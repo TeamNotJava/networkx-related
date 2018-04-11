@@ -4,7 +4,7 @@ import networkx as nx
 import cProfile
 
 from exact_algorithm import exact_tree_width
-from unoptimized_heuristic import tree_width_from_decomp,tree_decomp
+from unoptimized_heuristic import tree_width_from_decomp,tree_decomp,min_degree_heuristic
 
 # Number of nodes on which to run the test
 N = 12
@@ -44,8 +44,8 @@ def main():
         # Initialize Profiler
         pr = cProfile.Profile()
         # Calculate the upper bound to the treewidth
-        decomp = pr.runcall(tree_decomp,G)
-        tree_width = pr.runcall(tree_width_from_decomp,decomp)
+        decomp = pr.runcall(tree_decomp, G, min_degree_heuristic)
+        tree_width = pr.runcall(tree_width_from_decomp, decomp)
 
         print("Approximate Treewidth: ", tree_width)
 
