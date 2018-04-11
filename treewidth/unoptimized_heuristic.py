@@ -37,7 +37,10 @@ def minimum_fill_in_heuristic(G):
             for j in range(i + 1, len(neighbors)):
                 if G.has_edge(neighbors[i], neighbors[j]):
                     num_fill_in += 1
+
         if num_fill_in < min_fill_in:
+            if num_fill_in == 0:
+                return node
             min_fill_in = num_fill_in
             candidate_node = node
 
