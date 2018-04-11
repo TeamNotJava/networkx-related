@@ -2,17 +2,18 @@ import networkx as nx
 import itertools
 import sys
 
-def exact_tree_width(G : nx.Graph) -> int:
+
+def exact_tree_width(G):
     # Initialize treewidth for empty subgraph
-    tree_width = {frozenset():-1}
+    tree_width = {frozenset(): -1}
 
     # V: nodes of original graph
     V = frozenset(G.nodes)
 
     # Start with subsets of size 1 up to V
-    for i in range(1,G.number_of_nodes()+1):
+    for i in range(1, G.number_of_nodes() + 1):
 
-        for S in itertools.combinations(V,i):
+        for S in itertools.combinations(V, i):
             # S is a subset of V of size i
             S = frozenset(S)  # Convert to frozenset
 
@@ -29,12 +30,12 @@ def exact_tree_width(G : nx.Graph) -> int:
                 # Q(S,v) defined as in "On exact algorithms for treewidth" section 2.3 (page 4)
                 tw2 = 0
                 for w in V_diff_S.difference(v):
-                    subgraph = G.subgraph(S.union([v,w]))
+                    subgraph = G.subgraph(S.union([v, w]))
                     if nx.has_path(subgraph, v, w):
                         tw2 += 1
 
                 # Calculate the maximum (as in formula above)
-                max_tw = max(tw1,tw2)
+                max_tw = max(tw1, tw2)
                 if max_tw < min_tw:
                     # Update the minimum over all v (as in formula above)
                     min_tw = max_tw
@@ -45,12 +46,11 @@ def exact_tree_width(G : nx.Graph) -> int:
     return tree_width[V]
 
 
-# Test on graph from page 2 of http://citeseerx.ist.psu.edu/viewdoc/download;jsessionid=24EA9C89C95721F22241A61D21C4BB60?doi=10.1.1.61.3586&rep=rep1&type=pdf
+# Test on graph from page 2 of "Discovering Treewidth" (Hans L. Bodlaender)
 G = nx.Graph()
-G.add_edges_from([('a','b'),('b','c'),('b','d'),
-                  ('c','e'),('c','f'),('d','f'),
-                  ('d','g'),('e','f'),('f','g')])
-
+G.add_edges_from([('a', 'b'), ('b', 'c'), ('b', 'd'),
+                  ('c', 'e'), ('c', 'f'), ('d', 'f'),
+                  ('d', 'g'), ('e', 'f'), ('f', 'g')])
 
 print("Treewidth: ", exact_tree_width(G))
 """
