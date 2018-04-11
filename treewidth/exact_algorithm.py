@@ -29,9 +29,10 @@ def exact_tree_width(G):
                 # tw2 = Q(S-{v},v)   (as in formula above)
                 # Q(S,v) defined as in "On exact algorithms for treewidth" section 2.3 (page 4)
                 tw2 = 0
-                for w in V_diff_S.difference(v):
-                    subgraph = G.subgraph(S.union([v, w]))
-                    if nx.has_path(subgraph, v, w):
+                subgraph = G.subgraph(S.union([v]))
+                v_component = nx.node_connected_component(subgraph,v)
+                for w in V_diff_S.difference([v]):
+                    if not v_component.isdisjoint(G.neighbors(w)):
                         tw2 += 1
 
                 # Calculate the maximum (as in formula above)
@@ -46,15 +47,16 @@ def exact_tree_width(G):
     return tree_width[V]
 
 
-# Test on graph from page 2 of "Discovering Treewidth" (Hans L. Bodlaender)
-G = nx.Graph()
-G.add_edges_from([('a', 'b'), ('b', 'c'), ('b', 'd'),
-                  ('c', 'e'), ('c', 'f'), ('d', 'f'),
-                  ('d', 'g'), ('e', 'f'), ('f', 'g')])
+if __name__ == '__main__':
+    # Test on graph from page 2 of "Discovering Treewidth" (Hans L. Bodlaender)
+    G = nx.Graph()
+    G.add_edges_from([('a', 'b'), ('b', 'c'), ('b', 'd'),
+                      ('c', 'e'), ('c', 'f'), ('d', 'f'),
+                      ('d', 'g'), ('e', 'f'), ('f', 'g')])
 
-print("Treewidth: ", exact_tree_width(G))
-"""
-Output: 
-
-Treewidth:  2
-"""
+    print("Treewidth: ", exact_tree_width(G))
+    """
+    Output: 
+    
+    Treewidth:  2
+    """

@@ -29,7 +29,7 @@ def tree_decomp(G):
 
     if G.degree(elim_node) == 0:
         # The graph has multiple components
-        raise nx.NetworkXError
+        raise nx.NetworkXError("Input graph has multiple components.")
 
     # Create copy of graph and remove elim_node
     gp = G.copy()
@@ -60,24 +60,24 @@ def tree_decomp(G):
     decomp.add_edge(old_bag, neighbors)
     return decomp
 
+if __name__ == '__main__':
+    # Test on graph from page 2 of "Discovering Treewidth" (Hans L. Bodlaender)
+    G = nx.Graph()
+    G.add_edges_from([('a', 'b'), ('b', 'c'), ('b', 'd'),
+                      ('c', 'e'), ('c', 'f'), ('d', 'f'),
+                      ('d', 'g'), ('e', 'f'), ('f', 'g')])
 
-# Test on graph from page 2 of "Discovering Treewidth" (Hans L. Bodlaender)
-G = nx.Graph()
-G.add_edges_from([('a', 'b'), ('b', 'c'), ('b', 'd'),
-                  ('c', 'e'), ('c', 'f'), ('d', 'f'),
-                  ('d', 'g'), ('e', 'f'), ('f', 'g')])
+    decomp = tree_decomp(G)
+    for (left, right) in decomp.edges:
+        print("".join(left), "".join(right))
 
-decomp = tree_decomp(G)
-for (left, right) in decomp.edges:
-    print("".join(left), "".join(right))
-
-print("Treewidth: ", tree_width_from_decomp(decomp))
-"""
-Output: 
-
-fgd fcd
-fcd fce
-fcd bcd
-bcd ab
-Treewidth:  2
-"""
+    print("Treewidth: ", tree_width_from_decomp(decomp))
+    """
+    Output: 
+    
+    fgd fcd
+    fcd fce
+    fcd bcd
+    bcd ab
+    Treewidth:  2
+    """
