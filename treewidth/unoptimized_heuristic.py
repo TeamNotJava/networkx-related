@@ -95,6 +95,52 @@ def tree_decomp(G, heuristic):
     return decomp
 
 
+# version without recursion and copying, rest is still the same as in tree_decomp
+def tree_decomp_opt(G, heuristic):
+    # stack where nodes and their neighbors are pushed in the order they are selected by the heuristic
+    node_stack = []
+
+    elim_node = heuristic(G)
+    while elim_node is not None:
+
+        # Connect all neighbours with each other
+        neighbors = set(G.neighbors(elim_node))
+        for n in neighbors:
+            for m in neighbors:
+                if (n != m):
+                    G.add_edge(n, m)
+
+        # remove node from graph and push on stack (including its neighbors)
+        G.remove_node(elim_node)
+        node_stack.append((elim_node, neighbors));
+
+        # get next node to be removed according to heuristic
+        elim_node = heuristic(G)
+
+    # The abort condition is met. Put all nodes into one bag.
+    decomp = nx.Graph()
+    decomp.add_node(frozenset(G.nodes))
+
+    while node_stack:
+        # get node and its neighbors from the stack
+        (curr_node, neighbors) = node_stack.pop()
+        # find a bag the neighbors are in
+        old_bag = None
+        for bag in decomp.nodes:
+            if neighbors <= bag:
+                old_bag = bag
+                break
+
+        # Create new node for decomposition
+        neighbors.add(curr_node)
+        neighbors = frozenset(neighbors)
+
+        # Add edge to decomposition (implicitly also adds the new node)
+        decomp.add_edge(old_bag, neighbors)
+
+    return decomp
+
+
 if __name__ == '__main__':
     # Test on graph from page 2 of "Discovering Treewidth" (Hans L. Bodlaender)
     G = nx.Graph()
