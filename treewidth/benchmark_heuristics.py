@@ -6,6 +6,7 @@ import math
 
 from unoptimized_heuristic import tree_width_from_decomp,tree_decomp,min_degree_heuristic,minimum_fill_in_heuristic
 
+
 # Test setup
 TEST_P = [0.1, 0.01]
 TEST_NODE_NUMS = [int(math.exp(0.1*i)) for i in range(1, 60)]
