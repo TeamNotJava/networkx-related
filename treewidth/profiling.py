@@ -7,6 +7,7 @@ import pandas as pd
 pd.set_option('expand_frame_repr', False) # nicer printing of DataFrame
 
 # configure these options
+# download the benchmark here: https://people.mmci.uni-saarland.de/~hdell/pace17/he-instances-PACE2017-public-2016-12-02.tar.bz2
 BENCHMARK_PATH = './he-instances-PACE2017-public-2016-12-02'
 MAX_FILE_SIZE_IN_BYTE = 100 * 1000 # 500 KB
 MAX_NODES = 2000
