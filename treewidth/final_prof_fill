@@ -1,0 +1,90 @@
+benchmark treewidth_decomposition1_min_fill_in(G)
+loaded 39 graphs
+node avg: 356.9230769230769
+edge avg: 1534.7948717948718
+
+total time: 24.323800000000002
+                                                         mean        std        min        50%        max
+treewidth.py:143(min_fill_in_heuristic1)            71.666112  18.013214  16.374269  74.826928  94.607462
+<method 'sort' of 'list' objects>                    7.900542   7.331701   0.098314   4.739695  24.397777
+treewidth.py:208(treewidth_decomposition1_min_f...   7.889536   5.704953   3.034911   6.203957  33.918129
+treewidth.py:175(<listcomp>)                         3.884221   3.153247   0.056511   3.259365  11.965554
+<built-in method builtins.len>                       3.147827   1.428358   0.505502   3.466667   5.343204
+<built-in method builtins.min>                       2.072475   1.347843   0.063865   1.866667   4.202568
+<built-in method builtins.exec>                      0.634680   2.554074   0.000192   0.019753  13.450292
+graph.py:823(add_edge)                               0.524163   1.022451   0.006967   0.219481   4.678363
+<method 'add' of 'set' objects>                      0.413509   0.353634   0.085311   0.340984   1.866667
+coreviews.py:81(__getitem__)                         0.377839   1.139398   0.006878   0.072429   6.387906
+
+benchmark treewidth_decomposition2_min_fill_in(G)
+loaded 39 graphs
+node avg: 356.9230769230769
+edge avg: 1534.7948717948718
+
+total time: 24.508199
+                                                         mean        std        min        50%        max
+treewidth.py:143(min_fill_in_heuristic1)            71.010928  18.756027  12.179487  73.868523  95.216689
+treewidth.py:477(treewidth_decomposition2_min_f...   8.391520   5.317714   2.159744   7.046057  31.410256
+<method 'sort' of 'list' objects>                    7.861575   7.216606   0.095266   4.804886  23.052118
+treewidth.py:175(<listcomp>)                         3.884772   3.093288   0.060149   3.268482  11.619729
+<built-in method builtins.len>                       2.962025   1.411705   0.412354   3.127912   5.021345
+<built-in method builtins.min>                       2.143523   1.399562   0.056325   2.088773   4.262945
+<built-in method builtins.exec>                      0.685714   2.798979   0.000443   0.021384  15.384615
+graph.py:823(add_edge)                               0.680633   1.132455   0.006954   0.222186   5.128205
+<method 'add' of 'set' objects>                      0.410448   0.318848   0.079933   0.373614   1.566580
+coreviews.py:81(__getitem__)                         0.291861   0.642211   0.008400   0.079602   2.865391
+
+benchmark treewidth_decomposition3_min_fill_in(G)
+loaded 39 graphs
+node avg: 356.9230769230769
+edge avg: 1534.7948717948718
+
+total time: 161.63951099999994
+                                                         mean        std        min        50%        max
+treewidth.py:644(min_fill_in_heuristic3)            86.855112  14.958344  15.217391  89.898888  98.626828
+treewidth.py:696(treewidth_decomposition3_min_f...   5.509149   6.248458   0.552073   4.194331  33.913043
+<built-in method builtins.len>                       3.303322   1.542429   0.756521   3.765591   5.835626
+<built-in method builtins.min>                       1.307585   1.100458   0.032187   1.331457   3.976782
+graph.py:823(add_edge)                               0.782338   2.033142   0.001813   0.105824   8.350777
+<built-in method builtins.exec>                      0.644548   2.877113   0.000028   0.007627  16.521739
+<method 'add' of 'set' objects>                      0.198589   0.226058   0.007809   0.123253   1.304348
+graph.py:416(__getitem__)                            0.166706   0.482817   0.000438   0.037209   2.608696
+coreviews.py:81(__getitem__)                         0.140022   0.358216   0.000756   0.037797   1.898734
+<built-in method builtins.max>                       0.122299   0.270439   0.000733   0.018784   1.304348
+
+benchmark treewidth_decomposition4_min_fill_in(G)
+loaded 39 graphs
+node avg: 356.9230769230769
+edge avg: 1534.7948717948718
+
+total time: 399.240669
+                                               mean       std       min        50%        max
+treewidth.py:143(min_fill_in_heuristic1)  24.274662  3.143269  7.621951  25.146045  26.395629
+graph.py:416(__getitem__)                 19.601967  2.626870  7.621951  19.931759  21.852205
+graph.py:318(adj)                         11.777712  1.394694  4.878049  11.863838  13.091093
+coreviews.py:81(__getitem__)              11.759047  1.678140  3.658537  11.961592  12.889735
+_collections_abc.py:599(__contains__)     11.114379  3.046586  0.609756  12.021025  13.967541
+coreviews.py:45(__init__)                  6.452299  0.823040  3.048780   6.529295   7.293960
+coreviews.py:54(__getitem__)               5.175311  1.473376  0.000000   5.502349   7.225752
+treewidth.py:175(<listcomp>)               1.753814  1.950682  0.007219   1.020288   7.728557
+<built-in method builtins.len>             1.556687  1.547453  0.049561   1.139063   5.653765
+<method 'sort' of 'list' objects>          1.084992  1.220160  0.004105   0.491700   4.896320
+
+benchmark treewidth_decomposition5(G, min_fill_in_heuristic)
+loaded 39 graphs
+node avg: 356.9230769230769
+edge avg: 1534.7948717948718
+
+total time: 508.17640299999965
+                                                 mean       std        min        50%        max
+treewidth.py:101(min_fill_in_heuristic)     58.307970  9.402655  11.785714  60.818813  63.249140
+graph.py:1047(has_edge)                     29.817806  8.442383   0.357143  30.337546  39.625061
+treewidth.py:957(treewidth_decomposition5)   2.725212  2.979938   0.317434   1.831856  15.714286
+reportviews.py:442(__iter__)                 1.528063  1.404432   0.024928   1.453771   5.171846
+<built-in method builtins.len>               1.460501  0.908444   0.201004   1.428571   3.384779
+graph.py:1088(neighbors)                     1.042069  0.982975   0.015045   0.974085   3.465461
+graph.py:887(add_edges_from)                 0.799229  1.999722   0.006964   0.271524  10.714286
+<built-in method builtins.min>               0.725608  0.726333   0.000000   0.689052   2.668361
+graph.py:823(add_edge)                       0.555358  0.920650   0.014432   0.259437   4.642857
+<built-in method builtins.exec>              0.480179  2.278713   0.000010   0.003545  13.571429
+
