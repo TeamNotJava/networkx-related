@@ -1,0 +1,92 @@
+graph size <= 10000
+
+benchmark treewidth_decomposition1_min_degree(G)
+loaded 67 graphs
+node avg: 1588.910447761194
+edge avg: 7369.149253731343
+
+total time: 113.70762300000007
+                                                         mean        std        min        50%        max
+treewidth.py:292(treewidth_decomposition1_min_d...  81.067928  10.425733  46.099291  81.973668  97.061950
+<built-in method _heapq.heappop>                     4.200774   1.813439   0.782537   4.266202   7.983193
+<method 'add' of 'set' objects>                      2.656074   2.171447   0.275634   1.830907  10.070016
+graph.py:823(add_edge)                               2.476487   3.579045   0.057297   1.742936  26.037137
+<built-in method _heapq.heappush>                    1.468484   0.741054   0.291531   1.291180   3.657256
+coreviews.py:81(__getitem__)                         1.163363   1.796344   0.035159   0.810241  13.219873
+graph.py:416(__getitem__)                            0.893964   0.772834   0.010055   0.790786   3.422053
+<built-in method builtins.exec>                      0.880461   3.362999   0.000197   0.059177  21.276596
+<method 'append' of 'list' objects>                  0.865178   0.491480   0.127571   0.814056   2.165482
+<built-in method builtins.len>                       0.861318   0.447326   0.130445   0.875753   2.126879
+
+benchmark treewidth_decomposition2_min_degree(G)
+loaded 67 graphs
+node avg: 1588.910447761194
+edge avg: 7369.149253731343
+
+total time: 123.51456599999997
+                                                         mean        std        min        50%        max
+treewidth.py:396(treewidth_decomposition2_min_d...  81.746350  11.593044  40.816327  82.992856  97.118899
+<built-in method _heapq.heappop>                     3.798634   1.724849   0.834415   3.647842   7.947625
+graph.py:823(add_edge)                               2.884690   5.572635   0.063055   1.645145  42.946285
+<method 'add' of 'set' objects>                      2.489615   2.201274   0.185365   1.521885   9.484517
+<built-in method _heapq.heappush>                    1.352112   0.741804   0.213890   1.174401   3.069313
+<built-in method builtins.len>                       0.836698   0.542319   0.131781   0.788107   3.401361
+graph.py:416(__getitem__)                            0.834618   0.723351   0.009940   0.741557   3.333333
+coreviews.py:81(__getitem__)                         0.811331   0.779414   0.018799   0.676756   4.641494
+<built-in method builtins.exec>                      0.679562   2.315935   0.000147   0.057931  16.326531
+graph.py:628(nodes)                                  0.591624   0.632479   0.006210   0.389494   3.750000
+
+benchmark treewidth_decomposition3_min_degree(G)
+loaded 67 graphs
+node avg: 1588.910447761194
+edge avg: 7369.149253731343
+
+total time: 162.28856199999996
+                                                         mean        std        min        50%        max
+treewidth.py:556(treewidth_decomposition3_min_d...  54.486373  18.657915  31.906233  48.228307  95.904231
+treewidth.py:538(min_degree_heuristic3)             28.419309  17.196681   1.003554  36.601301  53.150171
+<built-in method builtins.len>                       7.449613   4.436368   0.271796   9.422737  13.210113
+<method 'add' of 'set' objects>                      2.331120   2.527122   0.091311   1.060730  10.066904
+graph.py:823(add_edge)                               1.569176   1.619052   0.046445   1.096067   9.362191
+coreviews.py:81(__getitem__)                         0.971165   1.902648   0.021662   0.563753  15.189524
+graph.py:416(__getitem__)                            0.748055   0.974718   0.010221   0.441033   5.932203
+<built-in method builtins.exec>                      0.707114   2.376087   0.000161   0.033346  16.949153
+<method 'append' of 'list' objects>                  0.642260   0.512039   0.048885   0.448149   1.959038
+graph.py:318(adj)                                    0.520854   0.846975   0.006689   0.259301   6.227106
+
+benchmark treewidth_decomposition4_min_degree(G)
+loaded 67 graphs
+node avg: 1588.910447761194
+edge avg: 7369.149253731343
+
+total time: 305.87507500000015
+                                                         mean       std        min        50%        max
+treewidth.py:780(treewidth_decomposition4_min_d...  37.796611  8.906456  13.960041  35.666051  55.570448
+graph.py:1047(has_edge)                             16.627045  9.850284   0.000000  15.195113  39.386567
+graph.py:823(add_edge)                               7.134440  4.536246   1.421528   7.021609  27.901886
+graph.py:887(add_edges_from)                         6.688626  5.953418   0.164212   5.117357  38.216953
+reportviews.py:334(__init__)                         5.285851  2.334793   0.542084   5.638246   8.848894
+<built-in method builtins.hasattr>                   4.439140  1.997343   0.419342   4.792105   7.489689
+graph.py:1256(degree)                                3.919434  1.759856   0.375383   4.217764   6.552306
+reportviews.py:434(__getitem__)                      2.532715  1.102797   0.315070   2.646019   4.354437
+<built-in method _heapq.heappop>                     2.440401  1.400347   0.202574   2.637687   6.499278
+graph.py:1421(<genexpr>)                             1.700496  1.461308   0.036550   1.488752   8.486257
+
+benchmark treewidth_decomposition5(G, min_degree_heuristic)
+loaded 67 graphs
+node avg: 1588.910447761194
+edge avg: 7369.149253731343
+
+total time: 401.882861
+                                                 mean        std       min        50%        max
+reportviews.py:442(__iter__)                26.425079  18.507723  0.413718  31.653888  60.594804
+treewidth.py:947(treewidth_decomposition5)  24.994830  13.186645  7.037257  22.182064  55.517498
+graph.py:1047(has_edge)                     12.564590  10.306668  0.443665   9.116453  39.170554
+treewidth.py:68(min_degree_heuristic)       10.976479   7.187427  0.162866  13.105949  22.654998
+graph.py:887(add_edges_from)                 5.982575   7.207183  0.190605   2.574978  39.533491
+graph.py:823(add_edge)                       5.931777   7.736871  0.394765   3.001826  49.861264
+<built-in method builtins.len>               3.761464   2.349650  0.199785   4.431637   7.693403
+graph.py:1421(<genexpr>)                     1.376876   1.577000  0.041344   0.623549   8.542064
+<method 'update' of 'dict' objects>          1.120187   1.105927  0.066879   0.597137   5.138717
+graph.py:553(remove_node)                    1.050766   0.652290  0.172268   0.830131   3.205128
+

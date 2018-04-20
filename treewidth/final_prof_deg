@@ -1,3 +1,5 @@
+graph size <= 4000
+
 benchmark treewidth_decomposition1_min_degree(G)
 loaded 60 graphs
 node avg: 902.8833333333333
