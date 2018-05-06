@@ -2,6 +2,32 @@ from collections import defaultdict
 import networkx as nx
 
 
+def check_planarity(G):
+    """Checks if a graph is planar and returns a counter example or an embedding
+
+    Parameters
+    ----------
+    G : graph
+        A NetworkX graph
+
+    Returns
+    -------
+    is_planar : bool
+        Is true if the graph is planar
+
+    result : TODO
+        If the graph is planar this is a planar embedding
+        If the graph is not planar this is a counter example
+    """
+
+    planarity = LRPlanarity(G)
+    try:
+        planarity.lr_planarity()
+    except nx.NetworkXUnfeasible:
+        return False, None
+    return True, None
+
+
 class Interval(object):
     def __init__(self, low=None, high=None):
         self.low = low
