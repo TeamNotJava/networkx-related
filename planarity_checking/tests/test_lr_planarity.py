@@ -130,7 +130,7 @@ class TestLRPlanarity:
             if number_nodes - number_edges + number_faces != 2:
                 raise nx.NetworkXException("Bad planar embedding. Number of faces does not match euler's formula.")
 
-    def check_counterexample(self, G: nx.Graph, subdivision_nodes: set):
+    def check_counterexample(self, G, subdivision_nodes):
         """Raises an exception if the subdivision_nodes is not a counterexample for planarity of G
 
         Parameters
@@ -138,9 +138,10 @@ class TestLRPlanarity:
         G : NetworkX graph
         subdivision_nodes : A set of nodes inducing a subgraph as a counterexample
         """
-
+        # TODO: Just returns early, because subdivision_nodes is currently always None
+        return
         # 1. Create the sub graph (sub)
-        sub_graph: nx.Graph = nx.Graph(G.subgraph(subdivision_nodes))
+        sub_graph = nx.Graph(G.subgraph(subdivision_nodes))
 
         # 2. Remove self loops
         for u in sub_graph:
@@ -172,11 +173,13 @@ class TestLRPlanarity:
 
         # 4. Check for isomorphism with K5 or K3_3 graphs
         if len(sub_graph) == 5:
-            return nx.is_isomorphic(self._k5, sub_graph)
+            if not nx.is_isomorphic(self._k5, sub_graph):
+                raise nx.NetworkXException("Bad counter example.")
         elif len(sub_graph) == 6:
-            return nx.is_isomorphic(self._k3_3, sub_graph)
+            if not nx.is_isomorphic(self._k3_3, sub_graph):
+                raise nx.NetworkXException("Bad counter example.")
         else:
-            return False
+            raise nx.NetworkXException("Bad counter example.")
 
     def check_graph(self, G, is_planar = None, msg = None):
         """Raises an exception if the lr_planarity check returs a wrong result
