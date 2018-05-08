@@ -42,3 +42,14 @@ class TestLRPlanarity:
             # Check graph for planarity
             is_planar, result = lr_planarity.check_planarity(non_planar_graph)
             assert_false(is_planar, "A non planar graph was classified as planar.")
+
+    def test_goldner_harary(self):
+        # goldner-harary graph
+        # http://en.wikipedia.org/wiki/Goldner%E2%80%93Harary_graph
+        # a maximal planar graph
+        e= [(1,2 ),( 1,3 ),( 1,4 ),( 1,5 ),( 1,7 ),( 1,8 ),( 1,10 ),
+            ( 1,11 ),( 2,3 ),( 2,4 ),( 2,6 ),( 2,7 ),( 2,9 ),( 2,10 ),
+            ( 2,11 ),( 3,4 ),( 4,5 ),( 4,6 ),( 4,7 ),( 5,7 ),( 6,7 ),
+            ( 7,8 ),( 7,9 ),( 7,10 ),( 8,10 ),( 9,10 ),( 10,11)]
+        G=nx.Graph(e)
+        assert_true(is_planar, "Golder-Harary maximal planargraph was classified as planar")

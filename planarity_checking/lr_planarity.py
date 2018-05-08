@@ -1,4 +1,5 @@
 from collections import defaultdict
+from copy import deepcopy
 import networkx as nx
 
 
@@ -22,10 +23,10 @@ def check_planarity(G):
 
     planarity = LRPlanarity(G)
     try:
-        planarity.lr_planarity()
+        embedding = planarity.lr_planarity()
     except nx.NetworkXUnfeasible:
         return False, None
-    return True, None
+    return True, embedding
 
 
 class Interval(object):
@@ -80,6 +81,8 @@ class LRPlanarity(object):
         self.left_ref = {}
         self.right_ref = {}
 
+        self.embedding = defaultdict(lambda: [])
+
     def lr_planarity(self):
         if self.G.order() > 2 and self.G.size() > 3*self.G.order() - 6:
             raise nx.NetworkXUnfeasible()
@@ -99,20 +102,22 @@ class LRPlanarity(object):
         for v in self.roots:
             self.dfs2(v)
 
-        # this is irrelevant for checking the planar embedding
-        # embedding
-        # def sign(e):
-        #    if self.ref[e] is not None:
-        #        self.side[e] = self.side[e] * sign(self.ref[e])
-        #        self.ref[e] = None
-        #    return self.side[e]
 
-        # for e in self.DG.edges:
-        #    self.nesting_depth[e] = sign(e)*self.nesting_depth[e]
-        # for v in self.DG:
-        #     self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
-        # for v in self.roots:
-        #    self.dfs3(v)
+        def sign(e):
+            if self.ref[e] is not None:
+                self.side[e] = self.side[e] * sign(self.ref[e])
+                self.ref[e] = None
+            return self.side[e]
+
+        for e in self.DG.edges:
+            self.nesting_depth[e] = sign(e)*self.nesting_depth[e]
+        for v in self.DG:
+            self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
+
+        for v in self.roots:
+            self.dfs3(v)
+
+        return dict(self.embedding)
 
 
     def dfs1(self, v):
@@ -258,20 +263,20 @@ class LRPlanarity(object):
                 else:
                     self.ref[e] = hr
 
-#    def dfs3(self, v):
-#        for w in self.ordered_adjs[v]:
-#            ei = (v, w)
-#            if ei == self.parent_edge[w]:
-#                # tree edge
-#                #TODO: make ei first element in adj list of w
-#
-#                self.left_ref[v] = ei
-#                self.right_ref[v] = ei
-#                dfs3(w)
-#            else:
-#                # back edge
-#                if self.side[ei] == 1:
-#                    #TODO: place ei after right_ref[w] in adj list of w
-#                else:
-#                    #TODO: place ei beforre left_ref[w] in adj list of w
-#                    self.left_ref[w] = ei
+    def dfs3(self, v):
+        for w in self.ordered_adjs[v]:
+            ei = (v, w)
+            if ei == self.parent_edge[w]:
+                # tree edge
+                self.embedding[v].insert(0, w) # this deviates from the paper
+                self.left_ref[v] = w
+                self.right_ref[v] = w
+                self.dfs3(w)
+            else:
+                # back edge
+                if self.side[ei] == 1:
+                    self.embedding[w].insert(self.embedding[w].index(self.right_ref[w]) + 1, v)
+                else:
+
+                    self.embedding[w].insert(self.embedding[w].index(self.left_ref[w]), v)
+                    self.left_ref[w] = v
