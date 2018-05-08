@@ -40,6 +40,10 @@ class TestLRPlanarity:
           - Every outgoing edge in the embedding also has an incoming edge in the embedding
           - Checks that all edges in the original graph have been counted
           - Checks that euler's formula holds for the number of edges, faces and nodes for each component
+
+        The number of faces is determined by using the combinatorial embedding to folowing a path around face
+        While following the path around the face every edge on the way (in this direction) is marked such that the face
+        is not counted twice.
         """
         # TODO: Just returns early, because there is still something wrong with this method
         return
@@ -95,6 +99,7 @@ class TestLRPlanarity:
                             incoming_idx = embedding[next_node].index(current_node)
                         except ValueError:
                             raise nx.NetworkXException("Bad planar embedding. No incoming edge for an outgoing edge.")
+                        # Outgoing edge is to the right of the incoming idx (or the idx rolls over to 0)
                         if incoming_idx == len(embedding[next_node]):
                             outgoing_idx = 0
                         else:
@@ -115,7 +120,7 @@ class TestLRPlanarity:
                     # 6. Check if the incoming node is correct
                     assert_equals(current_node, incoming_node, "Bad planar embedding. A path around a face did not end at the expected incoming node.")
 
-            # Lenght of edges_counted must be even
+            # Length of edges_counted must be even
             if len(edges_counted) % 2 != 0:
                 raise nx.NetworkXException("Counted an uneven number of half edges")
             number_edges = len(edges_counted) // 2
@@ -215,7 +220,6 @@ class TestLRPlanarity:
             # Check counter example
             self.check_counterexample(G, result)
 
-
     def test_simple_planar_graph(self):
         e = [(1, 2), (2, 3), (3, 4), (4, 6), (6, 7), (7, 1), (1, 5), (5, 2), (2, 4), (4, 5), (5, 7)]
         self.check_graph(nx.Graph(e), is_planar=True)
@@ -229,6 +233,16 @@ class TestLRPlanarity:
 
     def test_k5(self):
         self.check_graph(self._k5, is_planar=False)
+
+    def test_multiple_components_planar(self):
+        e = [(1, 2), (2, 3), (3, 1), (4, 5), (5, 6), (6, 4)]
+        self.check_graph(nx.Graph(e), is_planar=True)
+
+    def test_multiple_components_non_planar(self):
+        G = nx.complete_graph(5)
+        # Add another planar component to the non planar component --> G stays non planar
+        G.add_edges_from([(6, 7), (7, 8), (8, 6)])
+        self.check_graph(G, is_planar=False)
 
     def test_non_planar_with_selfloop(self):
         G = nx.complete_graph(5)
@@ -266,4 +280,6 @@ if __name__ == '__main__':
     t.test_non_planar1()
     t.test_simple_planar_graph()
     t.test_non_planar_with_selfloop()
+    t.test_multiple_components_planar()
+    t.test_multiple_components_non_planar()
     t.test_planar_with_selfloop()
