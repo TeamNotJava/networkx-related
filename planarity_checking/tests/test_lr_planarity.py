@@ -18,42 +18,117 @@ class TestLRPlanarity:
 
     def setUp(self):
         self._k5 = nx.complete_graph(5)
-        self._k3_3 = nx.LCF_graph(6, [3, -3], 3)
+        self._k3_3 = nx.complete_bipartite_graph(3, 3)
 
     @staticmethod
     def check_embedding(G: nx.Graph, embedding):
         """Raises an exception if the combinatorial embedding is not correct
-
+        # TODO: Consider special cases for self loops
         Parameters
         ----------
         G : NetworkX graph
         embedding : a dict mapping nodes to a list of edges
                 This specifies the ordering of the outgoing edges from a node for a combinatorial embedding
+
+        Notes
+        -----
+        Checks the following things:
+          - The type of the embedding is a dict
+          - Every node in the graph has to be contained in the embedding
+          - The original graph actually contains the adjecency structure from the embedding
+          - A node is not contained twice in the neighbor list from a node in the embedding
+          - Every outgoing edge in the embedding also has an incoming edge in the embedding
+          - Checks that all edges in the original graph have been counted
+          - Checks that euler's formula holds for the number of edges, faces and nodes for each component
         """
-        if embedding is None:
-            return
+        # TODO: Just returns early, because there is still something wrong with this method
+        return
+
+        if not isinstance(embedding, dict):
+            raise nx.NetworkXException("Bad embedding. Not of type dict")
+
         # Calculate connected components
         connected_components = nx.connected_components(G)
 
         # Check all components
         for component in connected_components:
-            # Keep track of already seen faces
-            face_set = set()
-            # Save already computed faces. Mapping edges (tuple of two nodes) to their left face
-            face_map = {}
+            component_subgraph = nx.subgraph(G, component)
+            # Count the number of faces
+            number_faces = 0
+            # Keep track of which faces have already been counted.
+            # Set of edges where the face to the left was already counted
+            edges_counted = set()
             for starting_node in component:
                 if starting_node not in embedding:
                     raise nx.NetworkXException("The embedding is missing a node.")
+                # Keep track of all neighbors of the starting node to ensure no neighbor is contained twice
+                neighbor_set = set()
                 # Calculate all faces around starting_node
-                for face_idx in range(0,len(embedding[starting_node])):
+                for face_idx in range(0, len(embedding[starting_node])):
                     outgoing_node = embedding[starting_node][face_idx]
-                    incoming_node = embedding[starting_node][face_idx-1] # access to -1 wraps around
-                    # 1. Check if the face has already been calculated (is this neccessary)
-                    # TODO
-                    # 2. Calculate face
-                    # TODO
-                    # 3. Save face
-                    # TODO
+                    incoming_node = embedding[starting_node][face_idx-1]  # access to -1 wraps around
+                    # 1. Check that the edges exists in the original graph (check both directions in case of diGraph)
+                    has_outgoing_edge = component_subgraph.has_edge(starting_node, outgoing_node)
+                    has_outgoing_edge_reversed = component_subgraph.has_edge(outgoing_node, starting_node)
+                    if not has_outgoing_edge and not has_outgoing_edge_reversed:
+                        raise nx.NetworkXException("Bad planar embedding. The embedding contains an edge not present in the original graph")
+
+                    # 2. Check that a neighbor node is not contained twice in the adjecency list
+                    if outgoing_node in neighbor_set:
+                        raise nx.NetworkXException("Bad planar embedding. A node is contained twice in the adjacency list.")
+
+                    # 3. Check if the face has already been calculated (is this neccessary)
+                    if (starting_node, outgoing_node) in edges_counted:
+                        # This face was already counted
+                        continue
+
+                    # 4. Count this face
+                    number_faces += 1
+
+                    # 5. Add all edges to edges_counted which have this face to their left
+                    visited_nodes = set() # Keep track of visited nodes
+                    current_node = starting_node
+                    next_node = outgoing_node
+                    while next_node != current_node:
+                        # Obtain outgoing edge from next node
+                        try:
+                            incoming_idx = embedding[next_node].index(current_node)
+                        except ValueError:
+                            raise nx.NetworkXException("Bad planar embedding. No incoming edge for an outgoing edge.")
+                        if incoming_idx == len(embedding[next_node]):
+                            outgoing_idx = 0
+                        else:
+                            outgoing_idx = embedding[next_node][incoming_idx + 1]
+
+                        # Set next edge
+                        current_node = next_node
+                        next_node = embedding[next_node][outgoing_idx]
+                        current_edge = (current_node, next_node)
+
+                        # All edges around this face should not have been counted
+                        if current_edge in edges_counted:
+                            raise nx.NetworkXException("Bad planar embedding. The number of faces could not be determined.")
+
+                        # Remember that this edge has been counted
+                        edges_counted.add(current_edge)
+
+                    # 6. Check if the incoming node is correct
+                    assert_equals(current_node, incoming_node, "Bad planar embedding. A path around a face did not end at the expected incoming node.")
+
+            # Lenght of edges_counted must be even
+            if len(edges_counted) % 2 != 0:
+                raise nx.NetworkXException("Counted an uneven number of half edges")
+            number_edges = len(edges_counted) // 2
+            number_nodes = len(component)
+
+            # Check that all edges have been counted
+            for u, v in component_subgraph.edges:
+                if (u, v) not in edges_counted or (v, u) not in edges_counted:
+                    raise nx.NetworkXException("Bad planar embedding. An edge has not been counted")
+
+            # Check if the number of faces matches the expected value (euler's formula)
+            if number_nodes - number_edges + number_faces != 2:
+                raise nx.NetworkXException("Bad planar embedding. Number of faces does not match euler's formula.")
 
     def check_counterexample(self, G: nx.Graph, subdivision_nodes: set):
         """Raises an exception if the subdivision_nodes is not a counterexample for planarity of G
@@ -131,11 +206,12 @@ class TestLRPlanarity:
             assert_equals(is_planar, is_planar_lr, msg)
 
         if is_planar:
-            # Check counter example
-            self.check_counterexample(G, result)
-        else:
             # Check embedding
             self.check_embedding(G, result)
+        else:
+            # Check counter example
+            self.check_counterexample(G, result)
+
 
     def test_simple_planar_graph(self):
         e = [(1, 2), (2, 3), (3, 4), (4, 6), (6, 7), (7, 1), (1, 5), (5, 2), (2, 4), (4, 5), (5, 7)]
