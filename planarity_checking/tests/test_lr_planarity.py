@@ -24,6 +24,7 @@ class TestLRPlanarity:
     def check_embedding(G: nx.Graph, embedding):
         """Raises an exception if the combinatorial embedding is not correct
         # TODO: Consider special cases for self loops
+        # TODO: More descriptive exceptions
         Parameters
         ----------
         G : NetworkX graph
@@ -37,6 +38,7 @@ class TestLRPlanarity:
           - Every node in the graph has to be contained in the embedding
           - The original graph actually contains the adjecency structure from the embedding
           - A node is not contained twice in the neighbor list from a node in the embedding
+          - The cycles around each face are correct (no unexpected cycle)
           - Every outgoing edge in the embedding also has an incoming edge in the embedding
           - Checks that all edges in the original graph have been counted
           - Checks that euler's formula holds for the number of edges, faces and nodes for each component
@@ -80,6 +82,7 @@ class TestLRPlanarity:
                     # 2. Check that a neighbor node is not contained twice in the adjecency list
                     if outgoing_node in neighbor_set:
                         raise nx.NetworkXException("Bad planar embedding. A node is contained twice in the adjacency list.")
+                    neighbor_set.add(outgoing_node)
 
                     # 3. Check if the face has already been calculated (is this neccessary)
                     if (starting_node, outgoing_node) in edges_counted:
@@ -90,10 +93,15 @@ class TestLRPlanarity:
                     number_faces += 1
 
                     # 5. Add all edges to edges_counted which have this face to their left
-                    visited_nodes = set() # Keep track of visited nodes
+                    visited_nodes = set()  # Keep track of visited nodes
                     current_node = starting_node
                     next_node = outgoing_node
-                    while next_node != current_node:
+                    while current_node != starting_node:  # Abort if the cycle is complete
+                        # Check that we have not visited the current node yet (starting_node lies outside of the cycle).
+                        if current_node in visited_nodes:
+                            raise nx.NetworkXException("Bad planar embedding. A node is contained twice in a cycle aound a face.")
+                        visited_nodes.add(current_node)
+
                         # Obtain outgoing edge from next node
                         try:
                             incoming_idx = embedding[next_node].index(current_node)
@@ -164,7 +172,7 @@ class TestLRPlanarity:
                 continue
             degree = sub_graph.degree[contract_node]
             # Check if we can remove the node
-            if degree == 2:
+            if degree == 2:  # TODO: Can it happen that we have isolated nodes that we might want to remove?
                 # Get the two neighbors
                 neighbors = iter(sub_graph[contract_node])
                 u = next(neighbors)
