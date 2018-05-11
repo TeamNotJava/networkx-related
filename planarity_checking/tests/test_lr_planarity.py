@@ -47,8 +47,6 @@ class TestLRPlanarity:
         While following the path around the face every edge on the way (in this direction) is marked such that the face
         is not counted twice.
         """
-        # TODO: Just returns early, because there is still something wrong with this method
-        return
 
         if not isinstance(embedding, dict):
             raise nx.NetworkXException("Bad embedding. Not of type dict")
@@ -84,10 +82,11 @@ class TestLRPlanarity:
                         raise nx.NetworkXException("Bad planar embedding. A node is contained twice in the adjacency list.")
                     neighbor_set.add(outgoing_node)
 
-                    # 3. Check if the face has already been calculated (is this neccessary)
+                    # 3. Check if the face has already been calculated
                     if (starting_node, outgoing_node) in edges_counted:
                         # This face was already counted
                         continue
+                    edges_counted.add((starting_node, outgoing_node))
 
                     # 4. Count this face
                     number_faces += 1
@@ -96,7 +95,7 @@ class TestLRPlanarity:
                     visited_nodes = set()  # Keep track of visited nodes
                     current_node = starting_node
                     next_node = outgoing_node
-                    while current_node != starting_node:  # Abort if the cycle is complete
+                    while next_node != starting_node:  # Abort if the cycle is complete
                         # Check that we have not visited the current node yet (starting_node lies outside of the cycle).
                         if current_node in visited_nodes:
                             raise nx.NetworkXException("Bad planar embedding. A node is contained twice in a cycle aound a face.")
@@ -108,10 +107,10 @@ class TestLRPlanarity:
                         except ValueError:
                             raise nx.NetworkXException("Bad planar embedding. No incoming edge for an outgoing edge.")
                         # Outgoing edge is to the right of the incoming idx (or the idx rolls over to 0)
-                        if incoming_idx == len(embedding[next_node]):
+                        if incoming_idx == len(embedding[next_node])-1:
                             outgoing_idx = 0
                         else:
-                            outgoing_idx = embedding[next_node][incoming_idx + 1]
+                            outgoing_idx = incoming_idx + 1
 
                         # Set next edge
                         current_node = next_node
