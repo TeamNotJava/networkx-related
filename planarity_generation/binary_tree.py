@@ -58,11 +58,11 @@ class BinaryTreeSampler():
         # Here are some dummy values from values_GF_binary_trees.num
         self.probabilities = {
             'black_rooted_tree': [0.5], # This value is not right
-            '1_or_white_rooted_tree': [0.29444027241668624677334211446066783047187327275181], # 4th vector
-            '1_or_black_rooted_tree': [0.64599880333411088336319322928710639835896803889376], # 5th vecotr
-            'black_rooted_pointed_tree': [0.24414175944453005274066900998117727717575865253963], # 1st vector
-            'donknow' : [0.00092404846499279191822170512841994980389724172358518, 0.50046227400160916426729702710187096162745453264042], # 2nd vector
-            'white_rooted_pointed_tree': [0.50000000000000000000000000000000000000000000000001] # 3rd vector
+            '1_or_white_rooted_tree': [0.29444027241668624677334211446066783047187327275181], # 4th vector, ch_1_or_v
+            '1_or_black_rooted_tree': [0.64599880333411088336319322928710639835896803889376], # 5th vecotr, ch_1_or_u
+            'black_rooted_pointed_tree': [0.24414175944453005274066900998117727717575865253963], # 1st vector, ch_pU_pV
+            'ch_U_or_pVV_or_VpV' : [0.00092404846499279191822170512841994980389724172358518, 0.50046227400160916426729702710187096162745453264042], # 2nd vector
+            'white_rooted_pointed_tree': [0.50000000000000000000000000000000000000000000000001] # 3rd vector, ch_pUU_or_UpU
         }
         # Setup
         self.tree_metadata = {'function': {'num_black': 0, 'num_white': 0, 'total': 0}}
@@ -90,10 +90,10 @@ class BinaryTreeSampler():
     # else 
     #   (white rooted tree)
     def ___binary_tree(self):
-        if self.___choice(self.probabilities['black_rooted_tree']):
-            tree = self.__black_rooted_tree()
+        if self.___choice(self.probabilities['black_rooted_tree']) is 0:
+            tree = self.___black_rooted_tree()
         else:
-            tree = self.__white_rooted_tree()
+            tree = self.___white_rooted_tree()
 
         return tree
         
@@ -104,7 +104,7 @@ class BinaryTreeSampler():
     # Sampler:
     # bern() then 1 else (white rooted tree) *
     # bern() then 1 else (white rooted tree)
-    def __black_rooted_tree(self):
+    def ___black_rooted_tree(self):
         tree = self.BinaryTree()
         tree.attr['color'] = 'black'
         # increase black nodes
@@ -123,10 +123,10 @@ class BinaryTreeSampler():
     # Sampler:
     # bern() then 0 else (black rooted tree)
     def ___empty_or_black_rooted(self):
-        if self.___choice(self.probabilities['1_or_black_rooted_tree']):
+        if self.___choice(self.probabilities['1_or_black_rooted_tree']) is 0:
             tree = None
         else:
-            tree = self.__black_rooted_tree()
+            tree = self.___black_rooted_tree()
 
         return tree
 
@@ -136,7 +136,7 @@ class BinaryTreeSampler():
     # Sampler:
     # bern(0.1/ (0.1 + black rooted tree) ) then 0 else (black rooted tree) *
     # bern() then 0 else (black rooted tree)
-    def __white_rooted_tree(self):
+    def ___white_rooted_tree(self):
         # Create Binary Tree
         tree = self.BinaryTree()
         tree.attr['color'] = 'white'
@@ -156,10 +156,10 @@ class BinaryTreeSampler():
     # Sampler:
     # bern() then 0 else (white rooted tree)
     def ___empty_or_white_rooted(self):
-        if self.___choice(self.probabilities['1_or_white_rooted_tree']):
+        if self.___choice(self.probabilities['1_or_white_rooted_tree']) is 0:
             tree = None
         else:
-            tree = self.__white_rooted_tree()
+            tree = self.___white_rooted_tree()
 
         return tree
 
@@ -181,23 +181,91 @@ class BinaryTreeSampler():
 
     # derivatives of binary tree
     def ___dx_black_pointed_binary_tree(self):
-        if self.___choice(self.probabilities['tree']):
-            tree = self.__black_rooted_tree()
+        if self.___choice(self.probabilities['black_rooted_pointed_tree']) is 0:
+            tree = self.___dx_black_pointed_black_rooted()
         else:
-            tree = self.__white_rooted_tree()
+            tree = self.___dx_black_pointed_white_rooted()
 
         return tree
     
     def ___dx_black_pointed_white_rooted(self):
-        pass
+        # Create Binary Tree
+        tree = self.BinaryTree()
+        tree.attr['color'] = 'white'
+        # increase black nodes
+        self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
+        # increase total nodes
+        self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+        if self.___choice(self.probabilities['white_rooted_pointed_tree']) is 0:
+            # left is 0 or black rooted
+            tree.leftChild = self.___empty_or_black_rooted()
+            # right is "dxu"
+            tree.rightChild = self.___dx_black_pointed_black_rooted()
+        else:
+            tree.leftChild = self.___dx_black_pointed_black_rooted()
+            tree.rightChild = self.___empty_or_black_rooted()
+        
+        return tree
     
     def ___dx_black_pointed_black_rooted(self):
-        pass
+        case = self.___choice(self.probabilities['ch_U_or_pVV_or_VpV'])
+        if case is 0:
+            return self.___black_rooted_tree()
+        else:
+            tree = self.BinaryTree()
+            tree.attr['color'] = 'black'
+            self.tree_metadata['function']['num_black'] = self.tree_metadata['function']['num_black'] + 1
+            self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+            if case is 1:
+                tree.leftChild = self.___empty_or_white_rooted()
+                tree.rightChild = self.___dx_black_pointed_white_rooted()
+            else:
+                tree.leftChild = self.___dx_black_pointed_white_rooted()
+                tree.rightChild = self.___empty_or_white_rooted()
+        return tree
 
     # We don't know if we need it later.
     def __dy_black_binary_tree(self):
-        pass
+        if self.___choice(self.probabilities['ch_dyu_or_dyv']) is 0:
+            tree = self.___dy_black_pointed_black_rooted()
+        else:
+            tree = self.___dy_black_pointed_white_rooted()
+
+        return tree
     
+    def ___dy_black_pointed_black_rooted(self):
+        case = self.___choice(self.probabilities['choose_vector_dyu'])
+        if case is 0:
+            return self.___black_rooted_tree()
+        else:
+            tree = self.BinaryTree()
+            tree.attr['color'] = 'white'
+            self.tree_metadata['function']['num_black'] = self.tree_metadata['function']['num_black'] + 1
+            self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+            if case is 1:
+                tree.leftChild = self.___empty_or_black_rooted()
+                tree.rightChild = self.___dx_black_pointed_black_rooted()
+            else:
+                tree.leftChild = self.___dx_black_pointed_black_rooted()
+                tree.rightChild = self.___empty_or_black_rooted()
+        return tree
+
+    def ___dy_black_pointed_white_rooted(self):
+        case = self.___choice(self.probabilities['choose_vector_dyv'])
+        if case is 0:
+            return self.___white_rooted_tree()
+        else:
+            tree = self.BinaryTree()
+            tree.attr['color'] = 'white'
+            self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
+            self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+            if case is 1:
+                tree.leftChild = self.___empty_or_black_rooted()
+                tree.rightChild = self.___dx_black_pointed_black_rooted()
+            else:
+                tree.leftChild = self.___dx_black_pointed_black_rooted()
+                tree.rightChild = self.___empty_or_black_rooted()
+        return tree
 
 # Shorthand version to just get a 
 binary_tree_sampler = BinaryTreeSampler().binary_tree
