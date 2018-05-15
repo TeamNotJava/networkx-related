@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+from .utils import bern_choice
+from .binary_tree import BinaryTreeSampler
 
 class ThreeConnectedGraphSampler:
     """Sampler Class for 3-Connected Planar Graphs.

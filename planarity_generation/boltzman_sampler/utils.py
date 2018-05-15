@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 # Gets a list of probabilities
 # Gets a random_function
 # Returns the index or the size of the probabiliy.

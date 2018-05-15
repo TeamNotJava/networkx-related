@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+
 from random import random
-from boltzman_sampler.utils import bern_choice
+from .utils import bern_choice
 
 # Based on the short paper
 class BinaryTreeSampler():
@@ -19,36 +20,15 @@ class BinaryTreeSampler():
 
     random_function = random
 
-    class BinaryTree():
-        """A Binary Tree representation
+    def set_random(self, random_function):
+        """Sets the used random function
         """
-        
-        attr = dict()
+        self.random_function = random_function
 
-        # Left Child
-        leftChild = None
-        # Right Child
-        rightChild = None
-
-        def __str__(self):
-            repr = '['
-            if self.leftChild == None:
-                repr = repr + '0'
-            else:
-                repr = repr + self.leftChild.__str__()
-
-            if 'color' in self.attr:
-                if self.attr['color'] is 'white':
-                    repr = repr + 'w'
-                if self.attr['color'] is 'black':
-                    repr = repr + 'b'
-                 
-            if self.rightChild == None:
-                repr = repr + '0'
-            else:
-                repr = repr + self.rightChild.__str__()
-            repr = repr + ']'
-            return repr
+    def set_probabilities(self, probabilities):
+        """Sets the used probabilities
+        """
+        self.probabilities = probabilities
 
 
     def binary_tree(self, n, epsilon=None):
@@ -57,14 +37,15 @@ class BinaryTreeSampler():
         """
         # Todo: Setup Probablities based on n and epsilon
         # Here are some dummy values from values_GF_binary_trees.num
-        self.probabilities = {
-            'black_rooted_tree': [0.5], # This value is not right
+        self.set_probabilities({
+            'black_rooted_tree': [0.50000000000000000000000000000000000000000000000001], # This value is not right
             '1_or_white_rooted_tree': [0.29444027241668624677334211446066783047187327275181], # 4th vector, ch_1_or_v
             '1_or_black_rooted_tree': [0.64599880333411088336319322928710639835896803889376], # 5th vecotr, ch_1_or_u
             'black_rooted_pointed_tree': [0.24414175944453005274066900998117727717575865253963], # 1st vector, ch_pU_pV
             'ch_U_or_pVV_or_VpV' : [0.00092404846499279191822170512841994980389724172358518, 0.50046227400160916426729702710187096162745453264042], # 2nd vector
             'white_rooted_pointed_tree': [0.50000000000000000000000000000000000000000000000001] # 3rd vector, ch_pUU_or_UpU
-        }
+        })
+
         # Setup
         self.tree_metadata = {'function': {'num_black': 0, 'num_white': 0, 'total': 0}}
         # Todo: Create networkx graph from Tree.
@@ -95,7 +76,7 @@ class BinaryTreeSampler():
     # bern() then 1 else (white rooted tree) *
     # bern() then 1 else (white rooted tree)
     def ___black_rooted_tree(self):
-        tree = self.BinaryTree()
+        tree = BinaryTree()
         tree.attr['color'] = 'black'
         # increase black nodes
         self.tree_metadata['function']['num_black'] = self.tree_metadata['function']['num_black'] + 1
@@ -128,7 +109,7 @@ class BinaryTreeSampler():
     # bern() then 0 else (black rooted tree)
     def ___white_rooted_tree(self):
         # Create Binary Tree
-        tree = self.BinaryTree()
+        tree = BinaryTree()
         tree.attr['color'] = 'white'
         # increase black nodes
         self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
@@ -180,7 +161,7 @@ class BinaryTreeSampler():
     
     def ___dx_black_pointed_white_rooted(self):
         # Create Binary Tree
-        tree = self.BinaryTree()
+        tree = BinaryTree()
         tree.attr['color'] = 'white'
         # increase black nodes
         self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
@@ -202,7 +183,7 @@ class BinaryTreeSampler():
         if case is 0:
             return self.___black_rooted_tree()
         else:
-            tree = self.BinaryTree()
+            tree = BinaryTree()
             tree.attr['color'] = 'black'
             self.tree_metadata['function']['num_black'] = self.tree_metadata['function']['num_black'] + 1
             self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
@@ -228,7 +209,7 @@ class BinaryTreeSampler():
         if case is 0:
             return self.___black_rooted_tree()
         else:
-            tree = self.BinaryTree()
+            tree = BinaryTree()
             tree.attr['color'] = 'white'
             self.tree_metadata['function']['num_black'] = self.tree_metadata['function']['num_black'] + 1
             self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
@@ -245,7 +226,7 @@ class BinaryTreeSampler():
         if case is 0:
             return self.___white_rooted_tree()
         else:
-            tree = self.BinaryTree()
+            tree = BinaryTree()
             tree.attr['color'] = 'white'
             self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
             self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
@@ -257,8 +238,38 @@ class BinaryTreeSampler():
                 tree.rightChild = self.___empty_or_black_rooted()
         return tree
 
-# Shorthand version to just get a 
-binary_tree_sampler = BinaryTreeSampler().binary_tree
 
-if __name__ == '__main__':
-    print(binary_tree_sampler(10000))
+class BinaryTree():
+    """A Binary Tree representation
+    """
+
+    attr = dict()
+
+    # Left Child
+    leftChild = None
+    # Right Child
+    rightChild = None
+
+    def __str__(self):
+        repr = '['
+        if self.leftChild == None:
+            repr = repr + '0'
+        else:
+            repr = repr + self.leftChild.__str__()
+
+        if 'color' in self.attr:
+            if self.attr['color'] is 'white':
+                repr = repr + 'w'
+            if self.attr['color'] is 'black':
+                repr = repr + 'b'
+                
+        if self.rightChild == None:
+            repr = repr + '0'
+        else:
+            repr = repr + self.rightChild.__str__()
+        repr = repr + ']'
+        return repr
+    
+# Shorthand version to just get a 
+def binary_tree_sampler(n, **kwargs):
+    return BinaryTreeSampler().binary_tree(n, **kwargs)
