@@ -3,8 +3,14 @@ from copy import deepcopy
 import networkx as nx
 
 
+
+
+
 def check_planarity(G):
     """Checks if a graph is planar and returns a counter example or an embedding
+
+     A graph is said to be planar, if it can be drawn in the plane without
+     edge intersections.
 
     Parameters
     ----------
@@ -19,6 +25,16 @@ def check_planarity(G):
     result : TODO
         If the graph is planar this is a planar embedding
         If the graph is not planar this is a counter example
+
+    Notes
+    -----
+    TODO
+    References
+    ----------
+    .. [1] Ulrik Brandes:
+      The Left-Right Planarity Test
+      2009
+      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.217.9208
     """
 
     planarity = LRPlanarity(G)
