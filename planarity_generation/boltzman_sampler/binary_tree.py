@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from random import random
+from boltzman_sampler.utils import bern_choice
 
 # Based on the short paper
 class BinaryTreeSampler():
@@ -69,17 +70,6 @@ class BinaryTreeSampler():
         # Todo: Create networkx graph from Tree.
         return self.___binary_tree()
 
-    # Gets a list of probabilities
-    # Returns the index or the size of the probabiliy.
-    # Acts as Bernoulli for len(probabilites) == 2
-    # Todo: may be used by the other files as well, outsource to util file.
-    def ___choice(self, probabilities) -> int:
-        assert type(probabilities) is list
-        random_value = self.random_function()
-        for index in range(len(probabilities)):
-            if random_value <= probabilities[index]:
-                return index
-        return len(probabilities)
 
 
     # binary tree
@@ -90,7 +80,7 @@ class BinaryTreeSampler():
     # else 
     #   (white rooted tree)
     def ___binary_tree(self):
-        if self.___choice(self.probabilities['black_rooted_tree']) is 0:
+        if bern_choice(self.probabilities['black_rooted_tree'], self.random_function) is 0:
             tree = self.___black_rooted_tree()
         else:
             tree = self.___white_rooted_tree()
@@ -123,7 +113,7 @@ class BinaryTreeSampler():
     # Sampler:
     # bern() then 0 else (black rooted tree)
     def ___empty_or_black_rooted(self):
-        if self.___choice(self.probabilities['1_or_black_rooted_tree']) is 0:
+        if bern_choice(self.probabilities['1_or_black_rooted_tree'], self.random_function) is 0:
             tree = None
         else:
             tree = self.___black_rooted_tree()
@@ -156,7 +146,7 @@ class BinaryTreeSampler():
     # Sampler:
     # bern() then 0 else (white rooted tree)
     def ___empty_or_white_rooted(self):
-        if self.___choice(self.probabilities['1_or_white_rooted_tree']) is 0:
+        if bern_choice(self.probabilities['1_or_white_rooted_tree'], self.random_function) is 0:
             tree = None
         else:
             tree = self.___white_rooted_tree()
@@ -181,7 +171,7 @@ class BinaryTreeSampler():
 
     # derivatives of binary tree
     def ___dx_black_pointed_binary_tree(self):
-        if self.___choice(self.probabilities['black_rooted_pointed_tree']) is 0:
+        if bern_choice(self.probabilities['black_rooted_pointed_tree'], self.random_function) is 0:
             tree = self.___dx_black_pointed_black_rooted()
         else:
             tree = self.___dx_black_pointed_white_rooted()
@@ -196,7 +186,7 @@ class BinaryTreeSampler():
         self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
         # increase total nodes
         self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
-        if self.___choice(self.probabilities['white_rooted_pointed_tree']) is 0:
+        if bern_choice(self.probabilities['white_rooted_pointed_tree'], self.random_function) is 0:
             # left is 0 or black rooted
             tree.leftChild = self.___empty_or_black_rooted()
             # right is "dxu"
@@ -208,7 +198,7 @@ class BinaryTreeSampler():
         return tree
     
     def ___dx_black_pointed_black_rooted(self):
-        case = self.___choice(self.probabilities['ch_U_or_pVV_or_VpV'])
+        case = bern_choice(self.probabilities['ch_U_or_pVV_or_VpV'], self.random_function)
         if case is 0:
             return self.___black_rooted_tree()
         else:
@@ -226,7 +216,7 @@ class BinaryTreeSampler():
 
     # We don't know if we need it later.
     def __dy_black_binary_tree(self):
-        if self.___choice(self.probabilities['ch_dyu_or_dyv']) is 0:
+        if bern_choice(self.probabilities['ch_dyu_or_dyv'], self.random_function) is 0:
             tree = self.___dy_black_pointed_black_rooted()
         else:
             tree = self.___dy_black_pointed_white_rooted()
@@ -234,7 +224,7 @@ class BinaryTreeSampler():
         return tree
     
     def ___dy_black_pointed_black_rooted(self):
-        case = self.___choice(self.probabilities['choose_vector_dyu'])
+        case = bern_choice(self.probabilities['choose_vector_dyu'], self.random_function)
         if case is 0:
             return self.___black_rooted_tree()
         else:
@@ -251,7 +241,7 @@ class BinaryTreeSampler():
         return tree
 
     def ___dy_black_pointed_white_rooted(self):
-        case = self.___choice(self.probabilities['choose_vector_dyv'])
+        case = bern_choice(self.probabilities['choose_vector_dyv'], self.random_function)
         if case is 0:
             return self.___white_rooted_tree()
         else:
