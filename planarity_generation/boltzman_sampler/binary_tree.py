@@ -45,6 +45,7 @@ class BinaryTreeSampler():
     def binary_tree(self, n, epsilon=None):
         """Sample a binary tree with size n.
         If epsilon is not None the size can be between n(1-epsilon) and n(1+epsilon)
+        Returns a Networkx graph
         """
         # Todo: Setup Probablities based on n and epsilon
         # Here are some dummy values from values_GF_binary_trees.num
@@ -57,11 +58,27 @@ class BinaryTreeSampler():
             'white_rooted_pointed_tree': [0.50000000000000000000000000000000000000000000000001] # 3rd vector, ch_pUU_or_UpU
         })
 
-        # Setup
-        self.tree_metadata = {'function': {'num_black': 0, 'num_white': 0, 'total': 0}}
-        # Todo: Create networkx graph from Tree.
-        return self.___binary_tree()
+        # Reset
+        self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
+        
+        tree =  self.___binary_tree()
+        for key in self.tree_metadata:
+            tree.attr[key] = self.tree_metadata[key]
 
+        # Todo: Create networkx graph from Tree.
+        return tree
+
+    def binary_tree_sampler(self):
+        """Binary tree function for use in other samples. 
+        Returns a BinaryTree 
+        """
+
+        # Reset
+        self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
+        tree =  self.___binary_tree()
+        for key in self.tree_metadata:
+            tree.attr[key] = self.tree_metadata[key]
+        return tree
 
 
     # binary tree
@@ -154,8 +171,29 @@ class BinaryTreeSampler():
     #   (white rooted tree)
     def black_pointed_binary_tree(self):
         """Similar entry point like self.binary_tree() but black pointed
+        Returns a networkx graph
         """
-        return self.___black_pointed_binary_tree()
+        # Reset
+        self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
+        
+        tree =  self.___black_pointed_binary_tree()
+        for key in self.tree_metadata:
+            tree.attr[key] = self.tree_metadata[key]
+
+        # Todo: Create networkx graph from Tree.
+        return tree
+
+    def black_pointed_binary_tree_sampler(self):
+        """Binary tree function for use in other samples. 
+        Returns a BinaryTree 
+        """
+
+        # Reset
+        self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
+        tree =  self.___black_pointed_binary_tree()
+        for key in self.tree_metadata:
+            tree.attr[key] = self.tree_metadata[key]
+        return tree
 
     # Don't know just return the dx one.
     def ___black_pointed_binary_tree(self):
