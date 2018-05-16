@@ -26,6 +26,8 @@ class HalfEdge:
 	color = None
 	#Node the half-edge is  assigned to
 	node_nr = -1
+	#Index
+	index = 0
 
 	# def __init__(self, opp = None, nex = None, pri = None, prox = 0, col = None, num = -1):
 	# 	self.opposite = opp
@@ -63,6 +65,8 @@ class HalfEdge:
 				repr = repr + ", white"
 		repr = repr + ", "
 		repr = repr + node_nr
+		repr = repr + ", "
+		repr = repr + index
 		repr = repr + ')'
 		
 		return repr
