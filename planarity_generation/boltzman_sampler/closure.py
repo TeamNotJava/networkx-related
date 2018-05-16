@@ -21,6 +21,9 @@ into a Boltzmann sampler for 3-connected planar graphs.
 ##################################################################
 
 import networkx as nx
+from .halfedge import HalfEdge
+from .binary_tree import BinaryTree
+
 
 class Closure:   
 
@@ -63,9 +66,9 @@ class Closure:
 
         #Construct the planar map on the children
         if btree.left_child != None:
-            return construct_planar_map(btree.left_child, half_edge_2)
+            return self.___construct_planar_map(btree.left_child, half_edge_2)
         if btree.right_child != None:
-            return construct_planar_map(btree.right_child, half_edge_3)
+            return self.___construct_planar_map(btree.right_child, half_edge_3)
 
 
 
@@ -263,19 +266,16 @@ class Closure:
 
 
 
-
-
-
     #Transforms a list of planar map half-edged into a networkx graph
-    def ___half_edges_to_graph(init_half_edge):
+    def ___half_edges_to_graph(self, init_half_edge):
         G = nx.Graph()
-        node_list = ___assign_half_edges_to_nodes(init_half_edge, 0)
+        node_list = self.___assign_half_edges_to_nodes(init_half_edge, 0)
 
 
  
 
     #Returns a list of half-edges and its corresponding node number
-    def ___assign_half_edges_to_nodes(half_edge, node_nr):
+    def assign_half_edges_to_nodes(self, half_edge, node_nr):
         half_edges = []
         half_edges.append((half_edge, node_nr))
         prior_half_edge = half_edge.prior 
@@ -288,89 +288,15 @@ class Closure:
         else:
             if half_edge.opposite != None:
                 half_edge.opposite.opposite = None
-                half_edges.append(___assign_half_edges_to_nodes(half_edge.opposite, node_nr+1))
+                half_edges.append(self.___assign_half_edges_to_nodes(half_edge.opposite, node_nr+1))
             elif half_edge.next.opposite != None:
                 half_edge.next.opposite.opposite = None
-                half_edges.append(___assign_half_edges_to_nodes(half_edge.next.opposite, node_nr+2))
+                half_edges.append(self.___assign_half_edges_to_nodes(half_edge.next.opposite, node_nr+2))
             elif half_edge.prior.opposite != None:
                 half_edge.prior.opposite.opposite = None
-                half_edges.append(___assign_half_edges_to_nodes(half_edge.prior.opposite, node_nr+3))
+                half_edges.append(self.___assign_half_edges_to_nodes(half_edge.prior.opposite, node_nr+3))
             else:
                 return
-
-def ___test():
-    h1 = HalfEdge()
-    h2 = HalfEdge()
-    h3 = HalfEdge()
-    h4 = HalfEdge()
-    h5 = HalfEdge()
-    h6 = HalfEdge()
-    h7 = HalfEdge()
-    h8 = HalfEdge()
-    h9 = HalfEdge()
-    h10 = HalfEdge()
-    h11 = HalfEdge()
-    h12 = HalfEdge()
-    h13 = HalfEdge()
-    h14 = HalfEdge()
-    h15 = HalfEdge()
-
-    h1.opposite = None
-    h1.next = h2 
-    h1.prior = h3
-    h2.opposite = h4
-    h2.next = h3 
-    h2.prior = h1
-    h3.opposite = h7
-    h3.next = h1
-    h3.prior = h2
-    h4.opposite = h2
-    h4.next = h5
-    h4.prior = h6
-    h5.opposite = h10
-    h5.next = h6
-    h5.prior = h4
-    h6.opposite = h13
-    h6.next = h4
-    h6.prior = h5
-    h7.opposite = h3
-    h7.next = h8
-    h7.prior = h9
-    h8.opposite = None
-    h8.next = h9
-    h8.prior = h7
-    h9.opposite = None
-    h9.next = h7
-    h9.prior = h8
-    h10.opposite = h5
-    h10.next = h11
-    h10.prior = h12
-    h11.opposite = None
-    h11.next = h12
-    h11.prior = h10
-    h12.opposite = None
-    h12.next = h10
-    h12.prior = h11
-    h13.opposite = h6
-    h13.next = h14
-    h13.prior = h15
-    h14.opposite = None
-    h14.next = h15
-    h14.prior = h13
-    h15.opposite = None
-    h15.next = h13
-    h15.prior = h14
-
-    half_edges = [h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12, h13, h14, h15]
-
-    print(___assign_half_edges_to_nodes(half_edges, 0))
-
-
-            
-            
-            
-
-        
 
 
 

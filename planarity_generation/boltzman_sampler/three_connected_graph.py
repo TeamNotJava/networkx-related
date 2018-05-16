@@ -14,7 +14,7 @@
 
 from .utils import bern_choice
 from .binary_tree import BinaryTreeSampler
-from planarity_generation.closure import Closure
+from .closure import Closure
 
 class ThreeConnectedGraphSampler:
     """Sampler Class for 3-Connected Planar Graphs.
