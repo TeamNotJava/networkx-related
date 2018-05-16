@@ -21,8 +21,6 @@ class ThreeConnectedGraphSampler:
     Uses the Binary Tree Sampler for sampling the 3-Connected Planar Graph.
     """
 
-    binary_tree_sampler = None
-
     def set_probabilities(self, probabilities):
         """Sets the used probabilities
         """
@@ -34,7 +32,13 @@ class ThreeConnectedGraphSampler:
         self.random_function = random_function
 
     def __init__(self):
-        self.binary_tree_sampler = BinaryTreeSampler()
+        self.binary_tree_function = BinaryTreeSampler().binary_tree
+        self.binary_tree_sampler = BinaryTreeSampler().binary_tree_sampler
+        self.black_pointed_binary_tree_sampler = BinaryTreeSampler().black_pointed_binary_tree_sampler
+        self.dy_binary_tree_sampler = BinaryTreeSampler().dy_binary_tree_sampler
+
+        self.closure_function = Closure().closure
+
         self.set_probabilities({
             'ch_K_in_dyK': [0.1023148450168439782698851645651737890839, 0.8976851549831560217301148354348262109160],
             'ch_dxK_in_dxyK': [0.01056720808167383324019751492093784146016, 0.9894327919183261667598024850790621585398],
@@ -42,7 +46,7 @@ class ThreeConnectedGraphSampler:
             'ch_3b_or_dyb': [0.05196496216386519137788597254497784663637, 0.9480350378361348086221140274550221533636]
         })
 
-    def three_connected_graph(self, n, epsilon=None):
+    def three_connected_graph(self):
         """Sample a 3-Connected Planar Graph with size n.
         If epsilon is not None the size can be between n(1-epsilon) and n(1+epsilon)
         """
@@ -50,30 +54,27 @@ class ThreeConnectedGraphSampler:
 
     # Corresponds to 
     def ___three_connected_graph(self):
-        pass
-
+        return self.draw_k()
 
     def draw_k(self):
         while True:
             random = self.random_function()
+            #TODO check this with max size again!!
             max_size = int(4 / random)
-            #TODO: We still don't have the check if the binary tree exceeds the maximum number of nodes
-            #TODO  in BinaryTreeSampler, so it will return the first generated tree
-            binary_tree = self.binary_tree_sampler.binary_tree() # we should include the max size here!!
+            binary_tree = self.binary_tree_function(max_size)
             if binary_tree is not None:
-                half_edge = Closure().closure(binary_tree)
+                half_edge = self.closure_function(binary_tree)
                 if half_edge is not None:
                     return TreeConnectedGraph(half_edge)
 
-
     def draw_dxK(self):
         while True:
-            binary_tree = self.binary_tree_sampler.binary_tree() # no need of N
-            number_of_black_nodes = 0 # Todo: they are not provided in the interface
-            number_of_white_nodes = 0 # Todo: they are not provided in the interface
+            binary_tree = self.binary_tree_sampler() # no need of N
+            number_of_black_nodes = binary_tree.attr['num_black']
+            number_of_white_nodes = binary_tree.attr['num_white']
             reject = (3.0 * (number_of_black_nodes + 1) / (2.0 * (number_of_black_nodes + number_of_white_nodes + 2)))
             if reject >= self.random_function():
-                half_edge = Closure().closure(binary_tree)
+                half_edge = self.closure_function(binary_tree)
                 if half_edge is not None:
                     return TreeConnectedGraph(half_edge)
 
@@ -83,11 +84,10 @@ class ThreeConnectedGraphSampler:
             return self.draw_k()
         else:
             while True:
-                binary_tree = self.binary_tree_sampler.binary_tree() # no need of N
-                half_edge = Closure().closure(binary_tree)
+                binary_tree = self.binary_tree_sampler()
+                half_edge = self.closure_function(binary_tree)
                 if half_edge is not None:
                     return TreeConnectedGraph(half_edge)
-
 
     def draw_dxyK(self):
         if bern_choice(self.probabilities['ch_dxK_in_dxyK'], self.random_function) is 0:
@@ -95,22 +95,21 @@ class ThreeConnectedGraphSampler:
         else:
             while True:
                 if bern_choice(self.probabilities['ch_b_or_dxb'], self.random_function) is 0:
-                    binary_tree = self.binary_tree_sampler.binary_tree() #  n is not necessary
+                    binary_tree = self.binary_tree_sampler()
                 else:
-                    binary_tree = self.binary_tree_sampler.black_pointed_binary_tree()
-                half_edge = Closure().closure(binary_tree)
+                    binary_tree = self.black_pointed_binary_tree_sampler()
+                half_edge = self.closure_function(binary_tree)
                 if half_edge is not None:
                     return TreeConnectedGraph(half_edge)
 
-
     def draw_dxxK(self):
         while True:
-            black_rooted_binary_tree = self.binary_tree_sampler.black_pointed_binary_tree()
-            number_of_black_nodes = 0  # Todo: they are not provided in the interface
-            number_of_white_nodes = 0  # Todo: they are not provided in the interface
+            black_rooted_binary_tree = self.black_pointed_binary_tree_sampler()
+            number_of_black_nodes = black_rooted_binary_tree.attr['num_black']
+            number_of_white_nodes = black_rooted_binary_tree.attr['num_white']
             reject = (3.0 * (number_of_black_nodes + 1) / (2.0 * (number_of_black_nodes + number_of_white_nodes + 2)))
             if reject >= self.random_function():
-                half_edge = Closure().closure(black_rooted_binary_tree)
+                half_edge = self.closure_function(black_rooted_binary_tree)
                 if half_edge is not None:
                     return TreeConnectedGraph(half_edge)
 
@@ -118,13 +117,12 @@ class ThreeConnectedGraphSampler:
     def draw_dyyK(self):
         while True:
             if bern_choice(self.probabilities['ch_3b_or_dyb'], self.random_function) is 0:
-                binary_tree = self.binary_tree_sampler.binary_tree() # n is not necessary
+                binary_tree = self.binary_tree_sampler()
             else:
-                binary_tree = self.binary_tree_sampler.white_pointed_binary_tree()
-            half_edge = Closure().closure(binary_tree)
+                binary_tree = self.dy_binary_tree_sampler()
+            half_edge = self.closure_function(binary_tree)
             if half_edge is not None:
                 return TreeConnectedGraph(half_edge)
-
 
 
 class TreeConnectedGraph:
@@ -144,5 +142,13 @@ class TreeConnectedGraph:
         self.make_copy(root_half_edge)
         self.root_half_edge = root_half_edge
 
-    def make_copy(self, root_half_edge):
-        pass
+
+    def __make_copy(self,first_half_edge, root_half_edge):
+        ''' Copy the HalfEdge content into ThreeConnectedGraph stucture.'''
+
+        # TODO finish this one
+        half_edge_walker = first_half_edge
+        if half_edge_walker != root_half_edge and half_edge_walker.opposite != root_half_edge:
+            self.vertices_list.append(half_edge_walker)
+
+
