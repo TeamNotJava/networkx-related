@@ -24,6 +24,16 @@ class HalfEdge:
 	number_proximate_inner_edges = 0
 	#Color that indicates what color the incident node has (0 - black, 1 -white)
 	color = None
+	#Node the half-edge is  assigned to
+	node_nr = -1
+
+	# def __init__(self, opp = None, nex = None, pri = None, prox = 0, col = None, num = -1):
+	# 	self.opposite = opp
+	# 	self.next = nex
+	# 	self.prior = pri
+	# 	self.number_proximate_inner_edges = prox
+	# 	self.color = col
+	# 	self.node_nr = num 
 
 	#Represents a half-edge as a tuple (opposite, next, prior, color)	
 	def __repr__(self):
@@ -45,12 +55,14 @@ class HalfEdge:
 		else:
 			repr = repr + '1'
 		if self.color == None:
-			repr = repr + '0'
+			repr = repr + ", 0"
 		else:
 			if self.color == 0:
-				repr = repr + "black"
+				repr = repr + ", black"
 			else:
-				repr = repr + "white"
+				repr = repr + ", white"
+		repr = repr + ", "
+		repr = repr + node_nr
 		repr = repr + ')'
 		
 		return repr

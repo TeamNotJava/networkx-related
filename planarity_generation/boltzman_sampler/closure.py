@@ -39,7 +39,7 @@ class Closure:
 
     #Consturct planer map out of a binary tree, i.e., make the binary tree
     #tri-oriented
-    def ___construct_planar_map(self, btree, init_half_edge):
+    def ___construct_planar_map(self, btree, init_half_edge, node_nr):
         half_edge_1 = HalfEdge()
         half_edge_2 = HalfEdge()
         half_edge_3 = HalfEdge()
@@ -63,12 +63,17 @@ class Closure:
         half_edge_2.color = color
         half_edge_2.color = color
 
+        #Set the number of node the edges asre assigned to
+        half_edge_1.node_nr = node_nr
+        half_edge_2.node_nr = node_nr
+        half_edge_3.node_nr = node_nr
+
 
         #Construct the planar map on the children
         if btree.left_child != None:
-            return self.___construct_planar_map(btree.left_child, half_edge_2)
+            return self.___construct_planar_map(btree.left_child, half_edge_2, node_nr+1)
         if btree.right_child != None:
-            return self.___construct_planar_map(btree.right_child, half_edge_3)
+            return self.___construct_planar_map(btree.right_child, half_edge_3, node_nr+1)
 
 
 
@@ -267,36 +272,60 @@ class Closure:
 
 
     #Transforms a list of planar map half-edged into a networkx graph
-    def ___half_edges_to_graph(self, init_half_edge):
+    def half_edges_to_graph(self, init_half_edge):
         G = nx.Graph()
-        node_list = self.___assign_half_edges_to_nodes(init_half_edge, 0)
+
+        added_edges = []
+
+        
+        current_half_edge = init_half_edge
+        while True:
+
+            if current_half_edge.opposite != None:
+                #Check if alrady added an edge for these nodes
+                try:
+                    found = added_edges.index((current_half_edge, current_half_edge.opposite))
+                except ValueError:
+                    found = -1
+                if found == -1:
+                    G.add_edge = (current_half_edge.node_nr, current_half_edge.opposite.node_nr)
+                    added_edges.append((current_half_edge.node_nr, current_half_edge.opposite.node_nr))
+
+                current_half_edge = current_half_edge.opposite.next
+            else:
+                current_half_edge = current_half_edge.next
+
+            if current_half_edge == init_half_edge:
+                break
+
+
+
+
 
 
  
 
-    #Returns a list of half-edges and its corresponding node number
-    def assign_half_edges_to_nodes(self, half_edge, node_nr):
-        half_edges = []
-        half_edges.append((half_edge, node_nr))
-        prior_half_edge = half_edge.prior 
-        half_edges.append((prior_half_edge, node_nr))
-        next_half_edge = half_edge.next
-        half_edges.append((next_half_edge, node_nr))
+    # #Returns a list of half-edges and its corresponding node number
+    # def assign_half_edges_to_nodes(self, half_edge, node_nr):
+    #     half_edges = []
+    #     half_edges.append((half_edge, node_nr))
+    #     prior_half_edge = half_edge.prior 
+    #     half_edges.append((prior_half_edge, node_nr))
+    #     next_half_edge = half_edge.next
+    #     half_edges.append((next_half_edge, node_nr))
 
-        if half_edge.opposite == None:
-            return half_edges
-        else:
-            if half_edge.opposite != None:
-                half_edge.opposite.opposite = None
-                half_edges.append(self.___assign_half_edges_to_nodes(half_edge.opposite, node_nr+1))
-            elif half_edge.next.opposite != None:
-                half_edge.next.opposite.opposite = None
-                half_edges.append(self.___assign_half_edges_to_nodes(half_edge.next.opposite, node_nr+2))
-            elif half_edge.prior.opposite != None:
-                half_edge.prior.opposite.opposite = None
-                half_edges.append(self.___assign_half_edges_to_nodes(half_edge.prior.opposite, node_nr+3))
-            else:
-                return
+
+    #     if half_edge.opposite != None:
+    #         half_edge.opposite.opposite = None
+    #         half_edges.append(self.assign_half_edges_to_nodes(half_edge.opposite, node_nr+1))
+    #     elif half_edge.next.opposite != None:
+    #         half_edge.next.opposite.opposite = None
+    #         half_edges.append(self.assign_half_edges_to_nodes(half_edge.next.opposite, node_nr+2))
+    #     elif half_edge.prior.opposite != None:
+    #         half_edge.prior.opposite.opposite = None
+    #         half_edges.append(self.assign_half_edges_to_nodes(half_edge.prior.opposite, node_nr+3))
+    #     else:
+    #         return half_edges
 
 
 
