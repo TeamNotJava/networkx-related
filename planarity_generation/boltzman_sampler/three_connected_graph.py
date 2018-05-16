@@ -47,9 +47,7 @@ class ThreeConnectedGraphSampler:
         })
 
     def three_connected_graph(self):
-        """Sample a 3-Connected Planar Graph with size n.
-        If epsilon is not None the size can be between n(1-epsilon) and n(1+epsilon)
-        """
+        """Sample a 3-Connected Planar Graph."""
         return self.___three_connected_graph()
 
     # Corresponds to 
@@ -59,7 +57,7 @@ class ThreeConnectedGraphSampler:
     def draw_k(self):
         while True:
             random = self.random_function()
-            #TODO check this with max size again!!
+            #TODO check this with max size again!! WHY 4??
             max_size = int(4 / random)
             binary_tree = self.binary_tree_function(max_size)
             if binary_tree is not None:
@@ -77,7 +75,6 @@ class ThreeConnectedGraphSampler:
                 half_edge = self.closure_function(binary_tree)
                 if half_edge is not None:
                     return TreeConnectedGraph(half_edge)
-
 
     def draw_dyK(self):
         if bern_choice(self.probabilities['ch_K_in_dyK'], self.random_function) is 0:
@@ -113,7 +110,6 @@ class ThreeConnectedGraphSampler:
                 if half_edge is not None:
                     return TreeConnectedGraph(half_edge)
 
-
     def draw_dyyK(self):
         while True:
             if bern_choice(self.probabilities['ch_3b_or_dyb'], self.random_function) is 0:
@@ -139,16 +135,34 @@ class TreeConnectedGraph:
     edges_list = list()
 
     def __init__(self, root_half_edge):
-        self.make_copy(root_half_edge)
+        self.visited_half_edges = set()
+        self.__dfs_based_copy(root_half_edge, root_half_edge)
         self.root_half_edge = root_half_edge
 
 
-    def __make_copy(self,first_half_edge, root_half_edge):
+    def __dfs_based_copy(self, first_half_edge, root_half_edge):
         ''' Copy the HalfEdge content into ThreeConnectedGraph stucture.'''
+        # TODO have to check for already finished!!
+        if first_half_edge.index in self.visited_half_edges:
+            return
 
-        # TODO finish this one
-        half_edge_walker = first_half_edge
-        if half_edge_walker != root_half_edge and half_edge_walker.opposite != root_half_edge:
-            self.vertices_list.append(half_edge_walker)
+        self.visited_half_edges.update(first_half_edge.index)
+        walker_half_edge = first_half_edge.next
+        while walker_half_edge != first_half_edge:
+            self.visited_half_edges.update(first_half_edge.index)
+            walker_half_edge = walker_half_edge.next
 
+        walker_half_edge = first_half_edge
+        if walker_half_edge != root_half_edge and walker_half_edge.opposite != root_half_edge:
+            self.vertices_list.append(walker_half_edge)
 
+        walker_half_edge = walker_half_edge.next
+        while walker_half_edge != first_half_edge:
+            if walker_half_edge != root_half_edge and walker_half_edge.opposite.index not in self.visited_half_edges:
+                self.edges_list.append(walker_half_edge)
+            walker_half_edge = walker_half_edge.next
+
+        walker_half_edge = walker_half_edge.next
+        while walker_half_edge != first_half_edge:
+            self.__dfs_based_copy(walker_half_edge.opposite, root_half_edge)
+            walker_half_edge = walker_half_edge.next

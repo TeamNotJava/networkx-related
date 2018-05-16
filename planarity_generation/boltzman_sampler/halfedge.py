@@ -13,7 +13,7 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 class HalfEdge:
-	
+
 	#Contains the opposite half-edge
 	opposite = None
 	#Contains the next half-edge in ccw order around the incident node
