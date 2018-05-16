@@ -23,6 +23,8 @@ into a Boltzmann sampler for 3-connected planar graphs.
 import networkx as nx
 from .halfedge import HalfEdge
 from .binary_tree import BinaryTree
+import numpy as np
+import matplotlib.pyplot as plt
 
 
 class Closure:   
@@ -190,10 +192,10 @@ class Closure:
 
 
     #Constructs a hexagon out of a list of half_edges. The color argument defines the color of the
-    #first half-edge of the hexagon
-    def ___construct_hexagon(self, hexagon_half_edges, color):
+    #first half-edge of the hexagon 
+    def construct_hexagon(self, hexagon_half_edges, color):
 
-        #Set colors
+        #Set color
         current_color = (color-1)%2
         for i in range(12):
             hexagon_half_edges[i].color = current_color
@@ -209,44 +211,27 @@ class Closure:
         #Set next and prior half-edges. Here prior and next are the same
         iter = 1
         while iter < 12:
-            hexagon_half_edges[iter].next = hexagon_half_edges[iter+1]
-            hexagon_half_edges[iter].prior = hexagon_half_edges[iter+1]
-            hexagon_half_edges[iter+1].next = hexagon_half_edges[iter]
-            hexagon_half_edges[iter+1].prior = hexagon_half_edges[iter]
-            iter +=2
+            hexagon_half_edges[iter].next = hexagon_half_edges[(iter+1)%12]
+            hexagon_half_edges[iter].prior = hexagon_half_edges[(iter+1)%12]
+            hexagon_half_edges[(iter+1)%12].next = hexagon_half_edges[iter]
+            hexagon_half_edges[(iter+1)%12].prior = hexagon_half_edges[iter]
+            iter += 2
+
+        #Set number of nodes.
+        current_half_edge = hexagon_half_edges[11]
+        node_num = 0
+        while True:
+            current_half_edge.node_nr = node_num
+            current_half_edge.next.node_nr = node_num
+            current_half_edge = current_half_edge.next.opposite
+            node_num += 1
+            if current_half_edge == hexagon_half_edges[11]:
+                break
+
+
         #Return the starting half-edge
         return hexagon_half_edges[0]
 
-
-    #Transforms a list of hexagon half-edges into a netowrkx graph
-    def ___hexagon_to_graph(self, half_edges):
-
-        self.___construct_hexagon(half_edges)
-        G = nx.Graph()
-        list_size = len(half_edges)
-        iter = 0
-        count_unpaired = 0
-        starting_half_edge = half_edges[0]
-
-        current_half_edge = starting_half_edge
-        while True:
-            if current_half_edge == starting_half_edge:
-                break 
-                
-            #Add new node with the color of the current half-edge
-            G.add_node(iter, color=half_edges[iter].color)
-            
-            if current_half_edge.opposite != None:
-                #Add new node with the color of the opposite half-edge
-                G.add_node(iter+1, color=half_edges[(iter+1)%list_size].color)
-                G.add_edge(iter,(iter+1)%list_size)
-            else:
-                #The current half-edge has no opponent so the "empty node" is created
-                count_unpaired += 1
-                G.add_node(count_unpaired, color='empty')
-                G.add_edge(iter, count_unpaired)
-
-            current_half_edge = current_half_edge.next
 
 
     def ___reject(self, init_half_edge):
@@ -274,21 +259,15 @@ class Closure:
     #Transforms a list of planar map half-edged into a networkx graph
     def half_edges_to_graph(self, init_half_edge):
         G = nx.Graph()
-
         added_edges = []
-
-        
         current_half_edge = init_half_edge
         while True:
 
             if current_half_edge.opposite != None:
                 #Check if alrady added an edge for these nodes
-                try:
-                    found = added_edges.index((current_half_edge, current_half_edge.opposite))
-                except ValueError:
-                    found = -1
-                if found == -1:
-                    G.add_edge = (current_half_edge.node_nr, current_half_edge.opposite.node_nr)
+                
+                if (current_half_edge, current_half_edge.opposite) not in added_edges:
+                    G.add_edge(current_half_edge.node_nr, current_half_edge.opposite.node_nr)
                     added_edges.append((current_half_edge.node_nr, current_half_edge.opposite.node_nr))
 
                 current_half_edge = current_half_edge.opposite.next
@@ -297,41 +276,5 @@ class Closure:
 
             if current_half_edge == init_half_edge:
                 break
-
-
-
-
-
-
- 
-
-    # #Returns a list of half-edges and its corresponding node number
-    # def assign_half_edges_to_nodes(self, half_edge, node_nr):
-    #     half_edges = []
-    #     half_edges.append((half_edge, node_nr))
-    #     prior_half_edge = half_edge.prior 
-    #     half_edges.append((prior_half_edge, node_nr))
-    #     next_half_edge = half_edge.next
-    #     half_edges.append((next_half_edge, node_nr))
-
-
-    #     if half_edge.opposite != None:
-    #         half_edge.opposite.opposite = None
-    #         half_edges.append(self.assign_half_edges_to_nodes(half_edge.opposite, node_nr+1))
-    #     elif half_edge.next.opposite != None:
-    #         half_edge.next.opposite.opposite = None
-    #         half_edges.append(self.assign_half_edges_to_nodes(half_edge.next.opposite, node_nr+2))
-    #     elif half_edge.prior.opposite != None:
-    #         half_edge.prior.opposite.opposite = None
-    #         half_edges.append(self.assign_half_edges_to_nodes(half_edge.prior.opposite, node_nr+3))
-    #     else:
-    #         return half_edges
-
-
-
-
-
-
-
-
+        return G
 
