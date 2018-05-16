@@ -21,15 +21,13 @@ into a Boltzmann sampler for 3-connected planar graphs.
 ##################################################################
 
 import networkx as nx
-from .binary_tree import BinaryTreeSampler
-from .halfedge import HalfEdge
 
 class Closure:   
 
     #Convert a binary tree int o planar map
-    def ___btree_to_planar_map(btree):
+    def ___btree_to_planar_map(self, btree):
         init_half_edge = HalfEdge()
-        construct_planar_map(btree, init_half_edge)
+        self.___construct_planar_map(btree, init_half_edge)
         #Destroy the initial half-edge as it is only needed to construct its opposite
         init_half_edge.opposite.opposite = None
         return init_half_edge.opposite
@@ -38,7 +36,7 @@ class Closure:
 
     #Consturct planer map out of a binary tree, i.e., make the binary tree
     #tri-oriented
-    def ___construct_planar_map(btree, init_half_edge):
+    def ___construct_planar_map(self, btree, init_half_edge):
         half_edge_1 = HalfEdge()
         half_edge_2 = HalfEdge()
         half_edge_3 = HalfEdge()
@@ -75,7 +73,7 @@ class Closure:
     #new edges in order to get faces with 4 edges
     #Input: initial half-edge, an empty stack that will contain unpaired half-edges
     #and the color of the initial node
-    def ___bicolored_partial_closure(init_half_edge):
+    def ___bicolored_partial_closure(self, init_half_edge):
         break_half_edge = init_half_edge
         #Travelse the tree in ccw order
         while True:
@@ -125,11 +123,11 @@ class Closure:
     #a dissection of the hexagon with quadrangular faces
     #input: init_half_edge is the half-edge that we get when we convert a binary tree into
     #a planar map
-    def ___bicolored_complete_closure(init_half_edge):
+    def ___bicolored_complete_closure(self, init_half_edge):
 
-        starting_half_edge = ___bicolored_partial_closure(init_half_edge)
+        starting_half_edge = self.___bicolored_partial_closure(init_half_edge)
         hexagon = [HalfEdge() for i in range(12)]
-        hexagon_start_half_edge = ___construct_hexagon(hexagon, starting_half_edge.color)
+        hexagon_start_half_edge = self.___construct_hexagon(hexagon, starting_half_edge.color)
 
         #Connect the starting half-edge of our planar map with the first node of the hexagon
         new_half_edge = HalfEdge()
@@ -185,7 +183,7 @@ class Closure:
 
     #Constructs a hexagon out of a list of half_edges. The color argument defines the color of the
     #first half-edge of the hexagon
-    def ___construct_hexagon(hexagon_half_edges, color):
+    def ___construct_hexagon(self, hexagon_half_edges, color):
 
         #Set colors
         current_color = (color-1)%2
@@ -213,9 +211,9 @@ class Closure:
 
 
     #Transforms a list of hexagon half-edges into a netowrkx graph
-    def ___hexagon_to_graph(half_edges):
+    def ___hexagon_to_graph(self, half_edges):
 
-        ___construct_hexagon(half_edges)
+        self.___construct_hexagon(half_edges)
         G = nx.Graph()
         list_size = len(half_edges)
         iter = 0
@@ -243,24 +241,24 @@ class Closure:
             current_half_edge = current_half_edge.next
 
 
-    def ___reject(init_half_edge):
+    def ___reject(self, init_half_edge):
         pass
 
 
-    def ___quadrangulate(init_half_edge):
+    def ___quadrangulate(self, init_half_edge):
         pass
 
-    def ___quadrangulation_to_3_map(init_half_edge):
+    def ___quadrangulation_to_3_map(self, init_half_edge):
         pass
 
 
-    def closure(binary_tree):
-        init_half_edge = ___btree_to_planar_map(binary_tree)
-        init_half_edge = ___bicolored_complete_closure(init_half_edge)
-        if ___reject(init_half_edge):
+    def closure(self, binary_tree):
+        init_half_edge = self.___btree_to_planar_map(binary_tree)
+        init_half_edge = self.___bicolored_complete_closure(init_half_edge)
+        if self.___reject(init_half_edge):
             return None
-        init_half_edge = ___quadrangulate(init_half_edge)
-        init_half_edge = ___quadrangulation_to_3_map(init_half_edge)
+        init_half_edge = self.___quadrangulate(init_half_edge)
+        init_half_edge = self.___quadrangulation_to_3_map(init_half_edge)
         return init_half_edge
 
 
@@ -275,8 +273,6 @@ class Closure:
 
 
  
-
-
 
     #Returns a list of half-edges and its corresponding node number
     def ___assign_half_edges_to_nodes(half_edge, node_nr):
