@@ -104,6 +104,16 @@ class BinaryTreeSampler():
         Returns a BinaryTree 
         """
 
+
+        self.set_probabilities({
+            'black_rooted_tree': [0.50000000000000000000000000000000000000000000000001], # This value is not right
+            '1_or_white_rooted_tree': [0.29444027241668624677334211446066783047187327275181], # 4th vector, ch_1_or_v
+            '1_or_black_rooted_tree': [0.64599880333411088336319322928710639835896803889376], # 5th vecotr, ch_1_or_u
+            'black_rooted_pointed_tree': [0.24414175944453005274066900998117727717575865253963], # 1st vector, ch_pU_pV
+            'ch_U_or_pVV_or_VpV' : [0.00092404846499279191822170512841994980389724172358518, 0.50046227400160916426729702710187096162745453264042], # 2nd vector
+            'white_rooted_pointed_tree': [0.50000000000000000000000000000000000000000000000001] # 3rd vector, ch_pUU_or_UpU
+        })
+        
         # Reset
         self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
         tree =  self.___binary_tree()
