@@ -245,22 +245,29 @@ class BinaryTreeSampler():
         return tree
 
     # white pointed tree
-    def white_pointed_binary_tree(self):
+    def dy_binary_tree_sampler(self):
         """Similar entry point like self.binary_tree() but white pointed
         """
-        return self.__dy_black_binary_tree()
+        self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
+
+        tree = self.__dy_binary_tree()
+        for key in self.tree_metadata:
+            tree.attr[key] = self.tree_metadata[key]
+
+        # Todo: Create networkx graph from Tree.
+        return tree
 
     # We don't know if we need it later.
     #TODO I am not sure that the naming should be like this .. since the derivative is with respect to y
-    def __dy_black_binary_tree(self):
+    def __dy_binary_tree(self):
         if bern_choice(self.probabilities['ch_dyu_or_dyv'], self.random_function) is 0:
-            tree = self.___dy_black_pointed_black_rooted()
+            tree = self.___dy_black_rooted()
         else:
-            tree = self.___dy_black_pointed_white_rooted()
+            tree = self.___dy_white_rooted()
 
         return tree
     
-    def ___dy_black_pointed_black_rooted(self):
+    def ___dy_black_rooted(self):
         case = bern_choice(self.probabilities['choose_vector_dyu'], self.random_function)
         if case is 0:
             return self.___black_rooted_tree()
@@ -277,7 +284,7 @@ class BinaryTreeSampler():
                 tree.rightChild = self.___empty_or_black_rooted()
         return tree
 
-    def ___dy_black_pointed_white_rooted(self):
+    def ___dy_white_rooted(self):
         case = bern_choice(self.probabilities['choose_vector_dyv'], self.random_function)
         if case is 0:
             return self.___white_rooted_tree()

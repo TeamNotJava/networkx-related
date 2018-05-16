@@ -2,28 +2,37 @@ from boltzman_sampler import *
 from boltzman_sampler.halfedge import HalfEdge
 from boltzman_sampler.closure import Closure
 
+
+import networkx as nx
+import numpy as np
+import matplotlib.pyplot as plt
+
 # print(binary_tree.binary_tree_sampler(10))
-# tree = binary_tree.BinaryTreeSampler().binary_tree(10)
-# print(tree)
+tree = binary_tree.BinaryTreeSampler().binary_tree(10)
 
 
-def test():
-    print("Start test...")
-    h1 = HalfEdge()
-    h2 = HalfEdge()
-    h3 = HalfEdge()
-    h4 = HalfEdge()
-    h5 = HalfEdge()
-    h6 = HalfEdge()
-    h7 = HalfEdge()
-    h8 = HalfEdge()
-    h9 = HalfEdge()
-    h10 = HalfEdge()
-    h11 = HalfEdge()
-    h12 = HalfEdge()
-    h13 = HalfEdge()
-    h14 = HalfEdge()
-    h15 = HalfEdge()
+colors = [node for node in tree.nodes()]
+print (colors)
+nx.draw(tree, cmap=plt.get_cmap('jet'), node_color=colors)
+plt.show()
+
+# def test():
+#     print("Start test...")
+#     h1 = HalfEdge()
+#     h2 = HalfEdge()
+#     h3 = HalfEdge()
+#     h4 = HalfEdge()
+#     h5 = HalfEdge()
+#     h6 = HalfEdge()
+#     h7 = HalfEdge()
+#     h8 = HalfEdge()
+#     h9 = HalfEdge()
+#     h10 = HalfEdge()
+#     h11 = HalfEdge()
+#     h12 = HalfEdge()
+#     h13 = HalfEdge()
+#     h14 = HalfEdge()
+#     h15 = HalfEdge()
 
 
     h1.opposite = None
@@ -94,6 +103,5 @@ def test():
 
 
 
-
-if __name__ == "__main__":
-    test()
+# if __name__ == "__main__":
+#     test()
