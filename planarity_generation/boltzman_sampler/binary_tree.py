@@ -206,7 +206,14 @@ class BinaryTreeSampler():
                 tree.rightChild = self.___empty_or_white_rooted()
         return tree
 
+    # white pointed tree
+    def white_pointed_binary_tree(self):
+        """Similar entry point like self.binary_tree() but white pointed
+        """
+        return self.__dy_black_binary_tree()
+
     # We don't know if we need it later.
+    #TODO I am not sure that the naming should be like this .. since the derivative is with respect to y
     def __dy_black_binary_tree(self):
         if bern_choice(self.probabilities['ch_dyu_or_dyv'], self.random_function) is 0:
             tree = self.___dy_black_pointed_black_rooted()
