@@ -68,35 +68,24 @@ class BinaryTreeSampler():
         for key in self.tree_metadata:
             tree.set_attributes(key, self.tree_metadata[key])
 
-        # print(tree)
-        # if tree.left() is not None:
-        #     print(tree.left().get_attributes())
-
         stack = deque([tree])
-        print(stack)
         G=nx.empty_graph(self.tree_metadata['total'])
 
         while stack:
             node = stack.pop()
-            # print(node)
             label_node = node.attributes['label']
-            # print("Processed {}".format(stack))
             G.nodes[label_node]['color'] = node.get_attribute('color')
             if node.left() is not None:
                 left = node.left()
                 stack.append(left)
                 label_left = left.attributes['label']
                 G.add_edge(label_node, label_left)
-                # print("Add Edges from {} to {}". format(label_node, label_left))
             if node.right() is not None:
                 right = node.right()
                 stack.append(right)
                 label_right = right.attributes['label']
                 G.add_edge(label_node, label_right)
-                # print("Add Edges from {} to {}". format(label_node, label_right))
 
-        print(G)
-        # Todo: Create networkx graph from Tree.
         return G
 
     def binary_tree_sampler(self):
@@ -113,7 +102,7 @@ class BinaryTreeSampler():
             'ch_U_or_pVV_or_VpV' : [0.00092404846499279191822170512841994980389724172358518, 0.50046227400160916426729702710187096162745453264042], # 2nd vector
             'white_rooted_pointed_tree': [0.50000000000000000000000000000000000000000000000001] # 3rd vector, ch_pUU_or_UpU
         })
-        
+
         # Reset
         self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
         tree =  self.___binary_tree()

@@ -7,7 +7,19 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 
+def plot_binary_tree():
+    # print(binary_tree.binary_tree_sampler(10))
+    tree = binary_tree.BinaryTreeSampler().binary_tree(10)
+    colors = []
+    for x in nx.get_node_attributes(tree, 'color').values():
+        if x is 'black':
+            colors.append('#222222')
+        else:
+            colors.append('#DDDDDD')
 
+
+    nx.draw(tree, node_color=colors)
+    plt.show()
 
 def test():
     print("Start test...")
