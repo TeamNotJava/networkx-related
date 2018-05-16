@@ -74,11 +74,11 @@ class Closure:
 
     #Performs bicolored partial closure on a binary tree. When possible build
     #new edges in order to get faces with 4 edges
-    #Input: initial half-edge, an empty stack that will contain unpaired half-edges
-    #and the color of the initial node
     def ___bicolored_partial_closure(self, init_half_edge):
         break_half_edge = init_half_edge
         #Travelse the tree in ccw order
+        current_half_edge = init_half_edge
+        stack = []
         while True:
             current_half_edge = current_half_edge.next
             #Check if the incident vertex is a leaf

@@ -24,10 +24,9 @@ class HalfEdge:
 	number_proximate_inner_edges = 0
 	#Color that indicates what color the incident node has (0 - black, 1 -white)
 	color = None
-	#TODO: make color as attribute like in binary trees????
 
 	#Represents a half-edge as a tuple (opposite, next, prior, color)	
-	def __str__(self):
+	def __repr__(self):
 		repr = '('
 		if self.opposite == None:
 			repr = repr  + '0'
