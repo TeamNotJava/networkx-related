@@ -30,9 +30,9 @@ import matplotlib.pyplot as plt
 class Closure:   
 
     #Convert a binary tree int o planar map
-    def ___btree_to_planar_map(self, btree):
+    def btree_to_planar_map(self, btree):
         init_half_edge = HalfEdge()
-        self.___construct_planar_map(btree, init_half_edge)
+        self.___construct_planar_map(btree, init_half_edge, 0)
         #Destroy the initial half-edge as it is only needed to construct its opposite
         init_half_edge.opposite.opposite = None
         return init_half_edge.opposite
@@ -60,7 +60,7 @@ class Closure:
         half_edge_2.prior = half_edge_1
 
         #Set the colors of the half-edges
-        color = btree.attr['color']
+        color = btree.get_attribute('color')
         half_edge_1.color = color
         half_edge_2.color = color
         half_edge_2.color = color
@@ -72,16 +72,16 @@ class Closure:
 
 
         #Construct the planar map on the children
-        if btree.left_child != None:
-            return self.___construct_planar_map(btree.left_child, half_edge_2, node_nr+1)
-        if btree.right_child != None:
-            return self.___construct_planar_map(btree.right_child, half_edge_3, node_nr+1)
+        if btree.left() != None:
+            return self.___construct_planar_map(btree.left(), half_edge_2, node_nr+1)
+        if btree.right() != None:
+            return self.___construct_planar_map(btree.right(), half_edge_3, node_nr+1)
 
 
 
     #Performs bicolored partial closure on a binary tree. When possible build
     #new edges in order to get faces with 4 edges
-    def ___bicolored_partial_closure(self, init_half_edge):
+    def bicolored_partial_closure(self, init_half_edge):
         break_half_edge = init_half_edge
         #Travelse the tree in ccw order
         current_half_edge = init_half_edge
