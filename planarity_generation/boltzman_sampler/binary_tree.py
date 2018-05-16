@@ -107,9 +107,9 @@ class BinaryTreeSampler():
         tree = BinaryTree()
         tree.attr['color'] = 'black'
         # increase black nodes
-        self.tree_metadata['function']['num_black'] = self.tree_metadata['function']['num_black'] + 1
+        self.tree_metadata['num_black'] = self.tree_metadata['num_black'] + 1
         # increase total nodes
-        self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+        self.tree_metadata['total'] = self.tree_metadata['total'] + 1
         # left is 0 or white rooted
         tree.leftChild = self.___empty_or_white_rooted()
         # right is 0 or white rooted
@@ -140,9 +140,9 @@ class BinaryTreeSampler():
         tree = BinaryTree()
         tree.attr['color'] = 'white'
         # increase black nodes
-        self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
+        self.tree_metadata['num_white'] = self.tree_metadata['num_white'] + 1
         # increase total nodes
-        self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+        self.tree_metadata['total'] = self.tree_metadata['total'] + 1
         # left is 0 or white rooted
         tree.leftChild = self.___empty_or_black_rooted()
         # right is 0 or white rooted
@@ -213,9 +213,9 @@ class BinaryTreeSampler():
         tree = BinaryTree()
         tree.attr['color'] = 'white'
         # increase black nodes
-        self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
+        self.tree_metadata['num_white'] = self.tree_metadata['num_white'] + 1
         # increase total nodes
-        self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+        self.tree_metadata['total'] = self.tree_metadata['total'] + 1
         if bern_choice(self.probabilities['white_rooted_pointed_tree'], self.random_function) is 0:
             # left is 0 or black rooted
             tree.leftChild = self.___empty_or_black_rooted()
@@ -234,8 +234,8 @@ class BinaryTreeSampler():
         else:
             tree = BinaryTree()
             tree.attr['color'] = 'black'
-            self.tree_metadata['function']['num_black'] = self.tree_metadata['function']['num_black'] + 1
-            self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+            self.tree_metadata['num_black'] = self.tree_metadata['num_black'] + 1
+            self.tree_metadata['total'] = self.tree_metadata['total'] + 1
             if case is 1:
                 tree.leftChild = self.___empty_or_white_rooted()
                 tree.rightChild = self.___dx_black_pointed_white_rooted()
@@ -267,8 +267,8 @@ class BinaryTreeSampler():
         else:
             tree = BinaryTree()
             tree.attr['color'] = 'white'
-            self.tree_metadata['function']['num_black'] = self.tree_metadata['function']['num_black'] + 1
-            self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+            self.tree_metadata['num_black'] = self.tree_metadata['num_black'] + 1
+            self.tree_metadata['total'] = self.tree_metadata['total'] + 1
             if case is 1:
                 tree.leftChild = self.___empty_or_black_rooted()
                 tree.rightChild = self.___dx_black_pointed_black_rooted()
@@ -284,8 +284,8 @@ class BinaryTreeSampler():
         else:
             tree = BinaryTree()
             tree.attr['color'] = 'white'
-            self.tree_metadata['function']['num_white'] = self.tree_metadata['function']['num_white'] + 1
-            self.tree_metadata['function']['total'] = self.tree_metadata['function']['total'] + 1
+            self.tree_metadata['num_white'] = self.tree_metadata['num_white'] + 1
+            self.tree_metadata['total'] = self.tree_metadata['total'] + 1
             if case is 1:
                 tree.leftChild = self.___empty_or_black_rooted()
                 tree.rightChild = self.___dx_black_pointed_black_rooted()
