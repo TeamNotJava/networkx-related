@@ -14,6 +14,9 @@
 
 from random import random
 from .utils import bern_choice
+import networkx as nx
+from collections import deque
+from copy import copy
 
 # Based on the short paper
 class BinaryTreeSampler():
@@ -63,10 +66,38 @@ class BinaryTreeSampler():
         
         tree =  self.___binary_tree()
         for key in self.tree_metadata:
-            tree.attr[key] = self.tree_metadata[key]
+            tree.set_attributes(key, self.tree_metadata[key])
 
+        # print(tree)
+        # if tree.left() is not None:
+        #     print(tree.left().get_attributes())
+
+        stack = deque([tree])
+        print(stack)
+        G=nx.empty_graph(self.tree_metadata['total'])
+
+        while stack:
+            node = stack.pop()
+            # print(node)
+            label_node = node.attributes['label']
+            # print("Processed {}".format(stack))
+            G.nodes[label_node]['color'] = node.get_attribute('color')
+            if node.left() is not None:
+                left = node.left()
+                stack.append(left)
+                label_left = left.attributes['label']
+                G.add_edge(label_node, label_left)
+                # print("Add Edges from {} to {}". format(label_node, label_left))
+            if node.right() is not None:
+                right = node.right()
+                stack.append(right)
+                label_right = right.attributes['label']
+                G.add_edge(label_node, label_right)
+                # print("Add Edges from {} to {}". format(label_node, label_right))
+
+        print(G)
         # Todo: Create networkx graph from Tree.
-        return tree
+        return G
 
     def binary_tree_sampler(self):
         """Binary tree function for use in other samples. 
@@ -77,7 +108,7 @@ class BinaryTreeSampler():
         self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
         tree =  self.___binary_tree()
         for key in self.tree_metadata:
-            tree.attr[key] = self.tree_metadata[key]
+            tree.set_attributes(key, self.tree_metadata[key])
         return tree
 
 
@@ -105,7 +136,8 @@ class BinaryTreeSampler():
     # bern() then 1 else (white rooted tree)
     def ___black_rooted_tree(self):
         tree = BinaryTree()
-        tree.attr['color'] = 'black'
+        tree.set_attributes('color', 'black')
+        tree.set_attributes('label', copy(self.tree_metadata['total']))
         # increase black nodes
         self.tree_metadata['num_black'] = self.tree_metadata['num_black'] + 1
         # increase total nodes
@@ -138,7 +170,8 @@ class BinaryTreeSampler():
     def ___white_rooted_tree(self):
         # Create Binary Tree
         tree = BinaryTree()
-        tree.attr['color'] = 'white'
+        tree.set_attributes('color', 'white')
+        tree.set_attributes('label', copy(self.tree_metadata['total']))
         # increase black nodes
         self.tree_metadata['num_white'] = self.tree_metadata['num_white'] + 1
         # increase total nodes
@@ -178,7 +211,7 @@ class BinaryTreeSampler():
         
         tree =  self.___black_pointed_binary_tree()
         for key in self.tree_metadata:
-            tree.attr[key] = self.tree_metadata[key]
+            tree.attributes[key] = self.tree_metadata[key]
 
         # Todo: Create networkx graph from Tree.
         return tree
@@ -192,7 +225,7 @@ class BinaryTreeSampler():
         self.tree_metadata = {'num_black': 0, 'num_white': 0, 'total': 0}
         tree =  self.___black_pointed_binary_tree()
         for key in self.tree_metadata:
-            tree.attr[key] = self.tree_metadata[key]
+            tree.attributes[key] = self.tree_metadata[key]
         return tree
 
     # Don't know just return the dx one.
@@ -211,7 +244,8 @@ class BinaryTreeSampler():
     def ___dx_black_pointed_white_rooted(self):
         # Create Binary Tree
         tree = BinaryTree()
-        tree.attr['color'] = 'white'
+        tree.attributes['color'] = 'white'
+        tree.attributes['label'] = self.tree_metadata['total']
         # increase black nodes
         self.tree_metadata['num_white'] = self.tree_metadata['num_white'] + 1
         # increase total nodes
@@ -233,7 +267,8 @@ class BinaryTreeSampler():
             return self.___black_rooted_tree()
         else:
             tree = BinaryTree()
-            tree.attr['color'] = 'black'
+            tree.attributes['color'] = 'black'
+            tree.attributes['label'] = self.tree_metadata['total']
             self.tree_metadata['num_black'] = self.tree_metadata['num_black'] + 1
             self.tree_metadata['total'] = self.tree_metadata['total'] + 1
             if case is 1:
@@ -252,7 +287,7 @@ class BinaryTreeSampler():
 
         tree = self.__dy_binary_tree()
         for key in self.tree_metadata:
-            tree.attr[key] = self.tree_metadata[key]
+            tree.attributes[key] = self.tree_metadata[key]
 
         # Todo: Create networkx graph from Tree.
         return tree
@@ -273,7 +308,8 @@ class BinaryTreeSampler():
             return self.___black_rooted_tree()
         else:
             tree = BinaryTree()
-            tree.attr['color'] = 'white'
+            tree.attributes['color'] = 'white'
+            tree.attributes['label'] = self.tree_metadata['total']
             self.tree_metadata['num_black'] = self.tree_metadata['num_black'] + 1
             self.tree_metadata['total'] = self.tree_metadata['total'] + 1
             if case is 1:
@@ -290,7 +326,8 @@ class BinaryTreeSampler():
             return self.___white_rooted_tree()
         else:
             tree = BinaryTree()
-            tree.attr['color'] = 'white'
+            tree.set_attributes('color', 'white')
+            tree.set_attributes('label', self.tree_metadata['total'])
             self.tree_metadata['num_white'] = self.tree_metadata['num_white'] + 1
             self.tree_metadata['total'] = self.tree_metadata['total'] + 1
             if case is 1:
@@ -306,30 +343,45 @@ class BinaryTree():
     """A Binary Tree representation
     """
 
-    attr = dict()
+    def __init__(self):
+        self.attributes = dict()
+        # Left Child
+        leftChild = None
+        # Right Child
+        rightChild = None
 
-    # Left Child
-    leftChild = None
-    # Right Child
-    rightChild = None
+    def right(self):
+        return self.rightChild
+
+    def left(self):
+        return self.leftChild
+
+    def set_attributes(self, key, val):
+        self.attributes[key] = val
+    
+    def get_attributes(self):
+        return self.attributes
+
+    def get_attribute(self, key):
+        return self.attributes[key]
 
     def __str__(self):
         repr = '['
-        if self.leftChild == None:
+        if self.left() == None:
             repr = repr + '0'
         else:
-            repr = repr + self.leftChild.__str__()
+            repr = repr + self.right().__str__()
 
-        if 'color' in self.attr:
-            if self.attr['color'] is 'white':
+        if 'color' in self.attributes:
+            if self.attributes['color'] is 'white':
                 repr = repr + 'w'
-            if self.attr['color'] is 'black':
+            if self.attributes['color'] is 'black':
                 repr = repr + 'b'
                 
-        if self.rightChild == None:
+        if self.right() == None:
             repr = repr + '0'
         else:
-            repr = repr + self.rightChild.__str__()
+            repr = repr + self.right().__str__()
         repr = repr + ']'
         return repr
     
