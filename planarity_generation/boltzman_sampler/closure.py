@@ -41,7 +41,7 @@ class Closure:
 
     #Consturct planer map out of a binary tree, i.e., make the binary tree
     #tri-oriented
-    def ___construct_planar_map(self, btree, init_half_edge, node_nr):
+    def ___construct_planar_map(self, btree, init_half_edge, node_nr, half_edge_index):
         half_edge_1 = HalfEdge()
         half_edge_2 = HalfEdge()
         half_edge_3 = HalfEdge()
@@ -70,12 +70,17 @@ class Closure:
         half_edge_2.node_nr = node_nr
         half_edge_3.node_nr = node_nr
 
+        #Set the indices of the half-edges
+        half_edge_1.index = half_edge_index
+        half_edge_2.index = half_edge_index + 1
+        half_edge_3.index = half_edge_index + 2
+
 
         #Construct the planar map on the children
         if btree.left() != None:
-            return self.___construct_planar_map(btree.left(), half_edge_2, node_nr+1)
+            return self.___construct_planar_map(btree.left(), half_edge_2, node_nr+1, half_edge_index+3)
         if btree.right() != None:
-            return self.___construct_planar_map(btree.right(), half_edge_3, node_nr+1)
+            return self.___construct_planar_map(btree.right(), half_edge_3, node_nr+1, half_edge_index+3)
 
 
 
@@ -228,6 +233,16 @@ class Closure:
             if current_half_edge == hexagon_half_edges[11]:
                 break
 
+        #Set indeces for half-edges
+        index = 0
+        current_half_edge = hexagon_half_edges[0]
+        while True:
+            current_half_edge.index = index
+            hexagon_half_edges.opposite = index + 1
+            current_half_edge = current_half_edge.opposite.next
+            index += 1
+            if current_half_edge == hexagon_half_edges[0]
+                break
 
         #Return the starting half-edge
         return hexagon_half_edges[0]
