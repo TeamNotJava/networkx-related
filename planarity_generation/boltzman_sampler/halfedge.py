@@ -29,44 +29,39 @@ class HalfEdge:
 	#Index
 	index = 0
 
-	# def __init__(self, opp = None, nex = None, pri = None, prox = 0, col = None, num = -1):
-	# 	self.opposite = opp
-	# 	self.next = nex
-	# 	self.prior = pri
-	# 	self.number_proximate_inner_edges = prox
-	# 	self.color = col
-	# 	self.node_nr = num 
-
-	#Represents a half-edge as a tuple (opposite, next, prior, color)	
+	#Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)	
 	def __repr__(self):
 		repr = '('
+		repr = repr + str(self.index)
+		repr = repr + ", "
+		repr = repr + str(self.node_nr)
+		repr = repr + ", "
+
 		if self.opposite == None:
-			repr = repr  + '0'
+			repr = repr  + "None"
 		else:	
-			repr =  repr + '1'
+			repr =  repr + str(self.opposite.index)
 		repr = repr + ", "
 
 		if self.next == None:
-			repr = repr + '0'
+			repr = repr + "None"
 		else:
-			repr = repr + '1'
+			repr = repr + str(self.next.index)
 		repr = repr + ", "
 	
 		if self.prior == None:
-			repr = repr + '0'
+			repr = repr + "None"
 		else:
-			repr = repr + '1'
+			repr = repr + str(self.prior.index)
 		if self.color == None:
-			repr = repr + ", 0"
+			repr = repr + ", None"
 		else:
 			if self.color == 0:
 				repr = repr + ", black"
 			else:
 				repr = repr + ", white"
 		repr = repr + ", "
-		repr = repr + node_nr
-		repr = repr + ", "
-		repr = repr + index
+		repr = repr + str(self.number_proximate_inner_edges)
 		repr = repr + ')'
 		
 		return repr
