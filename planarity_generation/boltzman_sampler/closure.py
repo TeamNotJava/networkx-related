@@ -32,7 +32,7 @@ class Closure:
     #Convert a binary tree int o planar map
     def btree_to_planar_map(self, btree):
         init_half_edge = HalfEdge()
-        self.___construct_planar_map(btree, init_half_edge, 0)
+        self.___construct_planar_map(btree, init_half_edge, 0, 0)
         #Destroy the initial half-edge as it is only needed to construct its opposite
         init_half_edge.opposite.opposite = None
         return init_half_edge.opposite
@@ -241,7 +241,7 @@ class Closure:
             hexagon_half_edges.opposite = index + 1
             current_half_edge = current_half_edge.opposite.next
             index += 1
-            if current_half_edge == hexagon_half_edges[0]
+            if current_half_edge == hexagon_half_edges[0]:
                 break
 
         #Return the starting half-edge
