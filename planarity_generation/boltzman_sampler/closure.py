@@ -63,6 +63,10 @@ class Closure:
 
         #Set the colors of the half-edges
         color = btree.get_attribute('color')
+        if color == "white":
+            color = 1
+        else:
+            color = 0
         half_edge_1.color = color
         half_edge_2.color = color
         half_edge_2.color = color
@@ -142,6 +146,11 @@ class Closure:
                         current_half_edge = top_half_edge.prior
                     else:
                         stack.append(top_half_edge)
+
+        # print("Partial closure list:")
+        # list_closure = self.list_half_edges(init_half_edge, [])
+        # for i in list_closure:
+        #     print(i)
         return init_half_edge
 
 
@@ -271,6 +280,11 @@ class Closure:
             else:
                 current_half_edge = current_half_edge.opposite
                 distance += 1
+
+        # print("Complete closure list:")
+        # list_closure = self.list_half_edges(hexagon[0], [])
+        # for i in list_closure:
+        #     print(i)
         return hexagon[0]
 
         
@@ -280,17 +294,17 @@ class Closure:
     def ___construct_hexagon(self, hexagon_half_edges, partial_closure_edge, index):
         inv_color = None
         color = partial_closure_edge.color
-        if color == "white":
-            inv_color = "black"
+        if color == 1:
+            inv_color = 0
         else:
-            inv_color = "white"
+            inv_color = 1
+
         #Set color
         for i in range(12):
             if i % 2 == 0:
                 hexagon_half_edges[i].color = inv_color
             else:
                 hexagon_half_edges[i].color = color
-
 
         #Set opposite edges
         iter = 0
@@ -329,6 +343,12 @@ class Closure:
             if current_half_edge == hexagon_half_edges[0]:
                 break
 
+        # print("Hexagon list:")
+        # list_closure = self.list_half_edges(hexagon_half_edges[0], [])
+        # for i in list_closure:
+        #     print(i)
+
+
         #Return the starting half-edge
         return hexagon_half_edges[0]
 
@@ -337,9 +357,47 @@ class Closure:
     def ___reject(self, init_half_edge):
         pass
 
-
+    #Makes the outer face of the irreducible dissection quadrangular by adding a new edge
+    #between two opposite nodes of the hexagon
     def ___quadrangulate(self, init_half_edge):
-        pass
+        new_half_edge = HalfEdge()
+        new_half_edge.next = init_half_edge
+        new_half_edge.prior = init_half_edge.prior
+        index = self.___get_max_half_edge_index(init_half_edge) + 1
+        print(index)
+        new_half_edge.iter = index
+        index += 1
+        new_half_edge.node_nr = init_half_edge.node_nr
+        new_half_edge.color = init_half_edge.color
+
+        #Iterate to the opposite node of the hexagon node 
+        count = 0
+        current_half_edge = new_half_edge
+        while True:
+            current_half_edge = current_half_edge.next
+            current_half_edge = current_half_edge.opposite
+            count += 1
+            if count == 5:
+                break
+
+        fresh_half_edge = HalfEdge()
+        fresh_half_edge.opposite = new_half_edge
+        new_half_edge.opposite = fresh_half_edge
+
+        fresh_half_edge.prior = current_half_edge
+        fresh_half_edge.next = current_half_edge.next
+        current_half_edge.next.prior = new_half_edge
+        current_half_edge.next = fresh_half_edge
+
+        fresh_half_edge.index = index 
+        fresh_half_edge.node_nr = current_half_edge.node_nr
+        fresh_half_edge.color = current_half_edge.color
+
+        # print("New Half Edge:",end=" ")
+        # print(fresh_half_edge)
+
+        return new_half_edge 
+
 
     def ___quadrangulation_to_3_map(self, init_half_edge):
         pass
@@ -358,43 +416,27 @@ class Closure:
             half_edge = half_edge_list.pop()
             G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
             half_edge_list.remove(half_edge.opposite)
-            # print("Adding edge:", end=" ")
-            # print(half_edge.node_nr, end=" ")
-            # print(half_edge.opposite.node_nr)
         return G
 
 
 
-    def ___get_max_half_edge_index(self, init_half_edge):
+    def ___get_max_half_edge_index(self, init_half_edge):        
+        edge_list = self.list_half_edges(init_half_edge, [])
         max_index = 0
-        current_half_edge = init_half_edge
-        while True:
-            current_half_edge = current_half_edge.next
-            if current_half_edge.index > max_index:
-                max_index = current_half_edge.index
-            if current_half_edge.opposite != None:
-                current_half_edge = current_half_edge.opposite
-            if current_half_edge == init_half_edge:
-                break
-            if current_half_edge.index > max_index:
-                max_index = current_half_edge.index
+        for x in edge_list:
+            if x.index > max_index:
+                max_index = x.index
         return max_index
 
 
-    def ___get_max_node_nr(self, init_half_edge):
-        max_node_nr = 0
-        current_half_edge = init_half_edge
-        while True:
-            if current_half_edge.node_nr > max_node_nr:
-                max_node_nr = current_half_edge.node_nr
-            if current_half_edge.next.opposite != None:
-                current_half_edge = current_half_edge.next.opposite
-            else:
-                current_half_edge = current_half_edge.next
-            if current_half_edge == init_half_edge:
-                break
-        return max_node_nr
 
+    def ___get_max_node_nr(self, init_half_edge):
+        edge_list = self.list_half_edges(init_half_edge, [])
+        max_node = 0
+        for x in edge_list:
+            if x.index > max_node:
+                max_node = x.index
+        return max_node
 
 
     def closure(self, binary_tree):
@@ -441,30 +483,30 @@ class Closure:
         half_edges[23].node_nr = 7
 
         #Set colors
-        half_edges[0].color = "black"
-        half_edges[1].color = "black"
-        half_edges[2].color = "black"
-        half_edges[3].color = "white"
-        half_edges[4].color = "white"
-        half_edges[5].color = "white"
-        half_edges[6].color = "black"
-        half_edges[7].color = "black"
-        half_edges[8].color = "black"
-        half_edges[9].color = "white"
-        half_edges[10].color = "white"
-        half_edges[11].color = "white"
-        half_edges[12].color = "white"
-        half_edges[13].color = "white"
-        half_edges[14].color = "white"
-        half_edges[15].color = "black"
-        half_edges[16].color = "black"
-        half_edges[17].color = "black"
-        half_edges[18].color = "black"
-        half_edges[19].color = "black"
-        half_edges[20].color = "black"
-        half_edges[21].color = "white"
-        half_edges[22].color = "white"
-        half_edges[23].color = "white"
+        half_edges[0].color = 0
+        half_edges[1].color = 0
+        half_edges[2].color = 0
+        half_edges[3].color = 1
+        half_edges[4].color = 1
+        half_edges[5].color = 1
+        half_edges[6].color = 0
+        half_edges[7].color = 0
+        half_edges[8].color = 0
+        half_edges[9].color = 1
+        half_edges[10].color = 1
+        half_edges[11].color = 1
+        half_edges[12].color = 1
+        half_edges[13].color = 1
+        half_edges[14].color = 1
+        half_edges[15].color = 0
+        half_edges[16].color = 0
+        half_edges[17].color = 0
+        half_edges[18].color = 0
+        half_edges[19].color = 0
+        half_edges[20].color = 0
+        half_edges[21].color = 1
+        half_edges[22].color = 1
+        half_edges[23].color = 1
 
 
         #Set opposite half-edges
@@ -533,15 +575,22 @@ class Closure:
         half_edges[23].next = half_edges[21]
         half_edges[23].prior = half_edges[22]
 
-        closure_start_half_edge = self.___bicolored_complete_closure(half_edges[0])
-
-        # print("Complete closure list:")
-        # list_closure = self.list_half_edges(closure_start_half_edge, [])
+        # print("Planar map list:")
+        # list_closure = self.list_half_edges(half_edges[0], [])
         # for i in list_closure:
         #     print(i)
 
 
-        # G = self.half_edges_to_graph(closure_start_half_edge)
+        # closure_start_half_edge = self.___bicolored_complete_closure(half_edges[0])
+
+
+
+        # quadrangulated_start_half_edge = self.___quadrangulate(closure_start_half_edge)
+
+
+
+
+        # G = self.half_edges_to_graph(quadrangulated_start_half_edge)
         # nx.draw(G)
         # plt.show()
 
