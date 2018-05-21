@@ -3,9 +3,6 @@ from copy import deepcopy
 import networkx as nx
 
 
-
-
-
 def check_planarity(G):
     """Checks if a graph is planar and returns a counter example or an embedding
 
@@ -41,7 +38,7 @@ def check_planarity(G):
     try:
         embedding = planarity.lr_planarity()
     except nx.NetworkXUnfeasible:
-        return False, None
+        return False, planarity.get_counterexample()
     return True, embedding
 
 
@@ -49,8 +46,10 @@ class Interval(object):
     def __init__(self, low=None, high=None):
         self.low = low
         self.high = high
+
     def empty(self):
         return self.low is None and self.high is None
+
     def copy(self):
         return Interval(self.low, self.high)
 
@@ -59,16 +58,19 @@ class ConflictPair(object):
     def __init__(self, left=Interval(), right=Interval()):
         self.left = left
         self.right = right
+
     def swap(self):
         temp = self.left
         self.left = self.right
         self.right = temp
+
 
 def top_of_stack(l: list):
     if not l:
         return None
 
     return l[-1]
+
 
 class LRPlanarity(object):
     def __init__(self, G: nx.Graph):
@@ -99,6 +101,12 @@ class LRPlanarity(object):
 
         self.embedding = defaultdict(lambda: [])
 
+        # For the counterexample
+        # The conflicting interval that represents a conflicting different-constraint
+        self.non_mergeable_conflict = None
+        # The edge that induces a same_constraint that contradicts the dirrent-constraint above
+        self.non_mergeable_same_constraint_edge = None
+
     def lr_planarity(self):
         if self.G.order() > 2 and self.G.size() > 3*self.G.order() - 6:
             raise nx.NetworkXUnfeasible()
@@ -110,14 +118,13 @@ class LRPlanarity(object):
                 self.roots.append(v)
                 self.dfs1(v)
 
-        self.G = None # just unsetting this for correctness purposes
+        #self.G = None # just unsetting this for correctness purposes
 
         # testing
         for v in self.DG:
             self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
         for v in self.roots:
             self.dfs2(v)
-
 
         def sign(e):
             if self.ref[e] is not None:
@@ -134,7 +141,6 @@ class LRPlanarity(object):
             self.dfs3(v)
 
         return dict(self.embedding)
-
 
     def dfs1(self, v):
         e = self.parent_edge[v]
@@ -153,7 +159,7 @@ class LRPlanarity(object):
             else:
                 self.lowpt[vw] = self.height[w]
 
-             # determine nesting graph
+            # determine nesting graph
             self.nesting_depth[vw] = 2 * self.lowpt[vw]
             if self.lowpt2[vw] < self.height[v]:
                 # chordal
@@ -172,6 +178,7 @@ class LRPlanarity(object):
     def dfs2(self, v):
         def conflicting(I, b):
             return not I.empty() and self.lowpt[I.high] > self.lowpt[b]
+
         def lowest(P):
             if P.left.empty():
                 return self.lowpt[P.right.low]
@@ -205,6 +212,9 @@ class LRPlanarity(object):
                         if not Q.left.empty():
                             Q.swap()
                         if not Q.left.empty():
+                            # Save the conflict to generate a counterexample
+                            self.non_mergeable_conflict = Q
+                            self.non_mergeable_same_constraint_edge = e
                             raise nx.NetworkXUnfeasible()
                         if self.lowpt[Q.right.low] > self.lowpt[e]:
                             # merge intervals
@@ -225,6 +235,9 @@ class LRPlanarity(object):
                         if conflicting(Q.right, ei):
                             Q.swap()
                         if conflicting(Q.right, ei):
+                            # Save the conflict to generate a counterexample
+                            self.non_mergeable_conflict = Q
+                            self.non_mergeable_same_constraint_edge = ei
                             raise nx.NetworkXUnfeasible()
                         # merge interval below lowpt(e_i) into P.R
                         self.ref[P.right.low] = Q.right.high
@@ -296,3 +309,98 @@ class LRPlanarity(object):
 
                     self.embedding[w].insert(self.embedding[w].index(self.left_ref[w]), v)
                     self.left_ref[w] = v
+
+    def _get_cycle_nodes(self, back_edge):
+        # Returns a set of nodes in the fundamental cycle of back_edge
+        nodes = set()
+        # Start with highest node
+        current_node = back_edge[0]
+        nodes.add(current_node)
+        while current_node != back_edge[1]:  # Move down the tree until low node of back_edge is found.
+            current_node = self.parent_edge[current_node][0]
+            nodes.add(current_node)
+        return nodes
+
+    def get_counterexample(self):
+        # 1. Check if the graph violates euler formula
+        if self.G.size() > 3*self.G.order() - 6:
+            # No need for a counterexample
+            print("Violates euler formula")
+            return None
+
+        # 2. Find contradicting fork
+        # Contradicting backedges
+        l_l = self.non_mergeable_conflict.left.low
+        l_r = self.non_mergeable_conflict.right.low
+
+        cycle_l_l = self._get_cycle_nodes(l_l)
+        cycle_l_r = self._get_cycle_nodes(l_r)
+        intersection_l_l_with_l_r = cycle_l_l.intersection(cycle_l_r)
+
+        # Find forking edges e_l and e_r
+        e_l = l_l
+        while e_l[0] not in intersection_l_l_with_l_r:
+            e_l = self.parent_edge[e_l[0]]
+        fork = e_l[0]
+        e_r = l_r
+        while e_r[0] != fork:
+            e_r = self.parent_edge[e_r[0]]
+
+        print(f"Parents: {self.parent_edge}")
+        print(f"Cycle l_l: {cycle_l_l} Cycle l_r: {cycle_l_r} intersection: {intersection_l_l_with_l_r }")
+        print(f"e_l: {e_l} e_r: {e_r} fork: {fork}")
+        print(f"lowpt_edge(e_l): {self.lowpt_edge[e_l]} lowpt_edge(e_r): {self.lowpt_edge[e_r]}")
+        print(f"Same constraint edge: {self.non_mergeable_same_constraint_edge} lowpt_edge(sce): {self.lowpt_edge[self.non_mergeable_same_constraint_edge]}")
+
+        # TODO: Check that this is correct
+        same_constraint_nodes = self._get_cycle_nodes(self.lowpt_edge[self.non_mergeable_same_constraint_edge])
+
+        # l_l and l_r are always part of counterexample
+        subgraph_nodes = cycle_l_l.union(cycle_l_r)
+        # A same-constraint is also needed in the counterexample
+        subgraph_nodes.update(same_constraint_nodes)
+
+        # 3. Check counterexample case
+        if self.lowpt[l_l] != self.lowpt[l_r]:
+            # Type 1
+            print("Type 1: K_3_3")
+            if self.lowpt[l_l] > self.lowpt[l_r]:
+                additional_cycle = self.lowpt_edge[e_l]
+            else:
+                additional_cycle = self.lowpt_edge[e_r]
+            # Add cycle to enforce different-constraint
+            subgraph_nodes.update(self._get_cycle_nodes(additional_cycle))
+        else:
+            # Type 2 or Type 3
+            if self.lowpt[e_l] == self.lowpt[e_r]:
+                # Type 2
+                print("Type 2: K_3_3")
+                # Add cycles to enforce different-constraint
+                subgraph_nodes.update(self._get_cycle_nodes(self.lowpt_edge[e_r]))
+                subgraph_nodes.update(self._get_cycle_nodes(self.lowpt_edge[e_l]))
+                # Remove overlapping parts of C(l_l) C(l_r) and the same-constraint cycle
+                current_node = fork
+                while current_node not in same_constraint_nodes:
+                    current_node = self.parent_edge[current_node][0]
+                # Don't remove the first node
+                current_node = self.parent_edge[current_node][0]
+                # Remove all parent nodes until the join point of l_l and l_r is reached
+                while current_node != l_l[1]:
+                    subgraph_nodes.remove(current_node)
+            else:
+                # Type 3
+                print("Type 3: K_5")
+                raise NotImplementedError
+
+        return subgraph_nodes
+
+
+if __name__ == '__main__':
+    #k5 = nx.complete_graph(5)
+    G = nx.fast_gnp_random_graph(10, 0.4)
+    print(G.adj)
+    from networkx.drawing.nx_agraph import write_dot
+    write_dot(G, 'temp.dot')
+    result = check_planarity(G)
+    print(result)
+    write_dot(G.subgraph(result[1]), 'subgraph.dot')
