@@ -1,4 +1,3 @@
-from .boltzmann_samplers import BoltzmannSampler
 
 
 class DecompositionGrammar:
@@ -16,7 +15,7 @@ class DecompositionGrammar:
     def sample(self, alias, x, y):
         assert alias in self.rules
         # inject this grammar into the sampler
-        BoltzmannSampler.active_grammar = self
+        #BoltzmannSampler.active_grammar = self
         result = self.rules[alias].sample(x, y)
         #BoltzmannSampler.active_grammar = None
         return result

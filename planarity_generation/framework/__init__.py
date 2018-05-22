@@ -1,2 +1,2 @@
-__all__ = ["boltzmann_samplers", "bijections", "combinatorial_classes", "decomposition_grammar", "evaluation_oracle",
+__all__ = ["generic_samplers.py", "bijections", "combinatorial_classes", "decomposition_grammar", "evaluation_oracle",
            "utils"]
