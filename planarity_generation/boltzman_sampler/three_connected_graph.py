@@ -124,45 +124,53 @@ class ThreeConnectedGraphSampler:
 class TreeConnectedGraph:
     ''' A Tree connected graph representation. '''
 
-    # Root half edge
+    # Root half edge.
+    # It, together with its opposite one are not contained in the vertices list.
     root_half_edge = None
 
     #Both edges_list and vertices list contain objects from HalfEdge class.
-    # List of vertices
+    # List of vertices in the 3 connected graph
     vertices_list = list()
 
-    # List of edges
+    # List of edges in the 3 connected graph
     edges_list = list()
 
     def __init__(self, root_half_edge):
-        self.visited_half_edges = set()
-        self.__dfs_based_copy(root_half_edge, root_half_edge)
         self.root_half_edge = root_half_edge
+        self.__dfs_three_connected_graph_components_extraction(root_half_edge, root_half_edge, set())
 
 
-    def __dfs_based_copy(self, first_half_edge, root_half_edge):
-        ''' Copy the HalfEdge content into ThreeConnectedGraph stucture.'''
-        # TODO have to check for already finished!!
-        if first_half_edge.index in self.visited_half_edges:
+    # Given the 3-map closure, this function extract the vertices and the edges from it.
+    # The root half edge and its opposite one are not part from the vertices set.
+    # The opposite property from the half edges in the edges_list gives the vertex in the 3 map for connection.
+    def __dfs_three_connected_graph_components_extraction(self, first_half_edge, root_half_edge, visited_half_edges):
+        # Check if the half edge has been already processed
+        if first_half_edge.index in visited_half_edges:
             return
 
-        self.visited_half_edges.update(first_half_edge.index)
+        # Mark the first half edge and the ones with which it shares a vertex to visited.
+        visited_half_edges.update(first_half_edge.index)
         walker_half_edge = first_half_edge.next
         while walker_half_edge != first_half_edge:
-            self.visited_half_edges.update(first_half_edge.index)
+            visited_half_edges.update(first_half_edge.index)
             walker_half_edge = walker_half_edge.next
 
+        # Check if the first half edge is different from the root and root.opposite. If this is true,
+        # than the first half edge is added to a vertices list.
         walker_half_edge = first_half_edge
         if walker_half_edge != root_half_edge and walker_half_edge.opposite != root_half_edge:
             self.vertices_list.append(walker_half_edge)
 
+        # Insert half edges to the edges list.
         walker_half_edge = walker_half_edge.next
         while walker_half_edge != first_half_edge:
-            if walker_half_edge != root_half_edge and walker_half_edge.opposite.index not in self.visited_half_edges:
+            # The condition that one half edge should fullfill for inserting.
+            if walker_half_edge != root_half_edge and walker_half_edge.opposite.index not in visited_half_edges:
                 self.edges_list.append(walker_half_edge)
             walker_half_edge = walker_half_edge.next
 
+        # Call the function recursively for the opposite half edges.
         walker_half_edge = walker_half_edge.next
         while walker_half_edge != first_half_edge:
-            self.__dfs_based_copy(walker_half_edge.opposite, root_half_edge)
+            self.__dfs_three_connected_graph_components_extraction(walker_half_edge.opposite, root_half_edge, visited_half_edges)
             walker_half_edge = walker_half_edge.next
