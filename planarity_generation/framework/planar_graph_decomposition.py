@@ -1,4 +1,6 @@
-from .boltzmann_samplers import *
+from framework.samplers.generic_samplers import *
+from framework.samplers.special_samplers import SpecialSampler1, SpecialSampler2, \
+    EdgeRootedThreeConnectedPlanarGraphSampler, LDerThreeConnectedPlanarGraphSampler
 from .decomposition_grammar import DecompositionGrammar
 from .bijections.networks import *
 
@@ -83,7 +85,7 @@ planar_graph_grammar.add_rules({
     # planar graphs
     'G': Set(0, G_1),
     'G_dx': G_1_dx * G,
-    'G_dx_Dx': G_1_dx_dx * G + G_1_dx * G_dx,
+    'G_dx_dx': G_1_dx_dx * G + G_1_dx * G_dx,
 
 })
 

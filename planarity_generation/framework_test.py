@@ -1,6 +1,5 @@
-from framework.boltzmann_samplers import *
+from framework.samplers.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar
-from framework.bijections import *
 from framework.evaluation_oracle import Oracle
 
 # some shortcuts to make the grammar more readable
@@ -22,7 +21,8 @@ test_grammar.add_rules({
 })
 
 # inject the oracle into the samplers
-BoltzmannSampler.oracle = Oracle()
+BoltzmannSampler.oracle = Oracle()#
+BoltzmannSampler.active_grammar = test_grammar
 
 
 print(test_grammar.sample('Tree', 'x0', 'y0'))
