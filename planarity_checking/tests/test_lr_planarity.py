@@ -3,8 +3,12 @@ from nose.tools import assert_equals
 
 import networkx as nx
 
-from planarity_checking import lr_planarity
+#from planarity_checking import lr_planarity
 
+import sys 
+import os
+sys.path.append(os.path.abspath("/home/yassin/graphlab/networkx-related/planarity_checking"))
+import lr_planarity
 
 class TestLRPlanarity:
     """Nose Unit tests for the :mod:`networkx.algorithms.TODO` module.
@@ -47,7 +51,6 @@ class TestLRPlanarity:
         While following the path around the face every edge on the way (in this direction) is marked such that the face
         is not counted twice.
         """
-
         if not isinstance(embedding, dict):
             raise nx.NetworkXException("Bad embedding. Not of type dict")
 
@@ -210,6 +213,7 @@ class TestLRPlanarity:
         # Obtain planarity results
         is_planar_lr, result = lr_planarity.check_planarity(G)
 
+
         if is_planar is not None:
             # Set a default message for the assert
             if msg is None:
@@ -287,6 +291,8 @@ class TestLRPlanarity:
         for i in range(m):
             u, v = map(int, lines[i + 2].split())
             G.add_edge(u, v)
+        self.check_graph(G, is_planar=True)
+
 
 if __name__ == '__main__':
     # I have temporarily added a main method so you don't actually have to run nose
@@ -301,6 +307,6 @@ if __name__ == '__main__':
     t.test_multiple_components_planar()
     t.test_multiple_components_non_planar()
 
-    #t.test_file("planar_embedding1000000.pg")
+    t.test_file("planar_embedding1000000.pg")
 
-    t.test_planar_with_selfloop()
+    #t.test_planar_with_selfloop()
