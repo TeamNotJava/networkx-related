@@ -3,12 +3,7 @@ from nose.tools import assert_equals
 
 import networkx as nx
 
-#from planarity_checking import lr_planarity
-
-import sys 
-import os
-sys.path.append(os.path.abspath("/home/yassin/graphlab/networkx-related/planarity_checking"))
-import lr_planarity
+from planarity_checking import lr_planarity
 
 class TestLRPlanarity:
     """Nose Unit tests for the :mod:`networkx.algorithms.TODO` module.
