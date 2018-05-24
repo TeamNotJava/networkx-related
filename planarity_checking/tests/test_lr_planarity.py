@@ -276,6 +276,17 @@ class TestLRPlanarity:
         G = nx.Graph(e)
         self.check_graph(G, is_planar=True, msg="Golder-Harary maximal planargraph was classified as planar")
 
+    def test_file(self, fname):
+        # test graph given as file in format from 
+        # https://users.dcc.uchile.cl/~jfuentess/datasets/graphs.php
+        G = nx.Graph()
+        with open(fname, 'r') as f:
+            lines = f.readlines()
+        n = int(lines[0])
+        m = int(lines[1])
+        for i in range(m):
+            u, v = map(int, lines[i + 2].split())
+            G.add_edge(u, v)
 
 if __name__ == '__main__':
     # I have temporarily added a main method so you don't actually have to run nose
@@ -289,4 +300,7 @@ if __name__ == '__main__':
     t.test_non_planar_with_selfloop()
     t.test_multiple_components_planar()
     t.test_multiple_components_non_planar()
+
+    #t.test_file("planar_embedding1000000.pg")
+
     t.test_planar_with_selfloop()
