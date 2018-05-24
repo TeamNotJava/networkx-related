@@ -44,6 +44,7 @@ G = Alias('G')
 G_dx = Alias('G_dx')
 
 planar_graph_grammar = DecompositionGrammar()
+#planar_graph_grammar.add_rules(BinaryTreeGrammar.get_rules())
 planar_graph_grammar.add_rules({
     # notice that "+" and "*" of the samplers is left-associative.
 
