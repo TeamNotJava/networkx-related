@@ -8,6 +8,7 @@ class BoltzmannSampler:
     # shared accross all instances
     # not sure if this is an okay pattern
     oracle: Oracle = None
+    # todo only the Alias sampler needs the active_grammar, so maybe it should just be there
     active_grammar: DecompositionGrammar = None
 
     def sampled_class(self) -> str:
@@ -37,7 +38,7 @@ class BoltzmannSampler:
     def oracle_query_string(self, x: str, y: str) -> str:
         """String used as key in oracle.
 
-        This is like a 'symbolic evaluation' of the generating function.
+        This is like a 'symbolic evaluation' of the generating function of the class being sampled from.
         :param x: symbolic x argument
         :param y: symbolic y argument
         """
@@ -245,8 +246,9 @@ class UDerFromLDer(BoltzmannSampler):
 
     def sampled_class(self):
         l_der_alias = self.l_der_sampler.sampled_class()
-        # discard the last symbol (') and append _
-        return l_der_alias[0:len(l_der_alias) - 1] + '_'
+        # assume that l_der_alias = X_dx
+        # discard the last symbol two symbols (dx) and append dy
+        return l_der_alias[0:len(l_der_alias) - 2] + 'dy'
 
     def get_eval(self, x, y):
         return self.oracle.get(self.oracle_query_string(x, y))
@@ -257,29 +259,39 @@ class UDerFromLDer(BoltzmannSampler):
             gamma = self.l_der_sampler.sample(x, y)
             p = (1 / self.alpha_u_l) * (gamma.get_u_size() / (gamma.get_l_size() + 1))
             if bern(p):
-                gamma = gamma.get_underlying_structure()
+                gamma = gamma.get_base_class_object()
                 rand_u_atom = gamma.random_u_atom()
                 return UDerivedClass(gamma, rand_u_atom)
 
     def oracle_query_string(self, x: str, y: str) -> str:
-        pass
+        return self.sampled_class() + '(' + x + ',' + y + ')'
 
-# todo
+
 class LDerFromUDer(BoltzmannSampler):
     def __init__(self, u_der_sampler, alpha_l_u):
-        pass
+        # u_der_sampler is a sampler for the u-derived class
+        self.u_der_sampler = u_der_sampler
+        self.alpha_l_u = alpha_l_u
 
     def sampled_class(self) -> str:
-        pass
+        u_der_class = self.u_der_sampler.sampled_class()
+        # assume u_der_class = X_dy
+        return u_der_class[0:len(u_der_class) - 2] + 'dx'
 
     def get_eval(self, x: str, y: str) -> float:
-        pass
+        return self.oracle.get(self.oracle_query_string(x, y))
 
     def sample(self, x: str, y: str) -> CombinatorialClass:
-        pass
+        while True:
+            gamma = self.u_der_sampler.sample(x, y)
+            p = (1 / self.alpha_l_u) * (gamma.get_l_size() / (gamma.get_u_size() + 1))
+            if bern(p):
+                gamma = gamma.get_base_class_object()
+                rand_l_atom = gamma.random_l_atom()
+                return LDerivedClass(gamma, rand_l_atom)
 
     def oracle_query_string(self, x: str, y: str) -> str:
-        pass
+        return self.sampled_class() + '(' + x + ',' + y + ')'
 
 
 class Bijection(BoltzmannSampler):
@@ -288,6 +300,7 @@ class Bijection(BoltzmannSampler):
         self.f = f
         # sampler is a sampler of the underlying class
         self.sampler = sampler
+        # optional label of target class
         self.target_class_label = target_class_label
 
     def sampled_class(self):

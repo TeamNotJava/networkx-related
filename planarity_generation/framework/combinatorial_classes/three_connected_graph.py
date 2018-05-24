@@ -31,6 +31,7 @@ class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
         raise NotImplementedError
 
     # we need this. in the network decomposition we have to replace the u atoms with networks
+    # todo HOW?? in figure 9 it says in a 'canonical way', wtf ...
     def replace_u_atoms(self, sampler, x, y):
         # this is a dummy
         return u_atom_to_network(UAtomClass())
