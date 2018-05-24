@@ -129,6 +129,9 @@ class LRPlanarity(object):
             self.nesting_depth[e] = sign(e)*self.nesting_depth[e]
         for v in self.DG:
             self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
+            self.embedding[v] = self.ordered_adjs[v].copy()
+
+
 
         for v in self.roots:
             self.dfs3(v)
@@ -284,7 +287,8 @@ class LRPlanarity(object):
             ei = (v, w)
             if ei == self.parent_edge[w]:
                 # tree edge
-                self.embedding[v].insert(0, w) # this deviates from the paper
+                #self.embedding[v].insert(0, w) # this deviates from the paper
+                self.embedding[w].insert(0, v) # according to paper
                 self.left_ref[v] = w
                 self.right_ref[v] = w
                 self.dfs3(w)
