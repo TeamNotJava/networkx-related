@@ -125,9 +125,17 @@ class LRPlanarity(object):
 
 
         def sign(e):
-            if self.ref[e] is not None:
-                self.side[e] = self.side[e] * sign(self.ref[e])
-                self.ref[e] = None
+            dfs_stack = [e]
+            old_ref = defaultdict(lambda: None)
+            while dfs_stack:
+                e = dfs_stack.pop()
+                if self.ref[e] is not None:
+                    dfs_stack.append(e)
+                    dfs_stack.append(self.ref[e])
+                    old_ref[e] = self.ref[e]
+                    self.ref[e] = None
+                else:
+                    self.side[e] *= self.side[old_ref[e]]
             return self.side[e]
 
         for e in self.DG.edges:
