@@ -276,16 +276,9 @@ class TestLRPlanarity:
         self.check_graph(G, is_planar=True, msg="Golder-Harary maximal planargraph was classified as planar")
 
     def test_file(self, fname):
-        # test graph given as file in format from 
+        # test graph given as file in format (without n,m) from 
         # https://users.dcc.uchile.cl/~jfuentess/datasets/graphs.php
-        G = nx.Graph()
-        with open(fname, 'r') as f:
-            lines = f.readlines()
-        n = int(lines[0])
-        m = int(lines[1])
-        for i in range(m):
-            u, v = map(int, lines[i + 2].split())
-            G.add_edge(u, v)
+        G = nx.read_adjlist(fname)
         self.check_graph(G, is_planar=True)
 
 
