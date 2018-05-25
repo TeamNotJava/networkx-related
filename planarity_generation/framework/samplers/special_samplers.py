@@ -6,8 +6,10 @@ from framework.samplers.generic_samplers import BoltzmannSampler
 
 
 class SpecialSampler1(BoltzmannSampler):
-    def __init__(self, something):
-        pass
+
+
+    def __init__(self, network_sampler):
+        super(SpecialSampler1, self).__init__(network_sampler)
 
     def sampled_class(self) -> str:
         pass
@@ -19,6 +21,9 @@ class SpecialSampler1(BoltzmannSampler):
         pass
 
     def oracle_query_string(self, x: str, y: str) -> str:
+        pass
+
+    def get_children(self):
         pass
 
 

@@ -1,3 +1,4 @@
+from framework.decomposition_grammar import Alias
 from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
 

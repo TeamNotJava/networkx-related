@@ -1,14 +1,17 @@
+from framework.decomposition_grammar import Alias
 from framework.samplers.generic_samplers import *
 from framework.samplers.special_samplers import SpecialSampler1, SpecialSampler2, \
     EdgeRootedThreeConnectedPlanarGraphSampler, LDerThreeConnectedPlanarGraphSampler
 from .decomposition_grammar import DecompositionGrammar
 from .bijections.networks import *
+from .bijections.two_connected import *
 
 # some shortcuts to make the grammar more readable
 Z = ZeroAtom()
 L = LAtom()
 U = UAtom()
 Bij = Bijection
+Trans = Transformation
 
 Link = Alias('Link')
 D = Alias('D')
@@ -50,9 +53,13 @@ planar_graph_grammar.add_rules({
 
     # 3 connected planar graphs
     # here we use dummy samplers at the moment
-    'G_3_arrow': EdgeRootedThreeConnectedPlanarGraphSampler(),
-    "G_3_arrow'": LDerThreeConnectedPlanarGraphSampler(),
-    'G_3_arrow_dy': UDerFromLDer(LDerThreeConnectedPlanarGraphSampler(), 3.0),  # for this 3.0 see 5.3.3.
+    #'G_3_arrow': EdgeRootedThreeConnectedPlanarGraphSampler(),
+    #"G_3_arrow'": LDerThreeConnectedPlanarGraphSampler(),
+    #'G_3_arrow_dy': UDerFromLDer(LDerThreeConnectedPlanarGraphSampler(), 3.0),  # for this 3.0 see 5.3.3.
+
+    'G_3_arrow': Z,
+    'G_3_arrow_dx': Z,
+    'G_3_arrow_dy': Z,
 
     # networks
     'Link': Bij(U, u_atom_to_network),  # introduce this just for readability
@@ -68,20 +75,21 @@ planar_graph_grammar.add_rules({
     'H_dx': USubs(G_3_arrow_dx, D) + D_dx * USubs(G_3_arrow_dy, D_dx),
 
     # 2 connected planar graphs
-    'G_2_arrow': SpecialSampler1(Z + D),
+    'G_2_arrow': Trans(Z + D, add_root_edge, 'G_2_arrow'), # have to pass target class label to transformation sampler
     'F': L * L * G_2_arrow,
-    'G_2_dy': SpecialSampler2(F),
+    'G_2_dy': Trans(F, forget_direction_of_root_edge, 'G_2_dy'),
     'G_2_dx': LDerFromUDer(G_2_dy, 2.0),  # see p. 26
 
     # l-derived 2 connected planar graphs
-    'G_2_arrow_dx': SpecialSampler1(D_dx),
+    'G_2_arrow_dx': Trans(D_dx, add_root_edge, 'G_2_arrow_dx'),
     'F_dx': L * L * G_2_arrow_dx + (L + L) * G_2_arrow, # notice that 2 * L = L + L
-    'G_2_dy_dx': SpecialSampler2(F_dx),
+    'G_2_dy_dx': Trans(F_dx, forget_direction_of_root_edge, 'G_2_dy_dx'),
     'G_2_dx_dx': LDerFromUDer(G_2_dy_dx, 1.0),  # see 5.5 # todo here we have to somehow convert dy_dx to dx_dy before calling LDerFromUDer
 
     # 1 connected planar graphs
     'G_1_dx': Set(0, LSubs(G_2_dx, L * G_1_dx)),
     'G_1_dx_dx': (G_1_dx + L * G_1_dx_dx) * (LSubs(G_2_dx_dx, L * G_1_dx)) * G_1_dx,
+    'G_1': Rejection(G_1_dx, lambda g: bern(1 / (g.get_l_size() + 1)), 'G_1'), #lemma 15
 
     # planar graphs
     'G': Set(0, G_1),
