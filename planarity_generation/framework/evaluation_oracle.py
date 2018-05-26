@@ -21,7 +21,6 @@ class Oracle:
 
     def get(self, query_string):
         try:
-            print('Oracle key used: {}'.format(query_string))
             return self.evaluations[query_string]
         except(KeyError):
             print('Oracle key missing: {}'.format(query_string))

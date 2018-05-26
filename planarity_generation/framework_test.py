@@ -6,10 +6,10 @@ from framework.binary_tree_decomposition import binary_tree_grammar
 from collections import deque
 
 import argparse
-
+import logging, sys
 
 # some shortcuts to make the grammar more readable
-class Oracle2(Orcale):
+class TestOracle(Oracle):
     # these values are for size 100
     evaluations = {
         'x0': 0.4999749994,
@@ -25,44 +25,37 @@ class Oracle2(Orcale):
             return 0.5
 
 
-
-
-
 def other_test():
     # some shortcuts to make the grammar more readable
     Z = ZeroAtom()
     L = LAtom()
     U = UAtom()
-    Bij = Bijection
+
     Tree = Alias('Tree')
     Bla = Alias('Bla')
     Blub = Alias('Blub')
     Blob = Alias('Blob')
 
-    Tree = Alias('Tree')
-
     test_grammar = DecompositionGrammar()
     test_grammar.add_rules({
 
-        # this is just for testing
-        # usual binary tree
-        # T = (1 + T)² * Z_L
         # tree is either a leaf or inner node with two children which are trees
         'Tree': L + Tree * L * Blub,
         'Blub': USubs(Bla, Blob),
         'Blob': L + U + Z,
         'Bla': LSubs(Blub, Blob),
 
+
     })
 
     # inject the oracle into the samplers
-    BoltzmannSampler.oracle = Oracle2()#
-    BoltzmannSampler.active_grammar = test_grammar
-    print(test_grammar.sample('Bla', 'x0', 'y0'))
-    print(test_grammar.collect_oracle_queries('Bla', 'x', 'y'))
+    BoltzmannSampler.oracle = TestOracle()
+    Alias.active_grammar = test_grammar
 
     print(test_grammar.recursive_rules)
+    print()
 
+    print(test_grammar.collect_oracle_queries('Bla', 'x', 'y'))
 
     #for key in test_grammar.get_rules():
         #print(test_grammar.collect_oracle_queries(key, 'x', 'y'))
@@ -135,20 +128,25 @@ def plot_binary_tree(tree):
     plt.show()
 
 def main():
-    argparser = argparse.ArgumentParser(description='Process some integers.')
-    argparser.add_argument('-b', '--binary-tree', action='store_true')
-    argparser.add_argument('--plot', action='store_true')
-    argparser.add_argument('--other', action='store_true')
-
+    argparser = argparse.ArgumentParser(description='Test stuff')
+    argparser.add_argument('-d', dest='loglevel', action='store_const',const=logging.DEBUG, help='Print Debug info')
+    argparser.add_argument('-b', '--binary-tree', action='store_true', help='Run the binary_tree_test function')
+    argparser.add_argument('--plot', action='store_true', help='Plot the binary_tree_test function result')
+    argparser.add_argument('--other', action='store_true', help='Run the other_test function')
+    
     args = argparser.parse_args()
+
+    logging.basicConfig(level=args.loglevel)
+
     if args.binary_tree:
         tree = binary_tree_test()
-
-    if args.plot:
-        plot_binary_tree(tree)
+        if args.plot:
+            plot_binary_tree(tree)
 
     if args.other:
         other_test()
+    
+    
 
 
 if __name__ == '__main__':

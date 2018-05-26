@@ -1,6 +1,7 @@
 from framework.decomposition_grammar import Alias
 from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
+import logging
 
 L = LAtom()
 U = UAtom()
@@ -75,10 +76,8 @@ class BinaryTree():
 
 
 def decomp_to_binary_tree_b_3(decomp):
-    print("b_3")
-    print(type(decomp.first))
-    print(type(decomp.second))
-    print(decomp)
+    logging.debug("b_3")
+    logging.debug(decomp)
     numblacknodes = 1
     numwhitenodes = 0
     numtotal = 1
@@ -106,14 +105,12 @@ def decomp_to_binary_tree_b_3(decomp):
         numblacknodes=numblacknodes, 
         numwhitenodes=numwhitenodes
     )
-    print(tree)
+    logging.debug(tree)
     return tree
 
 def decomp_to_binary_tree_b_4(decomp):
-    print("b_4")
-    print(type(decomp.first))
-    print(type(decomp.second))
-    print(decomp)
+    logging.debug("b_4")
+    logging.debug(decomp)
 
     numblacknodes = 1
     numwhitenodes = 0
@@ -121,7 +118,7 @@ def decomp_to_binary_tree_b_4(decomp):
 
     #(((X,L),U),U)
     if type(decomp.second) is UAtomClass and type(decomp.first.second) is UAtomClass:
-        print("#(((X,L),U),U)")
+        logging.debug("#(((X,L),U),U)")
         left = decomp.first.first.first
         if left:
             numblacknodes += left.get_attribute('numblacknodes')
@@ -134,7 +131,7 @@ def decomp_to_binary_tree_b_4(decomp):
             
     #(((U,U),L),X)
     elif type(decomp.first.first) is ProdClass and type(decomp.first.first.first) is UAtomClass and type(decomp.first.first.second) is UAtomClass:
-        print("#(((U,U),L),X)")
+        logging.debug("#(((U,U),L),X)")
         numwhitenodes += 1
         numtotal += 1
         left = BinaryTree(None, None, color='white')
@@ -146,8 +143,7 @@ def decomp_to_binary_tree_b_4(decomp):
             numtotal += right.get_attribute('numtotal')
     #((X,L),X)
     else:
-        print("#((X,L),X)")
-        print(decomp)
+        logging.debug("#((X,L),X)")
         right = decomp.second
         if right:
             numblacknodes += right.get_attribute('numblacknodes')
@@ -167,14 +163,12 @@ def decomp_to_binary_tree_b_4(decomp):
         numblacknodes=numblacknodes, 
         numwhitenodes=numwhitenodes
     )
-    print(tree)
+    logging.debug(tree)
     return tree
     
 def decomp_to_binary_tree_w_2(decomp):
-    print("w_2")
-    print(type(decomp.first))
-    print(type(decomp.second))
-    print(decomp)
+    logging.debug("w_2")
+    logging.debug(decomp)
 
     numblacknodes = 0
     numwhitenodes = 1
@@ -203,7 +197,7 @@ def decomp_to_binary_tree_w_2(decomp):
         numblacknodes=numblacknodes, 
         numwhitenodes=numwhitenodes
     )
-    print(tree)
+    logging.debug(tree)
     return tree
 
 def decomp_to_binary_tree_w_1_2(decomp):
@@ -213,10 +207,8 @@ def decomp_to_binary_tree_w_1_2(decomp):
     if type(decomp) is UAtomClass:
         return None
 
-    print("w_1_2")
-    print(type(decomp.first))
-    print(type(decomp.second))
-    print(decomp)
+    logging.debug("w_1_2")
+    logging.debug(decomp)
     numblacknodes = 1
     numwhitenodes = 0
     numtotal = 1
@@ -244,7 +236,7 @@ def decomp_to_binary_tree_w_1_2(decomp):
         numblacknodes=numblacknodes, 
         numwhitenodes=numwhitenodes
     )
-    print(tree)
+    logging.debug(tree)
     return tree
 
 binary_tree_grammar = DecompositionGrammar()
