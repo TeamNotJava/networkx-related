@@ -104,8 +104,6 @@ class LRPlanarity(object):
         # For the counterexample
         # The conflicting interval that represents a conflicting different-constraint
         self.non_mergeable_conflict = None
-        # The edge that induces a same_constraint that contradicts the dirrent-constraint above
-        self.non_mergeable_same_constraint_edge = None
 
     def lr_planarity(self):
         if self.G.order() > 2 and self.G.size() > 3*self.G.order() - 6:
@@ -214,7 +212,6 @@ class LRPlanarity(object):
                         if not Q.left.empty():
                             # Save the conflict to generate a counterexample
                             self.non_mergeable_conflict = Q
-                            self.non_mergeable_same_constraint_edge = e
                             raise nx.NetworkXUnfeasible()
                         if self.lowpt[Q.right.low] > self.lowpt[e]:
                             # merge intervals
@@ -237,7 +234,6 @@ class LRPlanarity(object):
                         if conflicting(Q.right, ei):
                             # Save the conflict to generate a counterexample
                             self.non_mergeable_conflict = Q
-                            self.non_mergeable_same_constraint_edge = ei
                             raise nx.NetworkXUnfeasible()
                         # merge interval below lowpt(e_i) into P.R
                         self.ref[P.right.low] = Q.right.high
@@ -310,16 +306,22 @@ class LRPlanarity(object):
                     self.embedding[w].insert(self.embedding[w].index(self.left_ref[w]), v)
                     self.left_ref[w] = v
 
-    def _get_cycle_nodes(self, back_edge):
-        # Returns a set of nodes in the fundamental cycle of back_edge
-        nodes = set()
+    def is_backedge(self, edge):
+        return self.height[edge[0]] > self.height[edge[1]]
+
+    def _get_cycle(self, back_edge):
+        # Returns a set of edges of the fundamental cycle of back_edge
+        edges = set()
         # Start with highest node
-        current_node = back_edge[0]
-        nodes.add(current_node)
-        while current_node != back_edge[1]:  # Move down the tree until low node of back_edge is found.
-            current_node = self.parent_edge[current_node][0]
-            nodes.add(current_node)
-        return nodes
+        edges.add(back_edge)
+        current_edge = back_edge
+        while True:  # Move down the tree until we reach back_edge agian
+            current_edge = self.parent_edge[current_edge[0]]
+            edges.add(current_edge)
+            if current_edge[0] == back_edge[1]:
+                break
+        return edges
+
 
     def get_counterexample(self):
         # 1. Check if the graph violates euler formula
@@ -332,33 +334,59 @@ class LRPlanarity(object):
         # Contradicting backedges
         l_l = self.non_mergeable_conflict.left.low
         l_r = self.non_mergeable_conflict.right.low
+        # Get the minimum height of the low points (later needed for the cycle of the same constraint)
+        min_low_point = max(self.height[l_l[1]], self.height[l_r[1]])
 
-        cycle_l_l = self._get_cycle_nodes(l_l)
-        cycle_l_r = self._get_cycle_nodes(l_r)
+        cycle_l_l = self._get_cycle(l_l)
+        cycle_l_r = self._get_cycle(l_r)
         intersection_l_l_with_l_r = cycle_l_l.intersection(cycle_l_r)
 
         # Find forking edges e_l and e_r
         e_l = l_l
-        while e_l[0] not in intersection_l_l_with_l_r:
+        while self.parent_edge[e_l[0]] not in intersection_l_l_with_l_r:
             e_l = self.parent_edge[e_l[0]]
-        fork = e_l[0]
+
         e_r = l_r
-        while e_r[0] != fork:
+        while self.parent_edge[e_r[0]] not in intersection_l_l_with_l_r:
             e_r = self.parent_edge[e_r[0]]
+        fork_edge = self.parent_edge[e_r[0]]
 
         print(f"Parents: {self.parent_edge}")
         print(f"Cycle l_l: {cycle_l_l} Cycle l_r: {cycle_l_r} intersection: {intersection_l_l_with_l_r }")
-        print(f"e_l: {e_l} e_r: {e_r} fork: {fork}")
+        print(f"e_l: {e_l} e_r: {e_r} fork: {self.parent_edge[e_r[0]]}")
         print(f"lowpt_edge(e_l): {self.lowpt_edge[e_l]} lowpt_edge(e_r): {self.lowpt_edge[e_r]}")
-        print(f"Same constraint edge: {self.non_mergeable_same_constraint_edge} lowpt_edge(sce): {self.lowpt_edge[self.non_mergeable_same_constraint_edge]}")
+        print(f"Non mergeable conflict: {self.non_mergeable_conflict}")
 
-        # TODO: Check that this is correct
-        same_constraint_nodes = self._get_cycle_nodes(self.lowpt_edge[self.non_mergeable_same_constraint_edge])
+
+        # Get the return edge that induces a same constraint for the required conflict
+        # For this we traverse our graph from the node blow the fork down to the root. On each level we check for outgoing nodes
+        # We then traverse the tree up again not following the branch we came from
+        # As soon as we have found an edge on one of these parts we have found a
+        previous_node = fork_edge[1]
+        current_node = fork_edge[0]
+        same_constraint_edge = None
+        while current_node is not None:
+            for neighbor in self.DG.neighbors(current_node):
+                if neighbor != previous_node:
+                    # Check height
+                    current_edge = (current_node, neighbor)
+                    lowpt = self.lowpt[current_edge]
+                    if lowpt < min_low_point:
+                        same_constraint_edge = self.lowpt_edge[current_edge]
+                        break
+            if same_constraint_edge is not None:
+                break
+            previous_node = current_node
+            current_node = self.parent_edge[current_node][0]
+
+        if same_constraint_edge is None:
+            raise nx.NetworkXError("No same constraint found for a conflict.")
+        same_constraint_cycle = self._get_cycle(same_constraint_edge)
 
         # l_l and l_r are always part of counterexample
         subgraph_nodes = cycle_l_l.union(cycle_l_r)
         # A same-constraint is also needed in the counterexample
-        subgraph_nodes.update(same_constraint_nodes)
+        subgraph_nodes.update(same_constraint_cycle)
 
         # 3. Check counterexample case
         if self.lowpt[l_l] != self.lowpt[l_r]:
@@ -369,31 +397,62 @@ class LRPlanarity(object):
             else:
                 additional_cycle = self.lowpt_edge[e_r]
             # Add cycle to enforce different-constraint
-            subgraph_nodes.update(self._get_cycle_nodes(additional_cycle))
+            subgraph_nodes.update(self._get_cycle(additional_cycle))
         else:
             # Type 2 or Type 3
             if self.lowpt[e_l] == self.lowpt[e_r]:
                 # Type 2
                 print("Type 2: K_3_3")
                 # Add cycles to enforce different-constraint
-                subgraph_nodes.update(self._get_cycle_nodes(self.lowpt_edge[e_r]))
-                subgraph_nodes.update(self._get_cycle_nodes(self.lowpt_edge[e_l]))
+                subgraph_nodes.update(self._get_cycle(self.lowpt_edge[e_r]))
+                subgraph_nodes.update(self._get_cycle(self.lowpt_edge[e_l]))
                 # Remove overlapping parts of C(l_l) C(l_r) and the same-constraint cycle
-                current_node = fork
-                while current_node not in same_constraint_nodes:
-                    current_node = self.parent_edge[current_node][0]
-                # Don't remove the first node
-                current_node = self.parent_edge[current_node][0]
-                # Remove all parent nodes until the join point of l_l and l_r is reached
-                while current_node != l_l[1]:
-                    subgraph_nodes.remove(current_node)
+                overlapping_part = intersection_l_l_with_l_r.intersection(same_constraint_cycle)
+                subgraph_nodes.difference_update(overlapping_part)
             else:
                 # Type 3
                 print("Type 3: K_5")
                 raise NotImplementedError
 
-        return subgraph_nodes
+        return nx.Graph(list(subgraph_nodes))
 
+
+# Just temporaritl copies from the test_lr_planarity
+def find_minor(G, sub_graph):
+    sub_graph = sub_graph.copy()
+    # 1. Check that each edge is contained in G
+    for edge in sub_graph.edges:
+        if not G.has_edge(*edge):
+            raise nx.NetworkXError("Not a subgraph.")
+
+    # 2. Remove self loops
+    for u in sub_graph:
+        if sub_graph.has_edge(u, u):
+            sub_graph.remove_edge(u, u)
+
+    # Keep track of nodes we might need to contract
+    contract = list(sub_graph)
+
+    # 3. Contract Edges
+    while len(contract) > 0:
+        contract_node = contract.pop()
+        if contract_node not in sub_graph:
+            # Node was already contracted
+            continue
+        degree = sub_graph.degree[contract_node]
+        # Check if we can remove the node
+        if degree == 2:  # TODO: Can it happen that we have isolated nodes that we might want to remove?
+            # Get the two neighbors
+            neighbors = iter(sub_graph[contract_node])
+            u = next(neighbors)
+            v = next(neighbors)
+            # Save nodes for later
+            contract.append(u)
+            contract.append(v)
+            # Contract edge
+            sub_graph.remove_node(contract_node)
+            sub_graph.add_edge(u, v)
+    return sub_graph
 
 if __name__ == '__main__':
     #k5 = nx.complete_graph(5)
@@ -403,4 +462,6 @@ if __name__ == '__main__':
     write_dot(G, 'temp.dot')
     result = check_planarity(G)
     print(result)
-    write_dot(G.subgraph(result[1]), 'subgraph.dot')
+    if not result[0]:
+        write_dot(result[1], 'subgraph.dot')
+        write_dot(find_minor(G, result[1]), 'subgraph_minor.dot')

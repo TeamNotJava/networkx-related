@@ -142,18 +142,16 @@ class TestLRPlanarity:
             if number_nodes - number_edges + number_faces != 2:
                 raise nx.NetworkXException("Bad planar embedding. Number of faces does not match euler's formula.")
 
-    def check_counterexample(self, G, subdivision_nodes):
+    def check_counterexample(self, G, sub_graph):
         """Raises an exception if the subdivision_nodes is not a counterexample for planarity of G
 
         Parameters
         ----------
         G : NetworkX graph
-        subdivision_nodes : A set of nodes inducing a subgraph as a counterexample
+        sub_graph : A subgraph of G, which is as a counterexample for planarity
         """
-        # TODO: Just returns early, because subdivision_nodes is currently always None
-        return
-        # 1. Create the sub graph (sub)
-        sub_graph = nx.Graph(G.subgraph(subdivision_nodes))
+        # 1. Create copy of sub_graph
+        sub_graph = sub_graph.copy()
 
         # 2. Remove self loops
         for u in sub_graph:
@@ -161,7 +159,7 @@ class TestLRPlanarity:
                 sub_graph.remove_edge(u, u)
 
         # Keep track of nodes we might need to contract
-        contract = list(subdivision_nodes)
+        contract = list(sub_graph)
 
         # 3. Contract Edges
         while len(contract) > 0:
