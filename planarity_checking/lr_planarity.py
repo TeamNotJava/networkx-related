@@ -53,6 +53,9 @@ class Interval(object):
     def copy(self):
         return Interval(self.low, self.high)
 
+    def __str__(self):
+        return f"[{self.low}, {self.high}]"
+
 
 class ConflictPair(object):
     def __init__(self, left=Interval(), right=Interval()):
@@ -63,6 +66,9 @@ class ConflictPair(object):
         temp = self.left
         self.left = self.right
         self.right = temp
+
+    def __str__(self):
+        return f"({self.left}, {self.right})"
 
 
 def top_of_stack(l: list):
@@ -104,6 +110,7 @@ class LRPlanarity(object):
         # For the counterexample
         # The conflicting interval that represents a conflicting different-constraint
         self.non_mergeable_conflict = None
+        self.non_mergeable_conflict_edge = None
 
     def lr_planarity(self):
         if self.G.order() > 2 and self.G.size() > 3*self.G.order() - 6:
@@ -212,6 +219,7 @@ class LRPlanarity(object):
                         if not Q.left.empty():
                             # Save the conflict to generate a counterexample
                             self.non_mergeable_conflict = Q
+                            self.non_mergeable_conflict_edge = self.lowpt_edge[e]
                             raise nx.NetworkXUnfeasible()
                         if self.lowpt[Q.right.low] > self.lowpt[e]:
                             # merge intervals
@@ -234,6 +242,7 @@ class LRPlanarity(object):
                         if conflicting(Q.right, ei):
                             # Save the conflict to generate a counterexample
                             self.non_mergeable_conflict = Q
+                            self.non_mergeable_conflict_edge = self.lowpt_edge[ei]
                             raise nx.NetworkXUnfeasible()
                         # merge interval below lowpt(e_i) into P.R
                         self.ref[P.right.low] = Q.right.high
@@ -335,7 +344,7 @@ class LRPlanarity(object):
         l_l = self.non_mergeable_conflict.left.low
         l_r = self.non_mergeable_conflict.right.low
         # Get the minimum height of the low points (later needed for the cycle of the same constraint)
-        min_low_point = max(self.height[l_l[1]], self.height[l_r[1]])
+        min_low_point = min(l_l[1], l_r[1])
 
         cycle_l_l = self._get_cycle(l_l)
         cycle_l_r = self._get_cycle(l_r)
@@ -355,13 +364,14 @@ class LRPlanarity(object):
         print(f"Cycle l_l: {cycle_l_l} Cycle l_r: {cycle_l_r} intersection: {intersection_l_l_with_l_r }")
         print(f"e_l: {e_l} e_r: {e_r} fork: {self.parent_edge[e_r[0]]}")
         print(f"lowpt_edge(e_l): {self.lowpt_edge[e_l]} lowpt_edge(e_r): {self.lowpt_edge[e_r]}")
-        print(f"Non mergeable conflict: {self.non_mergeable_conflict}")
+        print(f"Non mergeable conflict: {self.non_mergeable_conflict}, edge: {self.non_mergeable_conflict_edge}")
 
 
         # Get the return edge that induces a same constraint for the required conflict
         # For this we traverse our graph from the node blow the fork down to the root. On each level we check for outgoing nodes
         # We then traverse the tree up again not following the branch we came from
         # As soon as we have found an edge on one of these parts we have found a
+        """
         previous_node = fork_edge[1]
         current_node = fork_edge[0]
         same_constraint_edge = None
@@ -377,11 +387,15 @@ class LRPlanarity(object):
             if same_constraint_edge is not None:
                 break
             previous_node = current_node
+            if self.parent_edge[current_node] is None:
+                raise nx.NetworkXError("No same constraint found for a conflict.")
             current_node = self.parent_edge[current_node][0]
+        """
+        same_constraint_cycle = self._get_cycle(self.non_mergeable_conflict_edge)
 
-        if same_constraint_edge is None:
-            raise nx.NetworkXError("No same constraint found for a conflict.")
-        same_constraint_cycle = self._get_cycle(same_constraint_edge)
+        cycles = [cycle_l_l, cycle_l_r, same_constraint_cycle,
+                  self._get_cycle(self.lowpt_edge[e_l]), self._get_cycle(self.lowpt_edge[e_r])]
+        self.getDotGraph(cycles)
 
         # l_l and l_r are always part of counterexample
         subgraph_nodes = cycle_l_l.union(cycle_l_r)
@@ -415,6 +429,68 @@ class LRPlanarity(object):
                 raise NotImplementedError
 
         return nx.Graph(list(subgraph_nodes))
+
+    # Temporarily used to visualize the directed graph with interesting cycles
+    def getDotGraph(self, cycles):
+        """
+
+        :param cycles:
+            Dict that maps color of the cycle to a set of edges that the cycle consists of
+        :return:
+        """
+        # Initialize graph
+        import pydot
+        graph = pydot.Dot(graph_type='digraph', rankdir='BT', dpi='300')
+        graph.set_node_defaults(shape='circle')
+
+        # Obtain nodes ordered by height
+        nodes_by_height = {}
+        for v in self.height:
+            if self.height[v] in nodes_by_height:
+                node_set = nodes_by_height[self.height[v]]
+            else:
+                node_set = set()
+                nodes_by_height[self.height[v]] = node_set
+            node_set.add(v)
+
+        list_of_heights = list(nodes_by_height)
+        list_of_heights.sort()
+
+        # Add nodes to graph
+        pydot_nodes = {}
+        for height in list_of_heights:
+            # Add all nodes of this height
+            same_height_graph = pydot.Subgraph(rank='same')
+            for v in nodes_by_height[height]:
+                pydot_nodes[v] = pydot.Node(name=str(v))
+                same_height_graph.add_node(pydot_nodes[v])
+            graph.add_subgraph(same_height_graph)
+
+        # Add edges
+        for (u, v) in self.DG.edges:
+            graph.add_edge(pydot.Edge(u, v))
+
+        cycle_formats = [
+            {'color': 'red', 'style': 'bold'},     # l_l
+            {'color': 'blue', 'style': 'bold'},   # l_r
+            {'color': 'black', 'style': 'bold'},     # same constraint
+            {'color': 'red', 'style': 'dotted'},  # lowpt_edge e_l
+            {'color': 'blue', 'style': 'dotted'},  # lowpt_edge e_r
+        ]
+        current_formats = ['color', 'style']
+
+        # Add cycles
+        for i, current_cycle in enumerate(cycles):
+            for (u, v) in current_cycle:
+                obj_dict = {}
+                for f in current_formats:
+                    obj_dict[f] = cycle_formats[i][f]
+                #graph.add_edge(pydot.Edge(u, v, **obj_dict))
+
+        # Save graph
+        graph.write('directed_graph.dot')
+
+
 
 
 # Just temporaritl copies from the test_lr_planarity
@@ -456,7 +532,7 @@ def find_minor(G, sub_graph):
 
 if __name__ == '__main__':
     #k5 = nx.complete_graph(5)
-    G = nx.fast_gnp_random_graph(10, 0.4)
+    G = nx.fast_gnp_random_graph(6, 0.8)
     print(G.adj)
     from networkx.drawing.nx_agraph import write_dot
     write_dot(G, 'temp.dot')
