@@ -15,10 +15,6 @@
 """This class is needed for transformation of a Boltzmann sampler for bicolored binary trees
 into a Boltzmann sampler for 3-connected planar graphs.
 """
-##################################################################
-#  THIS IS BASED ON THE PAPER "DISSECTIONS AND TREES, WITH WITH  #
-#  APPLICATIONS TO OPTIMAL MESH ENCODING AND TO RANDOM SAMPLING" #
-##################################################################
 
 import networkx as nx
 from .halfedge import HalfEdge
@@ -488,6 +484,15 @@ class Closure:
 
 
     def closure(self, binary_tree):
+        """This function implements the bijection between the binary trees
+        and the edge-rooted 3-connected planar graphs. It first perfomrs the 
+        partial closure by adding a new edge to three inner edges of the
+        binary tree (every face in the binary tree has now four edges).
+        Afterwards, the complete closure is performed, where the partialy
+        closed binary tree is integrated into a hexagon (dissection of hexagon).
+        The last step is to make the outer face of the graph to a four-edge
+        face (quadrangulation of the hexagon).
+        """
         init_half_edge = self.___btree_to_planar_map(binary_tree)
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
         if self.___reject(init_half_edge):
