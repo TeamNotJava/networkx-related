@@ -3,6 +3,7 @@ from framework.samplers.generic_samplers import *
 from framework.decomposition_grammar import *
 from framework.evaluation_oracle import Oracle
 from framework.binary_tree_decomposition import binary_tree_grammar
+from framework.bijections.closure import Closure
 from collections import deque
 
 import argparse
@@ -127,12 +128,39 @@ def plot_binary_tree(tree):
     nx.draw(G, node_color=colors)
     plt.show()
 
+
+def closure_test():
+    # tree = binary_tree.BinaryTreeSampler().binary_tree_sampler()
+    class BinaryTreeOracle(Oracle):
+        def __init__(self):
+            self.evaluations = {
+                'x': 0.0149875,
+                'y': 1.0,
+                'R_b_as(x,y)': 1,
+                'R_w_as(x,y)': 1,
+                'R_w(x,y)': 0.9,
+                'R_b(x,y)': 0.9,
+                'R_b_head(x,y)': 0.000001,
+                'R_w_head(x,y)': 0.9
+            }
+    BoltzmannSampler.oracle = BinaryTreeOracle()
+    BoltzmannSampler.active_grammar = binary_tree_grammar
+    tree = binary_tree_grammar.sample('K_dy', 'x', 'y')
+    c = Closure()
+
+    init_half_edge = c.test_closure()
+    # G = c.half_edges_to_graph(init_half_edge)
+    # nx.draw(G)
+    # plt.show()
+
+
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
     argparser.add_argument('-d', dest='loglevel', action='store_const',const=logging.DEBUG, help='Print Debug info')
     argparser.add_argument('-b', '--binary-tree', action='store_true', help='Run the binary_tree_test function')
     argparser.add_argument('--plot', action='store_true', help='Plot the binary_tree_test function result')
     argparser.add_argument('--other', action='store_true', help='Run the other_test function')
+    argparser.add_argument('--closure', action='store_true', help='Run the closure_test function')
     
     args = argparser.parse_args()
 
@@ -145,8 +173,9 @@ def main():
 
     if args.other:
         other_test()
-    
-    
+
+    if args.closure:
+        closure_test()
 
 
 if __name__ == '__main__':

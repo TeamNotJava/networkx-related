@@ -83,22 +83,6 @@ class Closure:
             return self.___construct_planar_map(btree.right(), half_edge_3, node_nr+1, half_edge_index+3)
 
 
-    #Returns a list with half-edges
-    def list_half_edges(self, init_half_edge, edge_list):       
-        edge_list.append(init_half_edge)
-        current_half_edge = init_half_edge
-
-        while True:
-            current_half_edge = current_half_edge.next
-            if current_half_edge != init_half_edge and current_half_edge not in edge_list:
-                edge_list.append(current_half_edge)
-                if current_half_edge.opposite != None:
-                    if current_half_edge.opposite not in edge_list:
-                        self.list_half_edges(current_half_edge.opposite, edge_list)
-            else:
-                break
-        return edge_list
-
 
     # #Performs bicolored partial closure on a binary tree. When possible build
     # #new edges in order to get faces with 4 edges
@@ -447,6 +431,25 @@ class Closure:
             walker_half_edge =walker_half_edge.next
 
 
+
+    #Returns a list with half-edges
+    def list_half_edges(self, init_half_edge, edge_list):       
+        edge_list.append(init_half_edge)
+        current_half_edge = init_half_edge
+
+        while True:
+            current_half_edge = current_half_edge.next
+            if current_half_edge != init_half_edge and current_half_edge not in edge_list:
+                edge_list.append(current_half_edge)
+                if current_half_edge.opposite != None:
+                    if current_half_edge.opposite not in edge_list:
+                        self.list_half_edges(current_half_edge.opposite, edge_list)
+            else:
+                break
+        return edge_list
+
+
+
     #Transforms a list of planar map half-edged into a networkx graph
     def half_edges_to_graph(self, init_half_edge):
         half_edge_list = self.list_half_edges(init_half_edge, [])
@@ -628,20 +631,13 @@ class Closure:
         half_edges[23].next = half_edges[21]
         half_edges[23].prior = half_edges[22]
 
-        print("Planar map list:")
-        list_closure = self.list_half_edges(half_edges[0], [])
-        for i in list_closure:
-            print(i)
-
-
+        # print("Planar map list:")
+        # list_closure = self.list_half_edges(half_edges[0], [])
+        # for i in list_closure:
+        #     print(i)
         # closure_start_half_edge = self.___bicolored_complete_closure(half_edges[0])
 
-
-
         # quadrangulated_start_half_edge = self.___quadrangulate(closure_start_half_edge)
-
-
-
 
         # G = self.half_edges_to_graph(quadrangulated_start_half_edge)
         # nx.draw(G)
