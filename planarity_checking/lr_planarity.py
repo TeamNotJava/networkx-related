@@ -10,7 +10,7 @@ def check_planarity(G):
     """Checks if a graph is planar and returns a counter example or an embedding
 
      A graph is said to be planar, if it can be drawn in the plane without
-     edge intersections.
+     any edge intersections.
 
     Parameters
     ----------
@@ -28,13 +28,21 @@ def check_planarity(G):
 
     Notes
     -----
+    A (combinatorial) embedding consists of cyclic orderings of the incident edges at each vertex, given such
+    an embedding there are multiple approaches discussed in literature to drawing the graph (subject to various constraints, e.g.
+    integer coordinates), see e.g. [2].
+
     TODO
     References
     ----------
     .. [1] Ulrik Brandes:
-      The Left-Right Planarity Test
-      2009
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.217.9208
+        The Left-Right Planarity Test
+        2009
+        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.217.9208
+    .. [2] Takao Nishizeki, Md Saidur Rahman:
+        Planar graph drawing
+        Lecture Notes Series on Computing: Volume 12
+        2004
     """
 
     planarity = LRPlanarity(G)
