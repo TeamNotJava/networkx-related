@@ -378,59 +378,6 @@ class Closure:
         return new_half_edge
 
 
-    #Construct the tree map for a given qundrangulation.
-    def ___make_irreducible(self, init_half_edge):
-        # Used for the half_edges in the 3-map that corresponds to the half-edges in the quadrangulation.
-        associated_half_edge_in_3_map = {}
-        self.___quadrangulation_to_3_map_rec(init_half_edge, associated_half_edge_in_3_map)
-        return associated_half_edge_in_3_map[init_half_edge.next]
-
-
-    #Recursivly transform the quadrangulation to a 3-map where the next and prev pointers are kept as
-    #before, but the opposite pointer in the half edge is pointing to the opposite half-edge in the face.
-    def ___make_irreducible_rec(self, init_half_edge, associated_half_edges_in_3_map):
-        # Associate the initial half edge
-        initial_half_edge_association = HalfEdge()
-        initial_half_edge_association.index = init_half_edge.index
-        associated_half_edges_in_3_map[init_half_edge] = initial_half_edge_association
-
-        # Associate the half edges that are on the same vertex as tie initial one.
-        walker_half_edge = init_half_edge.next
-        while walker_half_edge is not init_half_edge:
-            walker_association = HalfEdge()
-            walker_association.index = walker_half_edge.index
-            associated_half_edges_in_3_map[walker_half_edge] = walker_association
-
-            # Connect the association with the association of the prev half-edge
-            walker_association.prior = associated_half_edges_in_3_map[walker_half_edge.prior]
-            associated_half_edges_in_3_map[walker_half_edge.prior].next = walker_association
-
-            # Continue with the next edges
-            walker_half_edge = walker_half_edge.next
-
-        # Add the final connection
-        initial_half_edge_association.prior = associated_half_edges_in_3_map[init_half_edge.prior]
-        associated_half_edges_in_3_map[init_half_edge.prior].next = initial_half_edge_association
-
-        # Make the opposite pointer of the half edge to point to the opposite half edge in the face.
-        skipFirst = True
-        walker_half_edge = init_half_edge
-        while walker_half_edge is not init_half_edge and skipFirst is True:
-            skipFirst = False
-            opposite_half_edge_in_face = walker_half_edge.next.opposite.next.opposite
-
-            # Check for already processed half edges
-            if opposite_half_edge_in_face not in associated_half_edges_in_3_map:
-                self.___quadrangulation_to_3_map_rec(opposite_half_edge_in_face, associated_half_edges_in_3_map)
-
-            # Make the actual opposite connection between the associations
-            associated_half_edges_in_3_map[opposite_half_edge_in_face].opposite = associated_half_edges_in_3_map[walker_half_edge]
-            associated_half_edges_in_3_map[walker_half_edge].opposite = associated_half_edges_in_3_map[opposite_half_edge_in_face]
-
-            # Continue with the next edges
-            walker_half_edge =walker_half_edge.next
-
-
 
     #Returns a list with half-edges
     def list_half_edges(self, init_half_edge, edge_list):       
@@ -488,7 +435,7 @@ class Closure:
 
     def closure(self, binary_tree):
         """This function implements the bijection between the binary trees
-        and the edge-rooted 3-connected planar graphs. It first perfomrs the 
+        and the irreducible dissections. It first perfomrs the
         partial closure by adding a new edge to three inner edges of the
         binary tree (every face in the binary tree has now four edges).
         Afterwards, the complete closure is performed, where the partialy
@@ -501,7 +448,6 @@ class Closure:
         if self.___reject(init_half_edge):
             return None
         init_half_edge = self.___quadrangulate(init_half_edge)
-        init_half_edge = self.___quadrangulation_to_3_map(init_half_edge)
         return init_half_edge
 
     def test_closure(self):
