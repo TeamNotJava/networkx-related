@@ -47,6 +47,7 @@ class PrimalMap:
         while walker_half_edge is not init_half_edge:
             walker_association = HalfEdge()
             walker_association.index = walker_half_edge.index
+            walker_association.node_nr = walker_half_edge.node_nr
             associated_half_edges_in_3_map[walker_half_edge] = walker_association
 
             # Connect the association with the association of the prev half-edge

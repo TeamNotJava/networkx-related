@@ -15,7 +15,7 @@
 """Make a bijection between the irreducible quadrangulation to a 3-connected map.
 """
 
-from networkx import Graph
+import networkx as nx
 from framework.bijections.halfedge import HalfEdge
 from framework.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
@@ -34,11 +34,17 @@ class WhitneyBijection:
         :return: EdgeRootedThreeConnectedPlanarGraph
         '''
 
+        # Recursively extract the components from the 3-connected map.
         vertices_list = []
         edges_list = []
         self.__extract_3_graph_components_rec(root_half_edge, root_half_edge, set(), vertices_list, edges_list)
 
-        root_edge, nx_graph = self.__create_graph_from_components(vertices_list, edges_list)
+        # We transform the extracted components to the nx.Graph structure
+        nx_graph = self.__create_graph_from_components(root_half_edge, vertices_list, edges_list)
+
+        # We create a tuple of the root edge node numbers.
+        root_edge = (root_half_edge.node_nr, root_half_edge.opposite.node_nr)
+
         return EdgeRootedThreeConnectedPlanarGraph(root_edge, nx_graph)
 
 
@@ -79,5 +85,23 @@ class WhitneyBijection:
 
 
 
-    def __create_graph_from_components(self, vertices_list, edges_list):
-        pass
+    def __create_graph_from_components(self, root_half_edge, vertices_list, edges_list):
+
+        G = nx.Graph()
+
+        # By the Whitney bijection, the root edge vertices should not be part of the graph, but since we have other
+        # edges that are connected with this vertices and from this point we are using nx.Graph structure,
+        # they have to be added. In order to give the correct number of L-vertices in EdgeRootedThreeConnectedPlanarGraph
+        # we always have to substract 2 from the number of nodes.
+        G.add_node(root_half_edge.node_nr)
+        G.add_edge(root_half_edge.opposite.node_nr)
+
+        # We add all other vertices from the vertices list.
+        for vertex_half_edge in vertices_list:
+            G.add_node(vertex_half_edge.node_nr)
+
+        # We add the adges in the nx graph structure.
+        for edge_half_edge in edges_list:
+            G.add_edge(edge_half_edge.node_nr, edge_half_edge.opposite.node_nr)
+
+        return G
