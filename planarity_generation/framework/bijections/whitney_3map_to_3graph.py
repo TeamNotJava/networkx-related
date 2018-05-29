@@ -94,7 +94,7 @@ class WhitneyBijection:
         # they have to be added. In order to give the correct number of L-vertices in EdgeRootedThreeConnectedPlanarGraph
         # we always have to substract 2 from the number of nodes.
         G.add_node(root_half_edge.node_nr)
-        G.add_edge(root_half_edge.opposite.node_nr)
+        G.add_node(root_half_edge.opposite.node_nr)
 
         # We add all other vertices from the vertices list.
         for vertex_half_edge in vertices_list:
