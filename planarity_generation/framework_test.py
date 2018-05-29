@@ -71,28 +71,29 @@ def binary_tree_test():
             self.evaluations = {
                 'x': 0.0149875,
                 'y': 1.0,
-                'R_b_as(x,y)': 1,
-                'R_w_as(x,y)': 1,
+                # 'R_b_as(x,y)': 1,
+                # 'R_w_as(x,y)': 1,
                 'R_w(x,y)': 0.9,
                 'R_b(x,y)': 0.9,
-                'R_b_head(x,y)': 0.000001,
-                'R_w_head(x,y)': 0.9
+                # 'R_b_head(x,y)': 0.000001,
+                # 'R_w_head(x,y)': 0.9
             }
 
 
 
     BoltzmannSampler.oracle = BinaryTreeOracle()
     BoltzmannSampler.active_grammar = binary_tree_grammar
-    tree = binary_tree_grammar.sample('K_dy', 'x', 'y')
+    print(binary_tree_grammar.collect_oracle_queries('G', 'x', 'y'))
+    tree = binary_tree_grammar.sample('G', 'x', 'y')
     print(tree)
-    tree.pretty()
     print("Black Nodes: {}".format(tree.get_attribute('numblacknodes')))
     print("White Nodes: {}".format(tree.get_attribute('numwhitenodes')))
     print("Total Nodes: {}".format(tree.get_attribute('numtotal')))
 
     return tree
 
-
+def pretty_print_tree(tree):
+    tree.pretty()
 
 def plot_binary_tree(tree):
     import networkx as nx
@@ -159,6 +160,7 @@ def main():
     argparser.add_argument('-d', dest='loglevel', action='store_const',const=logging.DEBUG, help='Print Debug info')
     argparser.add_argument('-b', '--binary-tree', action='store_true', help='Run the binary_tree_test function')
     argparser.add_argument('--plot', action='store_true', help='Plot the binary_tree_test function result')
+    argparser.add_argument('--print', action='store_true', help='print the binary_tree_test function result')
     argparser.add_argument('--other', action='store_true', help='Run the other_test function')
     argparser.add_argument('--closure', action='store_true', help='Run the closure_test function')
     
@@ -168,6 +170,8 @@ def main():
 
     if args.binary_tree:
         tree = binary_tree_test()
+        if args.print:
+            plot_binary_tree(tree)
         if args.plot:
             plot_binary_tree(tree)
 
