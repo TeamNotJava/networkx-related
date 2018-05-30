@@ -99,4 +99,4 @@ planar_graph_grammar.add_rules({
 })
 
 # then sample a planar graph from this grammar using
-# planar_graph_grammar.sample("G''")
+# planar_graph_grammar.sample("G_dx_dx''")

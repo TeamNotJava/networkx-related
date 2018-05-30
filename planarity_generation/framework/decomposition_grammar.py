@@ -133,7 +133,6 @@ class DecompositionGrammar:
                 return visitor_wants_to_go_on
 
     # determines which rules are recursive
-    # todo heres a bug
     class FindRecursiveRulesVisitor:
         def __init__(self):
             self.seen_alias_samplers = []
