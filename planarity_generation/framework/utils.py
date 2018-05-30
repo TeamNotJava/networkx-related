@@ -54,3 +54,15 @@ def pois_try(d, l):
 # currently used as dummy
 def pois(d, l):
     return d
+
+#Cumulative Poisson probability P(x < d)
+def ___poisson_less d(l,d):
+	prob = 0
+	for i in range(d):
+		prob = prob + (pow(l,i) * exp(-l))/(factorial(i))
+	return prob
+
+#Cumulative Poisson probability P(x >= d)
+def poisson_geq(l,d):
+	return 1 - ___poisson_less(l,d)
+
