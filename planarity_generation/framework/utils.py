@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import random as rnd
 from math import exp, pow, factorial
 import itertools
