@@ -14,20 +14,24 @@
 
 class HalfEdge:
 
-	#Contains the opposite half-edge
-	opposite = None
-	#Contains the next half-edge in ccw order around the incident node
-	next = None
-	#Contains the prior half-edge in cw order around the incident node
-	prior = None
-	#Number of inner edges following after the stem		
-	number_proximate_inner_edges = 0
-	#Color that indicates what color the incident node has (0 - black, 1 -white)
-	color = None
-	#Node the half-edge is  assigned to
-	node_nr = -1
-	#Index
-	index = 0
+	def __init__(self):
+		#Contains the opposite half-edge
+		self.opposite = None
+		#Contains the next half-edge in ccw order around the incident node
+		self.next = None
+		#Contains the prior half-edge in cw order around the incident node
+		self.prior = None
+		#Number of inner edges following after the stem
+		self.number_proximate_inner_edges = 0
+		#Color that indicates what color the incident node has (0 - black, 1 -white)
+		self.color = None
+		#Node the half-edge is  assigned to
+		self.node_nr = -1
+		#Index
+		self.index = 0
+		#Indicates if the half-edge belongs to the hexagon
+		self.is_hexagonal = False
+
 
 	#Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)	
 	def __repr__(self):
@@ -62,6 +66,11 @@ class HalfEdge:
 				repr = repr + ", white"
 		repr = repr + ", "
 		repr = repr + str(self.number_proximate_inner_edges)
+		if self.is_hexagonal == False:
+			repr = repr + ", NOT hexagonal"
+		else:
+			repr = repr + ", hexagonal"
+			
 		repr = repr + ')'
 		
 		return repr
