@@ -2,6 +2,7 @@ from framework.decomposition_grammar import Alias
 from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
 from framework.utils import bern
+from framework.bijections.closure import Closure
 import logging
 
 L = LAtom()
