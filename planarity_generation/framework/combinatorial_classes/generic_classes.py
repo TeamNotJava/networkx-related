@@ -7,6 +7,10 @@ from framework.utils import *
 # todo may these classes should rather be called something like "ProdClassInstance" or "ProdClassObject"
 # as they do not represent combinatorial classes as a whole but rather instances of them
 
+class BoltzmannFrameworkError(Exception):
+    """Base class for exceptions in the framework."""
+    pass
+
 # CombinatorialClass instances are objects from a mixed combinatorial class (with l- and u-atoms)
 class CombinatorialClass:
     def get_u_size(self):
@@ -216,10 +220,14 @@ class DerivedClass(CombinatorialClass):
     def get_base_class_object(self):
         return self.base_class_object
 
+    class InvertDerivationOrderError(BoltzmannFrameworkError):
+        def __init__(self, message):
+            self.message = message
+
 
 # wrapper for an l-derived class
 class LDerivedClass(DerivedClass):
-    def __init__(self, base_class_object, marked_l_atom):
+    def __init__(self, base_class_object, marked_l_atom = None):
         super(LDerivedClass, self).__init__(base_class_object, marked_l_atom)
 
     def get_l_size(self):
@@ -238,8 +246,9 @@ class LDerivedClass(DerivedClass):
 
     # invert the derivation order
     # the base class must be a UDerivedClass instance
+    # todo may throw InvertDerivationOrderError
     def to_dx_dy(self):
-        gamma = self.base_class_object.base_class_instance
+        gamma = self.base_class_object.get_base_class_object()
         l_derived = LDerivedClass(gamma, self.marked_atom)
         u_derived = UDerivedClass(l_derived, self.base_class_object.get_marked_atom())
         return u_derived
@@ -250,7 +259,7 @@ class LDerivedClass(DerivedClass):
 
 # wrapper for a u-derived class
 class UDerivedClass(DerivedClass):
-    def __init__(self, base_class_object, marked_u_atom):
+    def __init__(self, base_class_object, marked_u_atom = None):
         super(UDerivedClass, self).__init__(base_class_object, marked_u_atom)
 
     def get_l_size(self):
@@ -270,14 +279,10 @@ class UDerivedClass(DerivedClass):
     # invert the derivation order
     # the base class must be an LDerivedClass instance
     def to_dy_dx(self):
-        try:
-            gamma = self.base_class_object.base_class_instance
-            u_derived = UDerivedClass(gamma, self.marked_atom)
-            l_derived = LDerivedClass(u_derived, self.base_class_object.get_marked_atom())
-            return l_derived
-        except:
-            print('could not change derivation order')
-            raise
+        gamma = self.base_class_object.get_base_class_object()
+        u_derived = UDerivedClass(gamma, self.marked_atom)
+        l_derived = LDerivedClass(u_derived, self.base_class_object.get_marked_atom())
+        return l_derived
 
     def __str__(self):
         return str(self.base_class_object) + "->" + str(self.marked_atom)
