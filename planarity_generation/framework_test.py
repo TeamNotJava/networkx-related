@@ -69,7 +69,7 @@ def binary_tree_test():
     class BinaryTreeOracle(Oracle):
         def __init__(self):
             self.evaluations = {
-                'x': 0.0149875,
+                'x': 0.0127,
                 'y': 1.0,
                 # 'R_b_as(x,y)': 1,
                 # 'R_w_as(x,y)': 1,
@@ -82,13 +82,19 @@ def binary_tree_test():
 
 
     BoltzmannSampler.oracle = BinaryTreeOracle()
-    BoltzmannSampler.active_grammar = binary_tree_grammar
-    print(binary_tree_grammar.collect_oracle_queries('G', 'x', 'y'))
-    tree = binary_tree_grammar.sample('G', 'x', 'y')
+    print(binary_tree_grammar.collect_oracle_queries('K', 'x', 'y'))
+    tree = binary_tree_grammar.sample('K', 'x', 'y')
     print(tree)
     print("Black Nodes: {}".format(tree.get_attribute('numblacknodes')))
     print("White Nodes: {}".format(tree.get_attribute('numwhitenodes')))
     print("Total Nodes: {}".format(tree.get_attribute('numtotal')))
+
+    print(binary_tree_grammar.collect_oracle_queries('K_dx', 'x', 'y'))
+    tree2 = binary_tree_grammar.sample('K_dx', 'x', 'y')
+    print(tree2)
+    print("Black Nodes: {}".format(tree2.get_base_class_object().get_attribute('numblacknodes')))
+    print("White Nodes: {}".format(tree2.get_base_class_object().get_attribute('numwhitenodes')))
+    print("Total Nodes: {}".format(tree2.get_base_class_object().get_attribute('numtotal')))
 
     return tree
 

@@ -239,17 +239,17 @@ class LDerivedClass(DerivedClass):
     # invert the derivation order
     # the base class must be a UDerivedClass instance
     def to_dx_dy(self):
-        gamma = self.base_class_instance.base_class_instance
+        gamma = self.base_class_object.base_class_instance
         l_derived = LDerivedClass(gamma, self.marked_atom)
-        u_derived = UDerivedClass(l_derived, self.base_class_instance.get_marked_atom())
+        u_derived = UDerivedClass(l_derived, self.base_class_object.get_marked_atom())
         return u_derived
 
     def __str__(self):
-        return str(self.base_class_instance) + "->" + str(self.marked_atom)
+        return str(self.base_class_object) + "->" + str(self.marked_atom)
 
 
 # wrapper for a u-derived class
-class UDerivedClass(CombinatorialClass):
+class UDerivedClass(DerivedClass):
     def __init__(self, base_class_object, marked_u_atom):
         super(UDerivedClass, self).__init__(base_class_object, marked_u_atom)
 
@@ -264,7 +264,7 @@ class UDerivedClass(CombinatorialClass):
 
     def u_atoms(self):
         for u_atom in self.base_class_object.u_atoms():
-            if u_atom != self.marked_u_atom:
+            if u_atom != self.marked_atom:
                 yield u_atom
 
     # invert the derivation order
@@ -272,7 +272,7 @@ class UDerivedClass(CombinatorialClass):
     def to_dy_dx(self):
         try:
             gamma = self.base_class_object.base_class_instance
-            u_derived = UDerivedClass(gamma, self.marked_u_atom)
+            u_derived = UDerivedClass(gamma, self.marked_atom)
             l_derived = LDerivedClass(u_derived, self.base_class_object.get_marked_atom())
             return l_derived
         except:
@@ -280,4 +280,4 @@ class UDerivedClass(CombinatorialClass):
             raise
 
     def __str__(self):
-        return str(self.base_class_object) + "->" + str(self.marked_u_atom)
+        return str(self.base_class_object) + "->" + str(self.marked_atom)

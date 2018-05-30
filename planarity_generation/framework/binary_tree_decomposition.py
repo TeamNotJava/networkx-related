@@ -34,7 +34,17 @@ class BinaryTree(CombinatorialClass):
     
     def get_u_size(self):
         return self.get_attribute('numleafs')
-        
+
+    def get_l_size(self):
+        return self.get_attribute('numblacknodes')
+    # Todo: hacky stuff following
+    def random_l_atom(self):
+        return None
+    
+    def random_u_atom(self):
+        return None
+
+
     def __repr__(self):
         repr = '['
         if self.left is None:
@@ -273,30 +283,19 @@ def decomp_to_binary_tree_w_1_2(decomp):
     logging.debug(tree)
     return tree
 
-class BTRejection(Transformation):
-    def __init__(self, sampler, is_acceptable, target_class_label):
-        # sampler is a sampler of the underlying class
-        super(BTRejection, self).__init__(sampler, None, target_class_label)
-        # this is a function that takes a structure and outputs true iff it matches the acceptance criteria
-        self.is_acceptable = is_acceptable
-
-    def sample(self, x, y):
-        gamma = self.sampler.sample(x, y)
-        while not self.is_acceptable(gamma):
-            gamma = self.sampler.sample(x, y)
-        return gamma
-
+class BTRejection(Rejection):
+    """Extend Rejection to provide a evaluation"
+    """
     def get_eval(self, x, y):
+        # Todo: verify
         return self.sampler.get_eval(x, y)/self.oracle.get(y)
 
 def rejection_step(decomp):
-    print(type(decomp))
-    print(type(decomp.get_u_size()))
     return bern(2/decomp.get_u_size())
 
 binary_tree_grammar = DecompositionGrammar()
 binary_tree_grammar.add_rules({
-    'G': K + U,
+    'K_dx': LDerFromUDer(Bijection(K_dy, lambda decomp: UDerivedClass(decomp, None), 'UDerived'), 2/3), # Hacky way
     'K': BTRejection(K_dy, rejection_step, 'K'),
     'K_dy': R_b_as + R_w_as,
     'R_b_as': Bijection((R_w * L * U) + (U * L * R_w) + (R_w * L * R_w), decomp_to_binary_tree_b_3),
@@ -306,3 +305,4 @@ binary_tree_grammar.add_rules({
     'R_b': Bijection((U + R_w) * L * (U + R_w), decomp_to_binary_tree_b_3),
     'R_w': Bijection((U + R_b) * (U + R_b), decomp_to_binary_tree_w_2)
 })
+binary_tree_grammar.init()
