@@ -151,7 +151,7 @@ class TestLRPlanarity:
         subdivision_nodes : A set of nodes inducing a subgraph as a counterexample
         """
         # TODO: Just returns early, because subdivision_nodes is currently always None
-        return
+        #return
         # 1. Create the sub graph (sub)
         sub_graph = nx.Graph(G.subgraph(subdivision_nodes))
 
@@ -208,7 +208,7 @@ class TestLRPlanarity:
         """
 
         # Obtain planarity results
-        is_planar_lr, result = lr_planarity.check_planarity(G)
+        is_planar_lr, result = lr_planarity.check_planarity(G, cert=True)
 
         if is_planar is not None:
             # Set a default message for the assert
@@ -263,6 +263,19 @@ class TestLRPlanarity:
         e = [(1, 5), (1, 6), (1, 7), (2, 6), (2, 3), (3, 5), (3, 7), (4, 5), (4, 6), (4, 7)]
         self.check_graph(nx.Graph(e), is_planar=False)
 
+    def test_loop(self):
+        # currently fails in dfs3 with KeyError at selfloop
+        e = [(1, 2), (2, 2)]
+        G = nx.Graph(e)
+        self.check_graph(G, is_planar=True)
+
+    def test_comp(self):
+        # currently fails embedding check (due to euler's formula)
+        e = [(1, 2), (3, 4)]
+        G = nx.Graph(e)
+        G.remove_edge(1, 2)
+        self.check_graph(G, is_planar=True)
+
     def test_goldner_harary(self):
         # goldner-harary graph
         # http://en.wikipedia.org/wiki/Goldner%E2%80%93Harary_graph
@@ -290,3 +303,5 @@ if __name__ == '__main__':
     t.test_multiple_components_planar()
     t.test_multiple_components_non_planar()
     t.test_planar_with_selfloop()
+    t.test_loop()
+    t.test_comp()

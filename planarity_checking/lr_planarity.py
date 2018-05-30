@@ -4,9 +4,23 @@ import networkx as nx
 
 
 
+def get_counterexample(G):
+    if check_planarity(G)[0]:
+        raise nx.NetworkXException("G is planar - no counter example.")
+    
+    subgraph = nx.Graph()
+    for u in G:
+        nbrs = list(G[u])
+        for v in nbrs:
+            G.remove_edge(u, v)
+            if check_planarity(G)[0]:
+                G.add_edge(u, v)
+                subgraph.add_edge(u, v)
+
+    return subgraph
 
 
-def check_planarity(G):
+def check_planarity(G, cert=False):
     """Checks if a graph is planar and returns a counter example or an embedding
 
      A graph is said to be planar, if it can be drawn in the plane without
@@ -49,6 +63,8 @@ def check_planarity(G):
     try:
         embedding = planarity.lr_planarity()
     except nx.NetworkXUnfeasible:
+        if cert:
+            return False, get_counterexample(G)
         return False, None
     return True, embedding
 
