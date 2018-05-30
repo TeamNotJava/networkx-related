@@ -49,4 +49,6 @@ class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
         raise NotImplementedError
 
     def __str__(self):
-        raise NotImplementedError
+        repr = 'Root Edge : %s \n' % self.root_edge.__repr__()
+        repr += 'Graph Representation : %s' % self.graph.__repr__()
+        return repr

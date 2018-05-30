@@ -4,6 +4,8 @@ from framework.decomposition_grammar import *
 from framework.evaluation_oracle import Oracle
 from framework.binary_tree_decomposition import binary_tree_grammar
 from framework.bijections.closure import Closure
+from framework.bijections.primal_map import PrimalMap
+from framework.bijections.whitney_3map_to_3graph import WhitneyBijection
 from collections import deque
 
 import argparse
@@ -160,6 +162,17 @@ def closure_test():
     # nx.draw(G)
     # plt.show()
 
+# Run the primal map test.
+def primal_map_test():
+    # Check the outputs with the comments next to print instruction
+    PrimalMap().test_primal_map()
+
+
+# Run the whitney bijection test.
+def whiney_bijection_test():
+    # Check the outputs with the comments next to print instruction
+    WhitneyBijection().test_whitney_bijection()
+
 
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
@@ -169,7 +182,9 @@ def main():
     argparser.add_argument('--print', action='store_true', help='print the binary_tree_test function result')
     argparser.add_argument('--other', action='store_true', help='Run the other_test function')
     argparser.add_argument('--closure', action='store_true', help='Run the closure_test function')
-    
+    argparser.add_argument('--primal_map', action='store_true', help='Run the primal_map_test function')
+    argparser.add_argument('--whitney_bijection', action='store_true', help='Run the whitney_bijection_test function')
+
     args = argparser.parse_args()
 
     logging.basicConfig(level=args.loglevel)
@@ -186,6 +201,12 @@ def main():
 
     if args.closure:
         closure_test()
+
+    if args.primal_map:
+        primal_map_test()
+
+    if args.whitney_bijection:
+        whiney_bijection_test()
 
 
 if __name__ == '__main__':
