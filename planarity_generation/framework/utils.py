@@ -55,24 +55,27 @@ def pois_try(d, l):
 def pois(d, l):
     return d
 
-#Cumulative Poisson probability P(x < d)
-def ___poisson_less(l,d):
-	prob = 0
-	for i in range(d):
-		prob = prob + (pow(l,i) * exp(-l))/(factorial(i))
-	return prob
+#THIS IS PROBABLY NOT NECESSARY!
+# #Cumulative Poisson probability P(x < d)
+# def ___poisson_less(l,d):
+#     if d == 0:
+#         return exp(-l)
+# 	prob = 0
+# 	for i in range(d):
+# 		prob = prob + (pow(l,i) * exp(-l))/(factorial(i))
+# 	return prob
 
-#Cumulative Poisson probability P(x >= d)
-def poisson_geq(l,d):
-	return 1 - ___poisson_less(l,d)
+# #Cumulative Poisson probability P(x >= d)
+# def poisson_geq(l,d):
+# 	return 1 - ___poisson_less(l,d)
 
-#Poisson probability P(x>=k|l,d)
-def cond_poisson(k,l,d):
+#Poisson probability P(x>=d|l,d)
+def cond_poisson(l,d):
     prob = 0
     exp_less_d = 0
     for i in range(d):
         exp_less_d = exp_less_d + pow(l,i)/factorial(i)
-    denominator = (exp(-l) - exp_less_d) * factorial(k)
-    nominator = pow(l,k)
-    return nominator/denominator 
+    denominator = (exp(l) - exp_less_d) * factorial(d)
+    nominator = pow(l,d)
+    return nominator/denominator
 
