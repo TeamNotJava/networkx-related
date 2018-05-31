@@ -153,14 +153,37 @@ def closure_test():
                 'R_w_head(x,y)': 0.9
             }
     BoltzmannSampler.oracle = BinaryTreeOracle()
-    BoltzmannSampler.active_grammar = binary_tree_grammar
     tree = binary_tree_grammar.sample('K_dy', 'x', 'y')
     c = Closure()
 
     init_half_edge = c.test_closure()
-    # G = c.half_edges_to_graph(init_half_edge)
-    # nx.draw(G)
-    # plt.show()
+    return (c, init_half_edge)
+
+def plot_closure(closure, init_half_edge):
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    G = closure.half_edges_to_graph(init_half_edge)
+    nx.draw(G)
+    plt.show()
+
+def irreducible_dissection_test():
+    from framework.irreducible_dissection_decomposition import irreducible_dissection_grammar
+    class BinaryTreeOracle(Oracle):
+        def __init__(self):
+            self.evaluations = {
+                'x': 0.0149875,
+                'y': 1.0,
+                'R_w(x,y)': 0.9,
+                'R_b(x,y)': 0.9,
+            }
+    BoltzmannSampler.oracle = BinaryTreeOracle()
+    x = irreducible_dissection_grammar.sample('J_a', 'x', 'y')
+    print(x)
+
+    x_dx = irreducible_dissection_grammar.sample('J_a_dx', 'x', 'y')
+    print(x_dx)
+    
 
 # Run the primal map test.
 def primal_map_test():
@@ -182,6 +205,8 @@ def main():
     argparser.add_argument('--print', action='store_true', help='print the binary_tree_test function result')
     argparser.add_argument('--other', action='store_true', help='Run the other_test function')
     argparser.add_argument('--closure', action='store_true', help='Run the closure_test function')
+    argparser.add_argument('--irdi', action='store_true', help='Run the irreducible_dissection_test function')
+
     argparser.add_argument('--primal_map', action='store_true', help='Run the primal_map_test function')
     argparser.add_argument('--whitney_bijection', action='store_true', help='Run the whitney_bijection_test function')
 
@@ -200,7 +225,11 @@ def main():
         other_test()
 
     if args.closure:
-        closure_test()
+        (i,j) = closure_test()
+        if args.plot:
+            plot_closure(i,j)
+    if args.irdi:
+        irreducible_dissection_test()
 
     if args.primal_map:
         primal_map_test()
