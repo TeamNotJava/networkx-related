@@ -19,8 +19,6 @@ into a Boltzmann sampler for 3-connected planar graphs.
 import networkx as nx
 from framework.bijections.halfedge import HalfEdge
 from framework.combinatorial_classes import BinaryTree
-import numpy as np
-import matplotlib.pyplot as plt
 
 class Closure:
 
@@ -77,10 +75,10 @@ class Closure:
         half_edge_3.index = half_edge_index + 2
 
         #Construct the planar map on the children
-        if btree.left() != None:
-            return self.___construct_planar_map(btree.left(), half_edge_2, node_nr+1, half_edge_index+3)
-        if btree.right() != None:
-            return self.___construct_planar_map(btree.right(), half_edge_3, node_nr+1, half_edge_index+3)
+        if btree.left != None:
+            return self.___construct_planar_map(btree.left, half_edge_2, node_nr+1, half_edge_index+3)
+        if btree.right != None:
+            return self.___construct_planar_map(btree.right, half_edge_3, node_nr+1, half_edge_index+3)
 
 
 
@@ -595,9 +593,7 @@ class Closure:
 
         quadrangulated_start_half_edge = self.___quadrangulate(closure_start_half_edge)
 
-        G = self.half_edges_to_graph(quadrangulated_start_half_edge)
-        nx.draw(G)
-        plt.show()
+        return quadrangulated_start_half_edge
 
         
 
