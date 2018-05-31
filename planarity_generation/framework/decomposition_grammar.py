@@ -1,15 +1,15 @@
 from .samplers.generic_samplers import *
 import sys
 
+
 # I have decided to put the Alias sampler here because it is so closely linked to the grammar
 # An alias sampler is a sampler defined by a rule in a decomposition grammar.
 # The rule can contain the same alias sampler itself.
 # This allows to implement recursive decompositions.
 class Alias(BoltzmannSampler):
-
     grammar_not_initialized_error_msg = ": you have to set the grammar this Alias sampler belongs to before using it"
 
-    def __init__(self, alias, grammar = None):
+    def __init__(self, alias, grammar=None):
         self.alias = alias
         self.grammar = grammar
 
@@ -65,7 +65,7 @@ class Alias(BoltzmannSampler):
 
 
 class DecompositionGrammar:
-    def __init__(self, rules = {}):
+    def __init__(self, rules={}):
         self.rules = rules
         self.recursive_rules = None
 
@@ -99,6 +99,16 @@ class DecompositionGrammar:
         self.rules[alias].accept(visitor)
         return visitor.result
 
+    def infer_target_class_labels(self):
+        # just looks if the top sampler of a rule is a transformation sampler and this case
+        # automatically sets the label of the target class
+        for alias in self.rules:
+            sampler = self.rules[alias]
+            while isinstance(sampler, BijectionSampler):
+                sampler = sampler.get_children()[0]
+            if isinstance(sampler, TransformationSampler):
+                sampler.set_target_class_label(alias)
+
     # samples from the rule identified by the key "alias"
     def sample(self, alias, x, y):
         if alias not in self.rules:
@@ -109,7 +119,7 @@ class DecompositionGrammar:
         # initialize the alias samplers (set their referenced grammar to this grammar)
         visitor = self.SetActiveGrammarVisitor(self)
         for alias in self.rules:
-            #print(alias)
+            # print(alias)
             self.rules[alias].accept(visitor)
         # find out which rules are recursive
         self.recursive_rules = set()
@@ -117,7 +127,8 @@ class DecompositionGrammar:
             visitor = self.FindRecursiveRulesVisitor()
             self.rules[alias].accept(visitor)
             self.recursive_rules |= set(visitor.get_result())
-
+        # automatically set target class labels of transformation sampler where possible
+        self.infer_target_class_labels()
 
     ### visitors ###
 

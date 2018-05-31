@@ -35,7 +35,7 @@ def bij_closure(decomp):
 
 
 def bij_closure_dx(decomp):
-    return Closure().closure(decomp.get_base_class_object())
+    return LDerivedClass(Closure().closure(decomp.get_base_class_object()))
 
 
 def random_rooted_edge(half_edge_ptr):
@@ -100,7 +100,7 @@ irreducible_dissection_grammar.add_rules({
     'I_dx': Bij(K_dx, bij_closure_dx),
     'J': Bij((L + L + L) * U * I, bij_j),
     'J_dx': Bij(((L + L + L) * I) + ((L + L + L) * U * I_dx), bij_j_dx),
-    'J_a': Rej(J, rej_admiss, 'J_a'),
-    'J_a_dx': Rej(J_dx, rej_admiss_dx, 'J_a')
+    'J_a': Rej(J, rej_admiss),
+    'J_a_dx': Rej(J_dx, rej_admiss_dx)
 })
 irreducible_dissection_grammar.init()

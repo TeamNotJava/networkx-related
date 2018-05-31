@@ -18,6 +18,16 @@
 from framework.bijections.halfedge import HalfEdge
 import matplotlib.pyplot as plt
 
+
+def primal_map(dissection):
+    """Used in the grammar
+
+    :param dissection:
+    """
+    # todo what else needs to be done here?
+    return PrimalMap().primal_map_bijection(dissection)
+
+
 class PrimalMap:
 
     def primal_map_bijection(self, init_half_edge):

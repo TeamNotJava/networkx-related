@@ -63,5 +63,3 @@ def pois(d, l):
         F = F + f
         k = k + 1
     return k - 1
-
-

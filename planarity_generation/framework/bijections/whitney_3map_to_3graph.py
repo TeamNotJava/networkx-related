@@ -21,6 +21,15 @@ from framework.bijections.primal_map import  PrimalMap
 from framework.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 
+def whitney(map):
+    """To be used in the grammar.
+
+    :param map:
+    :return:
+    """
+    # todo what else needs to be done here?
+    return WhitneyBijection().whitney_bijection(map)
+
 class WhitneyBijection:
 
     def whitney_bijection(self, root_half_edge):

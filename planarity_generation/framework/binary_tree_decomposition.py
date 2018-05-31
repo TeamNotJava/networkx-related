@@ -18,6 +18,7 @@ R_b = Alias('R_b')
 R_w = Alias('R_w')
 K = Alias('K')
 Bij = BijectionSampler
+Rej = RejectionSampler
 DxFromDy = LDerFromUDerSampler
 
 
@@ -227,14 +228,14 @@ class BTRejectionSampler(RejectionSampler):
 
 
 def rejection_step(decomp):
-    return bern(2 / decomp.get_u_size())
+    return bern(2 / (decomp.get_u_size() + 1))
 
 
 binary_tree_grammar = DecompositionGrammar()
 binary_tree_grammar.add_rules({
-    'K_dx': DxFromDy(Bij(K_dy, lambda decomp: UDerivedClass(decomp, None), 'UDerived'), 2 / 3),  # Hacky way
-    'K': BTRejectionSampler(K_dy, rejection_step, 'K'),
-    'K_dy': R_b_as + R_w_as,
+    'K': Bij(Rej(K_dy, rejection_step), lambda dy: dy.get_base_class_object()),
+    'K_dx': DxFromDy(K_dy, 2 / 3),
+    'K_dy': Bij(R_b_as + R_w_as, lambda tree: UDerivedClass(tree)),
     'R_b_as': Bij((R_w * L * U) + (U * L * R_w) + (R_w * L * R_w), decomp_to_binary_tree_b_3),
     'R_w_as': Bij((R_b_head * U) + (U * R_b_head) + (R_b * R_b), decomp_to_binary_tree_w_2),
     'R_b_head': Bij((R_w_head * L * U * U) + (U * U * L * R_w_head) + (R_w_head * L * R_w_head),

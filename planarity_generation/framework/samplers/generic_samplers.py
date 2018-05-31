@@ -345,7 +345,7 @@ class SetSampler(UnarySampler):
         self.d = d
 
     def sampled_class(self):
-        return 'Set_' + self.d + '(' + self.sampler.sampled_class() + ')'
+        return 'Set_' + str(self.d) + '(' + self.sampler.sampled_class() + ')'
 
     def sample(self, x, y):
         k = pois(self.d, self.sampler.get_eval(x, y))
@@ -397,6 +397,13 @@ class TransformationSampler(UnarySampler):
 
     def oracle_query_string(self, x, y):
         return self.sampled_class() + '(' + x + ',' + y + ')'
+
+    def set_target_class_label(self, label):
+        """
+
+        :param label: Label of the target class.
+        """
+        self.target_class_label = label
 
 
 class BijectionSampler(TransformationSampler):
