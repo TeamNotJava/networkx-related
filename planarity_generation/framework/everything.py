@@ -2,7 +2,8 @@ from framework.bijections.networks import *
 from framework.bijections.two_connected import *
 from framework.bijections.primal_map import primal_map
 from framework.bijections.whitney_3map_to_3graph import whitney
-from framework.binary_tree_decomposition import rejection_step, decomp_to_binary_tree_b_3, decomp_to_binary_tree_b_4, decomp_to_binary_tree_w_1_2, decomp_to_binary_tree_w_2
+from framework.binary_tree_decomposition import rejection_step, decomp_to_binary_tree_b_3, decomp_to_binary_tree_b_4, \
+    decomp_to_binary_tree_w_1_2, decomp_to_binary_tree_w_2
 from framework.irreducible_dissection_decomposition import *
 
 # All references in comments in this file refer to:
@@ -34,7 +35,7 @@ K = Alias('K')
 
 binary_tree_rules = {
     'K': Bij(Rej(K_dy, rejection_step), lambda dy: dy.get_base_class_object()),
-    'K_dx': DxFromDy(K_dy, alpha_l_u = 2/3),
+    'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),
     'K_dy': Bij(R_b_as + R_w_as, lambda tree: UDerivedClass(tree)),
     'R_b_as': Bij((R_w * L * U) + (U * L * R_w) + (R_w * L * R_w), decomp_to_binary_tree_b_3),
     'R_w_as': Bij((R_b_head * U) + (U * R_b_head) + (R_b * R_b), decomp_to_binary_tree_w_2),
@@ -76,9 +77,11 @@ M_3_arrow_dx = Alias('M_3_arrow_dx')
 three_connected_rules = {
     'M_3_arrow': Bij(J_a, primal_map),
     'M_3_arrow_dx': Bij(J_a_dx, primal_map),
-    'G_3_arrow': Trans(M_3_arrow, whitney, lambda eval, x, y: 0.5 * eval), # see 4.1.9.
-    'G_3_arrow_dx': Trans(M_3_arrow_dx, whitney, lambda eval, x, y: 0.5 * eval),
-    'G_3_arrow_dy': DyFromDx(G_3_arrow_dx, alpha_u_l = 3) # alpha_u_l = 3, see 5.3.3.
+    'G_3_arrow': Trans(M_3_arrow, whitney,
+                       eval_transform=lambda evl, x, y: 0.5 * evl),  # see 4.1.9.
+    'G_3_arrow_dx': Trans(M_3_arrow_dx, whitney,
+                          eval_transform=lambda evl, x, y: 0.5 * evl),
+    'G_3_arrow_dy': DyFromDx(G_3_arrow_dx, alpha_u_l=3)  # alpha_u_l = 3, see 5.3.3.
 }
 
 ### networks ###
@@ -122,16 +125,20 @@ F = Alias('F')
 F_dx = Alias('F_dx')
 
 two_connected_rules = {
-    'G_2_arrow': Trans(Z + D, add_root_edge, lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))), # see 5.5
+    'G_2_arrow': Trans(Z + D, add_root_edge,
+                       eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),  # see 5.5
     'F': L * L * G_2_arrow,
-    'G_2_dy': Trans(F, forget_direction_of_root_edge, lambda evl, x, y: 0.5 * evl),
-    'G_2_dx': DxFromDy(G_2_dy, alpha_l_u = 2.0),  # see p. 26
+    'G_2_dy': Trans(F, forget_direction_of_root_edge,
+                    eval_transform=lambda evl, x, y: 0.5 * evl),
+    'G_2_dx': DxFromDy(G_2_dy, alpha_l_u=2.0),  # see p. 26
 
-    'G_2_arrow_dx': Trans(D_dx, add_root_edge, lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),
+    'G_2_arrow_dx': Trans(D_dx, add_root_edge,
+                          eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),
     'F_dx': L * L * G_2_arrow_dx + (L + L) * G_2_arrow,  # notice that 2 * L = L + L
-    'G_2_dy_dx': Trans(F_dx, forget_direction_of_root_edge, lambda evl, x, y: 0.5 * evl),
+    'G_2_dy_dx': Trans(F_dx, forget_direction_of_root_edge,
+                       eval_transform=lambda evl, x, y: 0.5 * evl),
     'G_2_dx_dy': Bij(G_2_dy_dx, lambda dy_dx: dy_dx.invert_derivation_order()),
-    'G_2_dx_dx': DxFromDy(G_2_dx_dy, alpha_l_u = 1.0) # see 5.5
+    'G_2_dx_dx': DxFromDy(G_2_dx_dy, alpha_l_u=1.0)  # see 5.5
 }
 
 ### connected planar graphs ###
@@ -143,7 +150,7 @@ G_1_dx_dx = Alias('G_1_dx_dx')
 connected_rules = {
     'G_1_dx': Set(0, LSubs(G_2_dx, L * G_1_dx)),
     'G_1_dx_dx': (G_1_dx + L * G_1_dx_dx) * (LSubs(G_2_dx_dx, L * G_1_dx)) * G_1_dx,
-    'G_1': Rej(G_1_dx, lambda g: bern(1 / (g.get_l_size() + 1))) # see lemma 15
+    'G_1': Rej(G_1_dx, lambda g: bern(1 / (g.get_l_size() + 1)))  # see lemma 15
 }
 
 ### planar graphs ###
