@@ -6,8 +6,8 @@ from framework.bijections.closure import Closure
 from framework.combinatorial_classes import BinaryTree
 import logging
 
-L = LAtom()
-U = UAtom()
+L = LAtomSampler()
+U = UAtomSampler()
 
 K_dy = Alias('K_dy')
 R_b_as = Alias('R_b_as')
@@ -17,6 +17,8 @@ R_w_head = Alias('R_w_head')
 R_b = Alias('R_b')
 R_w = Alias('R_w')
 K = Alias('K')
+Bij = BijectionSampler
+DxFromDy = LDerFromUDerSampler
 
 
 def decomp_to_binary_tree_b_3(decomp):
@@ -36,7 +38,7 @@ def decomp_to_binary_tree_b_3(decomp):
             numwhitenodes += left.get_attribute('numwhitenodes')
             numtotal += left.get_attribute('numtotal')
             numleafs += left.get_attribute('numleafs')
-    
+
     if type(decomp.second) is UAtomClass:
         right = None
         numleafs += 1
@@ -48,15 +50,16 @@ def decomp_to_binary_tree_b_3(decomp):
             numtotal += right.get_attribute('numtotal')
             numleafs += right.get_attribute('numleafs')
 
-    tree = BinaryTree(left, right, 
-        color='black', 
-        numtotal=numtotal, 
-        numblacknodes=numblacknodes, 
-        numwhitenodes=numwhitenodes,
-        numleafs=numleafs
-    )
+    tree = BinaryTree(left, right,
+                      color='black',
+                      numtotal=numtotal,
+                      numblacknodes=numblacknodes,
+                      numwhitenodes=numwhitenodes,
+                      numleafs=numleafs
+                      )
     logging.debug(tree)
     return tree
+
 
 def decomp_to_binary_tree_b_4(decomp):
     logging.debug("b_4")
@@ -67,7 +70,7 @@ def decomp_to_binary_tree_b_4(decomp):
     numtotal = 1
     numleafs = 0
 
-    #(((X,L),U),U)
+    # (((X,L),U),U)
     if type(decomp.second) is UAtomClass and type(decomp.first.second) is UAtomClass:
         logging.debug("#(((X,L),U),U)")
         left = decomp.first.first.first
@@ -81,9 +84,10 @@ def decomp_to_binary_tree_b_4(decomp):
         numtotal += 1
         right = BinaryTree(None, None, color='white')
         numleafs += 2
-            
-    #(((U,U),L),X)
-    elif type(decomp.first.first) is ProdClass and type(decomp.first.first.first) is UAtomClass and type(decomp.first.first.second) is UAtomClass:
+
+    # (((U,U),L),X)
+    elif type(decomp.first.first) is ProdClass and type(decomp.first.first.first) is UAtomClass and type(
+            decomp.first.first.second) is UAtomClass:
         logging.debug("#(((U,U),L),X)")
         numwhitenodes += 1
         numtotal += 1
@@ -98,7 +102,7 @@ def decomp_to_binary_tree_b_4(decomp):
             numwhitenodes += right.get_attribute('numwhitenodes')
             numtotal += right.get_attribute('numtotal')
             numleafs += right.get_attribute('numleafs')
-    #((X,L),X)
+    # ((X,L),X)
     else:
         logging.debug("#((X,L),X)")
         right = decomp.second
@@ -114,18 +118,18 @@ def decomp_to_binary_tree_b_4(decomp):
             numwhitenodes += left.get_attribute('numwhitenodes')
             numtotal += left.get_attribute('numtotal')
             numleafs += left.get_attribute('numleafs')
-        
 
     tree = BinaryTree(left, right,
-        color='black', 
-        numtotal=numtotal, 
-        numblacknodes=numblacknodes, 
-        numwhitenodes=numwhitenodes,
-        numleafs=numleafs
-    )
+                      color='black',
+                      numtotal=numtotal,
+                      numblacknodes=numblacknodes,
+                      numwhitenodes=numwhitenodes,
+                      numleafs=numleafs
+                      )
     logging.debug(tree)
     return tree
-    
+
+
 def decomp_to_binary_tree_w_2(decomp):
     logging.debug("w_2")
     logging.debug(decomp)
@@ -156,15 +160,16 @@ def decomp_to_binary_tree_w_2(decomp):
             numwhitenodes += right.get_attribute('numwhitenodes')
             numtotal += right.get_attribute('numtotal')
             numleafs += right.get_attribute('numleafs')
-    tree = BinaryTree(left, right, 
-        color='white',
-        numtotal=numtotal, 
-        numblacknodes=numblacknodes, 
-        numwhitenodes=numwhitenodes,
-        numleafs=numleafs
-    )
+    tree = BinaryTree(left, right,
+                      color='white',
+                      numtotal=numtotal,
+                      numblacknodes=numblacknodes,
+                      numwhitenodes=numwhitenodes,
+                      numleafs=numleafs
+                      )
     logging.debug(tree)
     return tree
+
 
 def decomp_to_binary_tree_w_1_2(decomp):
     """Creates either a white rooted tree with a left or a right None subtree
@@ -201,36 +206,41 @@ def decomp_to_binary_tree_w_1_2(decomp):
             numtotal += right.get_attribute('numtotal')
             numleafs += right.get_attribute('numleafs')
 
-    tree = BinaryTree(left, right, 
-        color='white',
-        numtotal=numtotal, 
-        numblacknodes=numblacknodes, 
-        numwhitenodes=numwhitenodes,
-        numleafs=numleafs
-    )
+    tree = BinaryTree(left, right,
+                      color='white',
+                      numtotal=numtotal,
+                      numblacknodes=numblacknodes,
+                      numwhitenodes=numwhitenodes,
+                      numleafs=numleafs
+                      )
     logging.debug(tree)
     return tree
 
-class BTRejection(Rejection):
+
+class BTRejectionSampler(RejectionSampler):
     """Extend Rejection to provide a evaluation"
     """
+
     def get_eval(self, x, y):
-        # Todo: verify
-        return self.sampler.get_eval(x, y)/self.oracle.get(y)
+        # todo this is wrong
+        return self.sampler.get_eval(x, y) / self.oracle.get(y)
+
 
 def rejection_step(decomp):
-    return bern(2/decomp.get_u_size())
+    return bern(2 / decomp.get_u_size())
+
 
 binary_tree_grammar = DecompositionGrammar()
 binary_tree_grammar.add_rules({
-    'K_dx': LDerFromUDer(Bijection(K_dy, lambda decomp: UDerivedClass(decomp, None), 'UDerived'), 2/3), # Hacky way
-    'K': BTRejection(K_dy, rejection_step, 'K'),
+    'K_dx': DxFromDy(Bij(K_dy, lambda decomp: UDerivedClass(decomp, None), 'UDerived'), 2 / 3),  # Hacky way
+    'K': BTRejectionSampler(K_dy, rejection_step, 'K'),
     'K_dy': R_b_as + R_w_as,
-    'R_b_as': Bijection((R_w * L * U) + (U * L * R_w) + (R_w * L * R_w), decomp_to_binary_tree_b_3),
-    'R_w_as': Bijection((R_b_head * U) + (U * R_b_head) + (R_b * R_b), decomp_to_binary_tree_w_2),
-    'R_b_head': Bijection((R_w_head * L * U * U) + (U * U * L * R_w_head) + (R_w_head * L * R_w_head), decomp_to_binary_tree_b_4),
-    'R_w_head': Bijection(U + (R_b * U) + (U * R_b) + (R_b * R_b), decomp_to_binary_tree_w_1_2),
-    'R_b': Bijection((U + R_w) * L * (U + R_w), decomp_to_binary_tree_b_3),
-    'R_w': Bijection((U + R_b) * (U + R_b), decomp_to_binary_tree_w_2)
+    'R_b_as': Bij((R_w * L * U) + (U * L * R_w) + (R_w * L * R_w), decomp_to_binary_tree_b_3),
+    'R_w_as': Bij((R_b_head * U) + (U * R_b_head) + (R_b * R_b), decomp_to_binary_tree_w_2),
+    'R_b_head': Bij((R_w_head * L * U * U) + (U * U * L * R_w_head) + (R_w_head * L * R_w_head),
+                    decomp_to_binary_tree_b_4),
+    'R_w_head': Bij(U + (R_b * U) + (U * R_b) + (R_b * R_b), decomp_to_binary_tree_w_1_2),
+    'R_b': Bij((U + R_w) * L * (U + R_w), decomp_to_binary_tree_b_3),
+    'R_w': Bij((U + R_b) * (U + R_b), decomp_to_binary_tree_w_2)
 })
 binary_tree_grammar.init()

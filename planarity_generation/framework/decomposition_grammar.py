@@ -187,24 +187,18 @@ class DecompositionGrammar:
                 _, y = self.stack_y.pop()
                 self.y = y
 
-            if isinstance(sampler, LAtom) or isinstance(sampler, UAtom):
+            if isinstance(sampler, LAtomSampler) or isinstance(sampler, UAtomSampler):
                 self.result.add(sampler.oracle_query_string(self.x, self.y))
 
-            if isinstance(sampler, LSubs):
+            if isinstance(sampler, LSubsSampler):
                 self.stack_x.append((sampler.rhs, self.x))
                 self.x = sampler.rhs.oracle_query_string(self.x, self.y)
 
-            if isinstance(sampler, USubs):
+            if isinstance(sampler, USubsSampler):
                 self.stack_y.append((sampler.rhs, self.y))
                 self.y = sampler.rhs.oracle_query_string(self.x, self.y)
 
-            if isinstance(sampler, LDerFromUDer):
-                self.result.add(sampler.oracle_query_string(self.x, self.y))
-
-            if isinstance(sampler, UDerFromLDer):
-                self.result.add(sampler.oracle_query_string(self.x, self.y))
-
-            if isinstance(sampler, Transformation):
+            if isinstance(sampler, TransformationSampler) and not isinstance(sampler, BijectionSampler):
                 self.result.add(sampler.oracle_query_string(self.x, self.y))
 
             if isinstance(sampler, Alias):

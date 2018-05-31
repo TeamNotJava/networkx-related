@@ -30,9 +30,9 @@ class TestOracle(Oracle):
 
 def other_test():
     # some shortcuts to make the grammar more readable
-    Z = ZeroAtom()
-    L = LAtom()
-    U = UAtom()
+    Z = ZeroAtomSampler()
+    L = LAtomSampler()
+    U = UAtomSampler()
 
     Tree = Alias('Tree')
     Bla = Alias('Bla')
@@ -44,16 +44,16 @@ def other_test():
 
         # tree is either a leaf or inner node with two children which are trees
         'Tree': L + Tree * L * Blub,
-        'Blub': USubs(Bla, Blob),
+        'Blub': USubsSampler(Bla, Blob),
         'Blob': L + U + Z,
-        'Bla': LSubs(Blub, Blob),
+        'Bla': LSubsSampler(Blub, Blob),
 
 
     })
+    test_grammar.init()
 
     # inject the oracle into the samplers
     BoltzmannSampler.oracle = TestOracle()
-    Alias.active_grammar = test_grammar
 
     print(test_grammar.recursive_rules)
     print()
@@ -84,14 +84,14 @@ def binary_tree_test():
 
 
     BoltzmannSampler.oracle = BinaryTreeOracle()
-    print(binary_tree_grammar.collect_oracle_queries('K', 'x', 'y'))
+    [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K', 'x', 'y'))]
     tree = binary_tree_grammar.sample('K', 'x', 'y')
     print(tree)
     print("Black Nodes: {}".format(tree.get_attribute('numblacknodes')))
     print("White Nodes: {}".format(tree.get_attribute('numwhitenodes')))
     print("Total Nodes: {}".format(tree.get_attribute('numtotal')))
 
-    print(binary_tree_grammar.collect_oracle_queries('K_dx', 'x', 'y'))
+    [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dx', 'x', 'y'))]
     tree2 = binary_tree_grammar.sample('K_dx', 'x', 'y')
     print(tree2)
     print("Black Nodes: {}".format(tree2.get_base_class_object().get_attribute('numblacknodes')))
