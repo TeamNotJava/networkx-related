@@ -18,7 +18,7 @@ into a Boltzmann sampler for 3-connected planar graphs.
 
 import networkx as nx
 from framework.bijections.halfedge import HalfEdge
-from framework.binary_tree_decomposition import BinaryTree
+from framework.combinatorial_classes import BinaryTree
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -455,8 +455,8 @@ class Closure:
         """
         init_half_edge = self.___btree_to_planar_map(binary_tree)
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
-        if self.___reject(init_half_edge):
-            return None
+        # if self.___reject(init_half_edge):
+        #     return None
         init_half_edge = self.___quadrangulate(init_half_edge)
         return init_half_edge
 
