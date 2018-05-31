@@ -391,7 +391,7 @@ class TransformationSampler(UnarySampler):
     def get_eval(self, x, y):
         # if a transformation is given, apply it here
         if self.eval_transform is not None:
-            return self.eval_transform(self.sampler.get_eval(x, y))
+            return self.eval_transform(self.sampler.get_eval(x, y), x, y)
         # otherwise query the oracle because we cannot infer the evaluation in the case of a general transformation
         return self.oracle.get(self.oracle_query_string(x, y))
 

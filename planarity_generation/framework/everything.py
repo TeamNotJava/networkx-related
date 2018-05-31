@@ -76,8 +76,8 @@ M_3_arrow_dx = Alias('M_3_arrow_dx')
 three_connected_rules = {
     'M_3_arrow': Bij(J_a, primal_map),
     'M_3_arrow_dx': Bij(J_a_dx, primal_map),
-    'G_3_arrow': Trans(M_3_arrow, whitney, lambda eval: 0.5 * eval), # see 4.1.9.
-    'G_3_arrow_dx': Trans(M_3_arrow_dx, whitney, lambda eval: 0.5 * eval),
+    'G_3_arrow': Trans(M_3_arrow, whitney, lambda eval, x, y: 0.5 * eval), # see 4.1.9.
+    'G_3_arrow_dx': Trans(M_3_arrow_dx, whitney, lambda eval, x, y: 0.5 * eval),
     'G_3_arrow_dy': DyFromDx(G_3_arrow_dx, alpha_u_l = 3) # alpha_u_l = 3, see 5.3.3.
 }
 
@@ -122,14 +122,14 @@ F = Alias('F')
 F_dx = Alias('F_dx')
 
 two_connected_rules = {
-    'G_2_arrow': Trans(Z + D, add_root_edge),
+    'G_2_arrow': Trans(Z + D, add_root_edge, lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))), # see 5.5
     'F': L * L * G_2_arrow,
-    'G_2_dy': Trans(F, forget_direction_of_root_edge),
+    'G_2_dy': Trans(F, forget_direction_of_root_edge, lambda evl, x, y: 0.5 * evl),
     'G_2_dx': DxFromDy(G_2_dy, alpha_l_u = 2.0),  # see p. 26
 
-    'G_2_arrow_dx': Trans(D_dx, add_root_edge),
+    'G_2_arrow_dx': Trans(D_dx, add_root_edge, lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),
     'F_dx': L * L * G_2_arrow_dx + (L + L) * G_2_arrow,  # notice that 2 * L = L + L
-    'G_2_dy_dx': Trans(F_dx, forget_direction_of_root_edge),
+    'G_2_dy_dx': Trans(F_dx, forget_direction_of_root_edge, lambda evl, x, y: 0.5 * evl),
     'G_2_dx_dy': Bij(G_2_dy_dx, lambda dy_dx: dy_dx.invert_derivation_order()),
     'G_2_dx_dx': DxFromDy(G_2_dx_dy, alpha_l_u = 1.0) # see 5.5
 }

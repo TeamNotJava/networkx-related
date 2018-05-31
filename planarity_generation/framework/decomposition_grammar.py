@@ -210,7 +210,9 @@ class DecompositionGrammar:
                 self.y = sampler.rhs.oracle_query_string(self.x, self.y)
 
             if isinstance(sampler, TransformationSampler) and not isinstance(sampler, BijectionSampler):
-                self.result.add(sampler.oracle_query_string(self.x, self.y))
+                if sampler.eval_transform is None:
+                    self.result.add(sampler.oracle_query_string(self.x, self.y))
+                # otherwise the sampler has an eval_transform function and does not directly query the oracle
 
             if isinstance(sampler, Alias):
                 if sampler.alias in self.seen_alias_samplers:
