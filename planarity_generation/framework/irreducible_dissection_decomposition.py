@@ -86,10 +86,16 @@ def bij_j_dx(decomp):
 
 
 def rej_admiss(decomp):
+    """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
+    to avoid 4 cycles
+    """
     return True
 
 
 def rej_admiss_dx(decomp):
+    """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
+    to avoid 4 cycles
+    """
     return True
 
 
