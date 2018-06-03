@@ -2,9 +2,8 @@ from framework.decomposition_grammar import Alias
 from framework.irreducible_dissection_decomposition import irreducible_dissection_grammar
 from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
-from framework.utils import bern
-from framework.bijections.closure import Closure
-from random import choice
+from framework.bijections.primal_map import primal_map
+from framework.bijections.whitney_3map_to_3graph import whitney
 import logging
 
 L = LAtomSampler()
@@ -21,16 +20,14 @@ DyFromDx = UDerFromLDerSampler
 
 
 def bij_primal(decomp):
-    logging.error('Primal bijection bound to grammer')
-    raise NotImplementedError
+    return primal_map(decomp)
 
 def bij_primal_dx(decomp):
     logging.error('Primal bijection bound to grammer')
     raise NotImplementedError
 
 def bij_whitney(decomp):
-    logging.error('Whitney bijection bound to grammer')
-    raise NotImplementedError
+    return whitney(decomp)
 
 def bij_whitney_dx(decomp):
     logging.error('Whitney bijection bound to grammer')
