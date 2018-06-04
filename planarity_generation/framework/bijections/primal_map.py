@@ -25,6 +25,7 @@ def primal_map(dissection):
     :param dissection:
     """
     # todo what else needs to be done here?
+    # petrov: As I have understood the bijection, I think we have implemented everything.
     return PrimalMap().primal_map_bijection(dissection)
 
 

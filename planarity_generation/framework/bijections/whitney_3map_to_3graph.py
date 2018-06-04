@@ -28,6 +28,7 @@ def whitney(map):
     :return:
     """
     # todo what else needs to be done here?
+    # petrov: As I have understood the bijection, I think we have implemented everything.
     return WhitneyBijection().whitney_bijection(map)
 
 class WhitneyBijection:
@@ -49,11 +50,11 @@ class WhitneyBijection:
         edges_list = set()
         self.__extract_3_graph_components_rec(root_half_edge, root_half_edge, set(), vertices_list, edges_list)
 
-        # We transform the extracted components to the nx.Graph structure
-        nx_graph = self.__create_graph_from_components(root_half_edge, vertices_list, edges_list)
-
         # We create a tuple of the root edge node numbers.
         root_edge = (root_half_edge.node_nr, root_half_edge.opposite.node_nr)
+
+        # We transform the extracted components to the nx.Graph structure
+        nx_graph = self.__create_graph_from_components(root_edge, vertices_list, edges_list)
 
         return EdgeRootedThreeConnectedPlanarGraph(nx_graph, root_edge)
 
@@ -76,7 +77,7 @@ class WhitneyBijection:
         # than the first half edge is added to a vertices list.
         walker_half_edge = first_half_edge
         if walker_half_edge.node_nr != root_half_edge.node_nr and walker_half_edge.node_nr != root_half_edge.opposite.node_nr:
-            print(walker_half_edge)
+            #print(walker_half_edge)
             vertices_list.add(walker_half_edge.node_nr)
 
         # Insert half edges to the edges list.
@@ -98,7 +99,7 @@ class WhitneyBijection:
 
 
 
-    def __create_graph_from_components(self, root_half_edge, vertices_list, edges_list):
+    def __create_graph_from_components(self, root_edge, vertices_list, edges_list):
 
         G = nx.Graph()
 
@@ -106,8 +107,8 @@ class WhitneyBijection:
         # edges that are connected with this vertices and from this point we are using nx.Graph structure,
         # they have to be added. In order to give the correct number of L-vertices in EdgeRootedThreeConnectedPlanarGraph
         # we always have to substract 2 from the number of nodes.
-        G.add_node(root_half_edge.node_nr)
-        G.add_node(root_half_edge.opposite.node_nr)
+        G.add_node(root_edge[0])
+        G.add_node(root_edge[1])
 
         # print('Vertices list: ' + vertices_list.__repr__())
         # print('Vertices list: ' + edges_list.__repr__())
@@ -138,10 +139,5 @@ class WhitneyBijection:
         # Chech the properties
         print(edge_rooted_three_connected_graph)
 
-        print(len(edge_rooted_three_connected_graph.graph.nodes))
         nx.draw(edge_rooted_three_connected_graph.graph)
         plt.show()
-
-
-if __name__ == "__main__":
-    WhitneyBijection().test_whitney_bijection()

@@ -28,8 +28,10 @@ class Closure:
         self.___construct_planar_map(btree, init_half_edge, 0, 0)
         #Destroy the initial half-edge as it is only needed to construct its opposite
         init_half_edge.opposite.opposite = None
-        print("btree to planar return: ")
-        print(init_half_edge.opposite)
+        print("btree to planar map return: ")
+        liste = self.list_half_edges(init_half_edge.opposite, [])
+        for l in liste:
+            print(l)
         return init_half_edge.opposite
 
 
@@ -62,7 +64,7 @@ class Closure:
             color = 0
         half_edge_1.color = color
         half_edge_2.color = color
-        half_edge_2.color = color
+        half_edge_3.color = color
 
         #Set the number of node the edges asre assigned to
         half_edge_1.node_nr = node_nr
@@ -128,9 +130,10 @@ class Closure:
         # list_closure = self.list_half_edges(init_half_edge, [])
         # for i in list_closure:
         #     print(i)
+        return_edge = self.___return_smallest_half_edge(init_half_edge)
         print("Partial closure returns the edge:",end=" ")
-        print(init_half_edge)
-        return init_half_edge
+        print(return_edge)
+        return return_edge
 
 
 
@@ -139,40 +142,30 @@ class Closure:
     #input: init_half_edge is the half-edge that we get when we convert a binary tree into
     #a planar map
     def ___bicolored_complete_closure(self, init_half_edge):
-        #For each node of the hexagon save the half-edge order
-        stack = [[] for i in range(6)]
+        print("BICOLORED COMPLETE CLOSURE")
         starting_half_edge = self.___bicolored_partial_closure(init_half_edge)
-        # print("Partial closure list:")
-        # list_partial = self.list_half_edges(init_half_edge, [])
-        # for i in list_partial:
-        #     print(i)
+        print("Partial closure list:")
+        list_partial = self.list_half_edges(init_half_edge, [])
+        for i in list_partial:
+            print(i)
 
         hexagon = [HalfEdge() for i in range(12)]
         index = self.___get_max_half_edge_index(starting_half_edge) + 1
         hexagon_start_half_edge = self.___construct_hexagon(hexagon, starting_half_edge, index)
-        # print("Hexagon list:")
-        # list_hexagon = self.list_half_edges(hexagon_start_half_edge, [])
-        # for i in list_hexagon:
-        #     print(i)
+        print("Hexagon list:")
+        list_hexagon = self.list_half_edges(hexagon_start_half_edge, [])
+        for i in list_hexagon:
+            print(i)
 
-        #Init stack
-        current_half_edge = hexagon_start_half_edge
-        while True:
-            current_node = current_half_edge.node_nr - hexagon[0].node_nr
-            # print("Current node:",end=" ")
-            # print(current_node)         
-            stack[current_node].insert(0, current_half_edge)
-            stack[current_node].insert(1, current_half_edge.next)
-            current_half_edge = current_half_edge.opposite.next
-            if current_half_edge == hexagon_start_half_edge:
-                break
 
         #Connect the starting half-edge of our planar map with the first node of the hexagon
         new_half_edge = HalfEdge()
         starting_half_edge.opposite = new_half_edge
         new_half_edge.opposite = starting_half_edge
         new_half_edge.prior = hexagon_start_half_edge
-        new_half_edge.next = hexagon[11]        
+        #Do the edges connecting the hexagon and the partial closer be marked as hexagon edges????!!
+        # new_half_edge.is_hexagonal = True
+        new_half_edge.next = hexagon[11]
         hexagon_start_half_edge.next = new_half_edge
         hexagon[11].prior = new_half_edge
         
@@ -181,94 +174,88 @@ class Closure:
         new_half_edge.node_nr = hexagon[11].node_nr
         new_half_edge.color = hexagon[11].color
         index = index + 1
-
-        stack[0].insert(1, new_half_edge)
-        # print("Stack: ")
-        # for s in stack:
-        #     print(s)
-
-        # print("Connecting hexagon and partial with: ",end=" ")
-        # print(new_half_edge)
-
+        
+        
+        print("Connecting hexagon and partal with: ",end=" ")
+        print(new_half_edge)
+        
         #Now traverse the planar map. Depending on the distance between a new inner edge and
         #the next half-edge one can assign the new half edge to a certain hexagon node
         distance = 0
-        hexagon_iter = 0
+        hexagon_iter = hexagon_start_half_edge
         current_half_edge = starting_half_edge
+        number_of_stems = len(self.list_half_edges(hexagon_start_half_edge, []))
         while True:
-            current_half_edge = current_half_edge.next 
+            current_half_edge = current_half_edge.next
             if current_half_edge == starting_half_edge:
                 break
             if current_half_edge.opposite == None:
+                number_of_stems = number_of_stems - 1
                 fresh_half_edge = HalfEdge()
                 fresh_half_edge.opposite = current_half_edge
                 current_half_edge.opposite = fresh_half_edge
+                #fresh_half_edge.is_hexagonal = True??????
 
                 if distance == 0:
-                    # print("Distance 0")
-                    hexagon_iter += 3
-                    connected_edges = stack[hexagon[hexagon_iter].node_nr - hexagon[0].node_nr]
+                    #Move 4 half-edges further
+                    hexagon_iter = hexagon[(hexagon_iter.index - hexagon_start_half_edge.index + 4)%11]
+
                 elif distance == 1:
-                    # print("Distance 1")
-                    hexagon_iter += 1
-                    connected_edges = stack[hexagon[hexagon_iter].node_nr - hexagon[0].node_nr]             
-                else: 
-                    # print("Distance 2")
-                    connected_edges = stack[hexagon[hexagon_iter].node_nr - hexagon[0].node_nr]
-
-                if connected_edges[0].index == hexagon[hexagon_iter].index:
-                    #We can insert the new edge between the left hexagon edge and the last inserted edge
-                    fresh_half_edge.next = connected_edges[1]
-                    fresh_half_edge.prior = hexagon[hexagon_iter]
-                    hexagon[hexagon_iter].next = fresh_half_edge
-                    connected_edges[1].prior = fresh_half_edge
-                    fresh_half_edge.index = index
-                    fresh_half_edge.node_nr = hexagon[hexagon_iter].node_nr
-                    fresh_half_edge.color = hexagon[hexagon_iter].color
-                    #Update stack
-                    connected_edges.insert(1, fresh_half_edge)
-                    # print("At stack number:",end=" ")
-                    # print(hexagon[hexagon_iter].node_nr - hexagon[0].node_nr)
-
+                    #Move 2 half-edges further
+                    hexagon_iter = hexagon[(hexagon_iter.index - hexagon_start_half_edge.index + 2)%11]
+                
                 else:
-                    #We can insert the new edge between the right hexagon edge and the first inserted edge
-                    pos = len(connected_edges) - 1 
-                    fresh_half_edge.next = connected_edges[pos]
-                    fresh_half_edge.prior = connected_edges[pos-1]
-                    connected_edges[pos].prior = fresh_half_edge
-                    connected_edges[pos-1].next = fresh_half_edge
-                    fresh_half_edge.index = index
-                    fresh_half_edge.node_nr = connected_edges[pos].node_nr
-                    fresh_half_edge.color = connected_edges[pos].color
-                    #Update stack
-                    connected_edges.insert(pos, fresh_half_edge)
-                    # print("At stack number:",end=" ")
-                    # print(hexagon[hexagon_iter].node_nr - hexagon[0].node_nr)
+                    #Stay at current half-edge
+                    pass
+                 
+                #THIS HERE IS PROBABLY NO PROBLEM (MAYBE ONLY A PROBLEM FOR THE HALF-EDGE VIEW)   
+                # if hexagon_iter.index == hexagon[0].index and number_of_stems == 0:
+                #     #A new half-edge was already added to this node so we have to take 
+                #     #the prior of the current's prior to add the fresh-edge
+                #     hexagon_iter = hexagon_iter.prior.prior
 
+                # print("Hexagon_iter:",end=" ")
+                # print(hexagon_iter)    
+                hexagon_iter.next = fresh_half_edge
+                hexagon_iter.prior.prior = fresh_half_edge
+            
+                fresh_half_edge.next = hexagon_iter.prior
+                fresh_half_edge.prior = hexagon_iter
+                fresh_half_edge.color = hexagon_iter.color
+                fresh_half_edge.node_nr = hexagon_iter.node_nr
+                fresh_half_edge.index = index 
+         
                 # print("adding fresh edge:", end=" ")
                 # print(fresh_half_edge)
-                # print("Stack: ")
-                # for s in stack:
-                #     print(s)
-
-                if distance == 0 or distance == 1:
-                    hexagon_iter += 1
-
+                
                 index += 1
                 distance = 0
             else:
                 current_half_edge = current_half_edge.opposite
                 distance += 1
 
-        # print("Complete closure list:")
-        # list_closure = self.list_half_edges(hexagon[0], [])
-        # for i in list_closure:
-        #     print(i)
+        print("Complete closure list:")
+        list_closure = self.list_half_edges(hexagon[0], [])
+        for i in list_closure:
+            print(i)
         print("Complete closure returns the edge:", end=" ")
         print(hexagon[0])
         return hexagon[0]
 
-        
+
+    #Returns the smalles half-edge in the graph
+    def ___return_smallest_half_edge(self, init_half_edge):
+        half_edge_list = self.list_half_edges(init_half_edge, [])
+        min_half_edge = None 
+
+        for edge in half_edge_list:
+            if min_half_edge == None and edge.opposite == None:
+                min_half_edge = edge
+            elif min_half_edge != None and edge.opposite == None and edge.index < min_half_edge.index:
+                min_half_edge = edge 
+
+        return min_half_edge
+
 
 
     #Constructs a hexagon from a list of half_edges. 
@@ -303,8 +290,6 @@ class Closure:
 
         #Set node number.
         node_num = self.___get_max_node_nr(partial_closure_edge) + 1
-        print("max node nr:",end=" ")
-        print(node_num)
         current_half_edge = hexagon_half_edges[11]
         while True:
             current_half_edge.node_nr = node_num
@@ -314,12 +299,22 @@ class Closure:
             if current_half_edge == hexagon_half_edges[11]:
                 break
 
+        even_color = None
+        odd_color = None
+        if hexagon_half_edges[0].node_nr % 2 == 0:
+            #Then all even nodes have to have the inverse color
+            even_color = inv_color
+            odd_color = color
+        else:
+            even_color = color
+            odd_color = inv_color
+
         #Set color
         for i in range(12):
             if hexagon_half_edges[i].node_nr % 2 == 0:
-                hexagon_half_edges[i].color = inv_color
+                hexagon_half_edges[i].color = even_color
             else:
-                hexagon_half_edges[i].color = color
+                hexagon_half_edges[i].color = odd_color
 
 
         #Set indeces for half-edges
