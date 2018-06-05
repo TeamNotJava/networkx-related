@@ -173,6 +173,7 @@ class Closure:
         new_half_edge.index = index
         new_half_edge.node_nr = hexagon[11].node_nr
         new_half_edge.color = hexagon[11].color
+        new_half_edge.added_by_comp_clsr = True
         index = index + 1
         
         
@@ -207,26 +208,35 @@ class Closure:
                 else:
                     #Stay at current half-edge
                     pass
-                 
-                #THIS HERE IS PROBABLY NO PROBLEM (MAYBE ONLY A PROBLEM FOR THE HALF-EDGE VIEW)   
-                # if hexagon_iter.index == hexagon[0].index and number_of_stems == 0:
-                #     #A new half-edge was already added to this node so we have to take 
-                #     #the prior of the current's prior to add the fresh-edge
-                #     hexagon_iter = hexagon_iter.prior.prior
 
-                # print("Hexagon_iter:",end=" ")
-                # print(hexagon_iter)    
-                hexagon_iter.next = fresh_half_edge
-                hexagon_iter.prior.prior = fresh_half_edge
-            
-                fresh_half_edge.next = hexagon_iter.prior
-                fresh_half_edge.prior = hexagon_iter
+                #Check if already added an half-edge to the current node
+                last_added_half_edge = None
+                temp_half_edge = hexagon_iter
+                while True:
+                    temp_half_edge = temp_half_edge.next
+                    if temp_half_edge.added_by_comp_clsr == True:
+
+                        last_added_half_edge = temp_half_edge
+                        break
+                    if temp_half_edge == hexagon_iter:
+                        break
+
+                if last_added_half_edge != None:
+                    fresh_half_edge.next = last_added_half_edge
+                    fresh_half_edge.prior = hexagon_iter
+                    last_added_half_edge.prior = fresh_half_edge
+                    hexagon_iter.next = fresh_half_edge
+                else:
+                    fresh_half_edge.next = hexagon_iter.prior
+                    fresh_half_edge.prior = hexagon_iter
+                    hexagon_iter.prior.prior = fresh_half_edge
+                    hexagon_iter.next = fresh_half_edge
+
+
                 fresh_half_edge.color = hexagon_iter.color
                 fresh_half_edge.node_nr = hexagon_iter.node_nr
                 fresh_half_edge.index = index 
-         
-                # print("adding fresh edge:", end=" ")
-                # print(fresh_half_edge)
+                fresh_half_edge.added_by_comp_clsr = True
                 
                 index += 1
                 distance = 0
@@ -345,40 +355,45 @@ class Closure:
         new_half_edge = HalfEdge()
         new_half_edge.next = init_half_edge
         new_half_edge.prior = init_half_edge.prior
+        init_half_edge.prior.next = new_half_edge 
+        init_half_edge.prior = new_half_edge
         index = self.___get_max_half_edge_index(init_half_edge) + 1
-        print(index)
-        new_half_edge.iter = index
+        new_half_edge.index = index
         index += 1
         new_half_edge.node_nr = init_half_edge.node_nr
         new_half_edge.color = init_half_edge.color
+        return_edge = new_half_edge
 
+    
         #Iterate to the opposite node of the hexagon node 
         count = 0
         current_half_edge = new_half_edge
         while True:
-            current_half_edge = current_half_edge.next
-            current_half_edge = current_half_edge.opposite
+            current_half_edge = current_half_edge.prior.opposite
             count += 1
-            if count == 5:
+            if count == 3:
                 break
 
         fresh_half_edge = HalfEdge()
         fresh_half_edge.opposite = new_half_edge
         new_half_edge.opposite = fresh_half_edge
 
-        fresh_half_edge.prior = current_half_edge
-        fresh_half_edge.next = current_half_edge.next
-        current_half_edge.next.prior = new_half_edge
-        current_half_edge.next = fresh_half_edge
+        fresh_half_edge.prior = current_half_edge.prior
+        fresh_half_edge.next = current_half_edge
+        current_half_edge.prior.next = fresh_half_edge
+        current_half_edge.prior = fresh_half_edge
+
 
         fresh_half_edge.index = index 
         fresh_half_edge.node_nr = current_half_edge.node_nr
         fresh_half_edge.color = current_half_edge.color
 
+        if return_edge.color != 0:
+            return_edge = fresh_half_edge
 
         print("Quadrangulation returns the edge:", end=" ")
-        print(init_half_edge.prior.opposite)
-        return init_half_edge.prior.opposite
+        print(return_edge)
+        return return_edge
 
 
 
