@@ -4,7 +4,7 @@ from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
 from framework.utils import bern
 from framework.bijections.closure import Closure
-from framework.rejections.irreducability_check import check_irreducible_dissection
+from framework.rejections.admissibility_check import check_admissibility
 from random import choice
 import logging
 
@@ -90,14 +90,14 @@ def rej_admiss(decomp):
     """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
     to avoid 4 cycles
     """
-    return check_irreducible_dissection(decomp)
+    return check_admissibility(decomp)
 
 
 def rej_admiss_dx(decomp):
     """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
     to avoid 4 cycles
     """
-    return check_irreducible_dissection(decomp)
+    return check_admissibility(decomp)
 
 
 irreducible_dissection_grammar = DecompositionGrammar()
