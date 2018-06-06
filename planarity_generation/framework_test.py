@@ -34,10 +34,10 @@ def other_test():
     L = LAtomSampler()
     U = UAtomSampler()
 
-    Tree = Alias('Tree')
-    Bla = Alias('Bla')
-    Blub = Alias('Blub')
-    Blob = Alias('Blob')
+    Tree = AliasSampler('Tree')
+    Bla = AliasSampler('Bla')
+    Blub = AliasSampler('Blub')
+    Blob = AliasSampler('Blob')
 
     test_grammar = DecompositionGrammar()
     test_grammar.add_rules({

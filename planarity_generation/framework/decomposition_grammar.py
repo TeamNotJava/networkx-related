@@ -6,7 +6,7 @@ import sys
 # An alias sampler is a sampler defined by a rule in a decomposition grammar.
 # The rule can contain the same alias sampler itself.
 # This allows to implement recursive decompositions.
-class Alias(BoltzmannSampler):
+class AliasSampler(BoltzmannSampler):
     grammar_not_initialized_error_msg = ": you have to set the grammar this Alias sampler belongs to before using it"
 
     def __init__(self, alias, grammar=None):
@@ -45,7 +45,7 @@ class Alias(BoltzmannSampler):
     def get_all_oracle_queries(self, x, y):
         if self.grammar is None:
             sys.exit(self.alias + self.grammar_not_initialized_error_msg)
-        if self.grammar.is_recursive_rule(self.alias):
+        if self.is_recursive():
             return [self.oracle_query_string(x, y)]
         else:
             return self.grammar.get_rule(self.alias).get_all_oracle_queries(x, y)
@@ -53,7 +53,7 @@ class Alias(BoltzmannSampler):
     def get_eval(self, x, y):
         if self.grammar is None:
             sys.exit(self.alias + self.grammar_not_initialized_error_msg)
-        if self.grammar.is_recursive_rule(self.alias):
+        if self.is_recursive():
             return self.oracle.get(self.oracle_query_string(x, y))
         else:
             return self.grammar.get_rule(self.alias).get_eval(x, y)
@@ -129,6 +129,8 @@ class DecompositionGrammar:
             self.recursive_rules |= set(visitor.get_result())
         # automatically set target class labels of transformation sampler where possible
         self.infer_target_class_labels()
+        # precompute evaluations
+        # todo
 
     ### visitors ###
 
@@ -138,10 +140,18 @@ class DecompositionGrammar:
             self.grammar = grammar
 
         def visit(self, sampler):
-            if isinstance(sampler, Alias):
+            if isinstance(sampler, AliasSampler):
                 sampler.grammar = self.grammar
                 visitor_wants_to_go_on = False
                 return visitor_wants_to_go_on
+
+    # todo
+    class PrecomputeEvaluationsVisitor:
+        def __init__(self):
+            pass
+
+        def visit(self, sampler):
+            pass
 
     # determines which rules are recursive
     class FindRecursiveRulesVisitor:
@@ -163,7 +173,7 @@ class DecompositionGrammar:
                 # so when we get to the right child later we can now and restore state
                 # here the list has to be copied
                 self.stack.append((sampler.rhs, list(self.seen_alias_samplers)))
-            if isinstance(sampler, Alias):
+            if isinstance(sampler, AliasSampler):
                 if sampler.alias in self.seen_alias_samplers:
                     # if we see it for the second time then we know it's recursive
                     self.result.append(sampler.alias)
@@ -214,7 +224,7 @@ class DecompositionGrammar:
                     self.result.add(sampler.oracle_query_string(self.x, self.y))
                 # otherwise the sampler has an eval_transform function and does not directly query the oracle
 
-            if isinstance(sampler, Alias):
+            if isinstance(sampler, AliasSampler):
                 if sampler.alias in self.seen_alias_samplers:
                     if sampler.is_recursive():
                         # i'm not very confident about this

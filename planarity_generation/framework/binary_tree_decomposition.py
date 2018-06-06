@@ -1,4 +1,4 @@
-from framework.decomposition_grammar import Alias
+from framework.decomposition_grammar import AliasSampler
 from framework.samplers.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar
 from framework.utils import bern
@@ -9,14 +9,14 @@ import logging
 L = LAtomSampler()
 U = UAtomSampler()
 
-K_dy = Alias('K_dy')
-R_b_as = Alias('R_b_as')
-R_w_as = Alias('R_w_as')
-R_b_head = Alias('R_b_head')
-R_w_head = Alias('R_w_head')
-R_b = Alias('R_b')
-R_w = Alias('R_w')
-K = Alias('K')
+K_dy = AliasSampler('K_dy')
+R_b_as = AliasSampler('R_b_as')
+R_w_as = AliasSampler('R_w_as')
+R_b_head = AliasSampler('R_b_head')
+R_w_head = AliasSampler('R_w_head')
+R_b = AliasSampler('R_b')
+R_w = AliasSampler('R_w')
+K = AliasSampler('K')
 Bij = BijectionSampler
 Rej = RejectionSampler
 DxFromDy = LDerFromUDerSampler
@@ -216,15 +216,6 @@ def decomp_to_binary_tree_w_1_2(decomp):
                       )
     logging.debug(tree)
     return tree
-
-
-class BTRejectionSampler(RejectionSampler):
-    """Extend Rejection to provide a evaluation"
-    """
-
-    def get_eval(self, x, y):
-        # todo this is wrong
-        return self.sampler.get_eval(x, y) / self.oracle.get(y)
 
 
 def rejection_step(decomp):

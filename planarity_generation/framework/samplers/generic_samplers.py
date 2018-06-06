@@ -42,6 +42,14 @@ class BoltzmannSampler:
         """
         raise NotImplementedError
 
+    def precompute_eval(self, x, y):
+        """Precomputes the evaluation of the generating function and stores it.
+
+        :param x: symbolic x argument
+        :param y: symbolic y argument
+        """
+        self.precomputed_eval = self.get_eval(x, y)
+
     # todo maybe find a better name for this
     def oracle_query_string(self, x, y):
         """String used as key in oracle.

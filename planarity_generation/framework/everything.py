@@ -24,14 +24,14 @@ DyFromDx = UDerFromLDerSampler
 
 ### binary trees ###
 
-K_dy = Alias('K_dy')
-R_b_as = Alias('R_b_as')
-R_w_as = Alias('R_w_as')
-R_b_head = Alias('R_b_head')
-R_w_head = Alias('R_w_head')
-R_b = Alias('R_b')
-R_w = Alias('R_w')
-K = Alias('K')
+K_dy = AliasSampler('K_dy')
+R_b_as = AliasSampler('R_b_as')
+R_w_as = AliasSampler('R_w_as')
+R_b_head = AliasSampler('R_b_head')
+R_w_head = AliasSampler('R_w_head')
+R_b = AliasSampler('R_b')
+R_w = AliasSampler('R_w')
+K = AliasSampler('K')
 
 binary_tree_rules = {
     'K': Bij(Rej(K_dy, rejection_step), lambda dy: dy.get_base_class_object()),
@@ -48,14 +48,14 @@ binary_tree_rules = {
 
 ### dissections ###
 
-K = Alias('K')
-K_dx = Alias('K_dx')
-I = Alias('I')
-I_dx = Alias('I_dx')
-J = Alias('J')
-J_dx = Alias('J_dx')
-J_a = Alias('J_a')
-J_a_dx = Alias('J_a_dx')
+K = AliasSampler('K')
+K_dx = AliasSampler('K_dx')
+I = AliasSampler('I')
+I_dx = AliasSampler('I_dx')
+J = AliasSampler('J')
+J_dx = AliasSampler('J_dx')
+J_a = AliasSampler('J_a')
+J_a_dx = AliasSampler('J_a_dx')
 
 irreducible_dissection_rules = {
     'I': Bij(K, bij_closure),
@@ -68,11 +68,11 @@ irreducible_dissection_rules = {
 
 ### 3-connected maps/graphs ###
 
-G_3_arrow = Alias('G_3_arrow')
-G_3_arrow_dy = Alias('G_3_arrow_dy')
-G_3_arrow_dx = Alias('G_3_arrow_dx')
-M_3_arrow = Alias('M_3_arrow')
-M_3_arrow_dx = Alias('M_3_arrow_dx')
+G_3_arrow = AliasSampler('G_3_arrow')
+G_3_arrow_dy = AliasSampler('G_3_arrow_dy')
+G_3_arrow_dx = AliasSampler('G_3_arrow_dx')
+M_3_arrow = AliasSampler('M_3_arrow')
+M_3_arrow_dx = AliasSampler('M_3_arrow_dx')
 
 three_connected_rules = {
     'M_3_arrow': Bij(J_a, primal_map),
@@ -86,16 +86,16 @@ three_connected_rules = {
 
 ### networks ###
 
-Link = Alias('Link')
-D = Alias('D')
-S = Alias('S')
-P = Alias('P')
-H = Alias('H')
+Link = AliasSampler('Link')
+D = AliasSampler('D')
+S = AliasSampler('S')
+P = AliasSampler('P')
+H = AliasSampler('H')
 
-D_dx = Alias('D_dx')
-S_dx = Alias('S_dx')
-P_dx = Alias('P_dx')
-H_dx = Alias('H_dx')
+D_dx = AliasSampler('D_dx')
+S_dx = AliasSampler('S_dx')
+P_dx = AliasSampler('P_dx')
+H_dx = AliasSampler('H_dx')
 
 network_rules = {
     'Link': Bij(U, u_atom_to_network),  # introduce this just for readability
@@ -112,17 +112,17 @@ network_rules = {
 
 ### 2-connected planar graphs ###
 
-G_2_arrow = Alias('G_2_arrow')
-G_2_arrow_dy = Alias('G_2_arrow_dy')
-G_2_arrow_dx = Alias('G_2_arrow_dx')
+G_2_arrow = AliasSampler('G_2_arrow')
+G_2_arrow_dy = AliasSampler('G_2_arrow_dy')
+G_2_arrow_dx = AliasSampler('G_2_arrow_dx')
 
-G_2_dx = Alias('G_2_dx')
-G_2_dx_dx = Alias('G_2_dx_dx')
-G_2_dy = Alias('G_2_dy')
-G_2_dy_dx = Alias('G_2_dy_dx')
-G_2_dx_dy = Alias('G_2_dx_dy')
-F = Alias('F')
-F_dx = Alias('F_dx')
+G_2_dx = AliasSampler('G_2_dx')
+G_2_dx_dx = AliasSampler('G_2_dx_dx')
+G_2_dy = AliasSampler('G_2_dy')
+G_2_dy_dx = AliasSampler('G_2_dy_dx')
+G_2_dx_dy = AliasSampler('G_2_dx_dy')
+F = AliasSampler('F')
+F_dx = AliasSampler('F_dx')
 
 two_connected_rules = {
     'G_2_arrow': Trans(Z + D, add_root_edge,
@@ -143,9 +143,9 @@ two_connected_rules = {
 
 ### connected planar graphs ###
 
-G_1 = Alias('G_1')
-G_1_dx = Alias('G_1_dx')
-G_1_dx_dx = Alias('G_1_dx_dx')
+G_1 = AliasSampler('G_1')
+G_1_dx = AliasSampler('G_1_dx')
+G_1_dx_dx = AliasSampler('G_1_dx_dx')
 
 connected_rules = {
     'G_1_dx': Set(0, LSubs(G_2_dx, L * G_1_dx)),
@@ -155,8 +155,8 @@ connected_rules = {
 
 ### planar graphs ###
 
-G = Alias('G')
-G_dx = Alias('G_dx')
+G = AliasSampler('G')
+G_dx = AliasSampler('G_dx')
 
 planar_graphs_rules = {
     'G': Set(0, G_1),

@@ -1,4 +1,4 @@
-from framework.decomposition_grammar import Alias
+from framework.decomposition_grammar import AliasSampler
 from framework.binary_tree_decomposition import binary_tree_grammar
 from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
@@ -10,12 +10,12 @@ import logging
 
 L = LAtomSampler()
 U = UAtomSampler()
-K = Alias('K')
-K_dx = Alias('K_dx')
-I = Alias('I')
-I_dx = Alias('I_dx')
-J = Alias('J')
-J_dx = Alias('J_dx')
+K = AliasSampler('K')
+K_dx = AliasSampler('K_dx')
+I = AliasSampler('I')
+I_dx = AliasSampler('I_dx')
+J = AliasSampler('J')
+J_dx = AliasSampler('J_dx')
 color_black = 0
 color_white = 1
 Bij = BijectionSampler

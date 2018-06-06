@@ -1,4 +1,4 @@
-from framework.decomposition_grammar import Alias
+from framework.decomposition_grammar import AliasSampler
 from framework.samplers.generic_samplers import *
 from framework.samplers.special_samplers import SpecialSampler1, SpecialSampler2, \
     EdgeRootedThreeConnectedPlanarGraphSampler, LDerThreeConnectedPlanarGraphSampler
@@ -13,38 +13,38 @@ U = UAtomSampler()
 Bij = BijectionSampler
 Trans = TransformationSampler
 
-Link = Alias('Link')
-D = Alias('D')
-S = Alias('S')
-P = Alias('P')
-H = Alias('H')
+Link = AliasSampler('Link')
+D = AliasSampler('D')
+S = AliasSampler('S')
+P = AliasSampler('P')
+H = AliasSampler('H')
 
-D_dx = Alias('D_dx')
-S_dx = Alias('S_dx')
-P_dx = Alias('P_dx')
-H_dx = Alias('H_dx')
+D_dx = AliasSampler('D_dx')
+S_dx = AliasSampler('S_dx')
+P_dx = AliasSampler('P_dx')
+H_dx = AliasSampler('H_dx')
 
-G_3_arrow = Alias('G_3_arrow')
-G_3_arrow_dy = Alias('G_3_arrow_dy')
-G_3_arrow_dx = Alias('G_3_arrow_dx')
+G_3_arrow = AliasSampler('G_3_arrow')
+G_3_arrow_dy = AliasSampler('G_3_arrow_dy')
+G_3_arrow_dx = AliasSampler('G_3_arrow_dx')
 
-G_2_arrow = Alias('G_2_arrow')
-G_2_arrow_dy = Alias('G_2_arrow_dy')
-G_2_arrow_dx = Alias('G_2_arrow_dx')
+G_2_arrow = AliasSampler('G_2_arrow')
+G_2_arrow_dy = AliasSampler('G_2_arrow_dy')
+G_2_arrow_dx = AliasSampler('G_2_arrow_dx')
 
-G_2_dx = Alias('G_2_dx')
-G_2_dx_dx = Alias('G_2_dx_dx')
-G_2_dy = Alias('G_2_dy')
-G_2_dy_dx = Alias('G_2_dy_dx')
-F = Alias('F')
-F_dx = Alias('F_dx')
+G_2_dx = AliasSampler('G_2_dx')
+G_2_dx_dx = AliasSampler('G_2_dx_dx')
+G_2_dy = AliasSampler('G_2_dy')
+G_2_dy_dx = AliasSampler('G_2_dy_dx')
+F = AliasSampler('F')
+F_dx = AliasSampler('F_dx')
 
-G_1 = Alias('G_1')
-G_1_dx = Alias('G_1_dx')
-G_1_dx_dx = Alias('G_1_dx_dx')
+G_1 = AliasSampler('G_1')
+G_1_dx = AliasSampler('G_1_dx')
+G_1_dx_dx = AliasSampler('G_1_dx_dx')
 
-G = Alias('G')
-G_dx = Alias('G_dx')
+G = AliasSampler('G')
+G_dx = AliasSampler('G_dx')
 
 planar_graph_grammar = DecompositionGrammar()
 #planar_graph_grammar.add_rules(BinaryTreeGrammar.get_rules())
