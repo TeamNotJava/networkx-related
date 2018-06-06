@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
-from framework.samplers.generic_samplers import *
 from framework.decomposition_grammar import *
-from framework.evaluation_oracle import Oracle
+from framework.evaluation_oracle import EvaluationOracle
 from framework.binary_tree_decomposition import binary_tree_grammar
 from framework.bijections.closure import Closure
 from framework.bijections.primal_map import PrimalMap
@@ -10,22 +9,6 @@ from collections import deque
 
 import argparse
 import logging, sys
-
-# some shortcuts to make the grammar more readable
-class TestOracle(Oracle):
-    # these values are for size 100
-    evaluations = {
-        'x0': 0.4999749994,
-        'y0': 1.0,  # this is not needed here
-        'Tree(x0,y0)': 0.99005
-    }
-
-    def get(self, query_string):
-        # print(query_string)
-        if query_string in self.evaluations:
-            return self.evaluations[query_string]
-        else:
-            return 0.5
 
 
 def other_test():
@@ -48,42 +31,43 @@ def other_test():
         'Blob': L + U + Z,
         'Bla': LSubsSampler(Blub, Blob),
 
-
     })
     test_grammar.init()
 
+    other_test_oracle = EvaluationOracle({
+        'x0': 0.4999749994,
+        'y0': 1.0,  # this is not needed here
+        'Tree(x0,y0)': 0.99005
+    })
+
     # inject the oracle into the samplers
-    BoltzmannSampler.oracle = TestOracle()
+    BoltzmannSampler.oracle = other_test_oracle
 
     print(test_grammar.recursive_rules)
     print()
 
     print(test_grammar.collect_oracle_queries('Bla', 'x', 'y'))
 
-    #for key in test_grammar.get_rules():
-        #print(test_grammar.collect_oracle_queries(key, 'x', 'y'))
+    # for key in test_grammar.get_rules():
+    # print(test_grammar.collect_oracle_queries(key, 'x', 'y'))
 
     # sizes = [test_grammar.sample('Tree', 'x0', 'y0').get_l_size() for _ in range(1000)]
     # sum(sizes) / len(sizes)
 
+
 def binary_tree_test():
+    binary_tree_test_oracle = EvaluationOracle({
+        'x': 0.0127,
+        'y': 1.0,
+        # 'R_b_as(x,y)': 1,
+        # 'R_w_as(x,y)': 1,
+        'R_w(x,y)': 0.9,
+        'R_b(x,y)': 0.9,
+        # 'R_b_head(x,y)': 0.000001,
+        # 'R_w_head(x,y)': 0.9
+    })
 
-    class BinaryTreeOracle(Oracle):
-        def __init__(self):
-            self.evaluations = {
-                'x': 0.0127,
-                'y': 1.0,
-                # 'R_b_as(x,y)': 1,
-                # 'R_w_as(x,y)': 1,
-                'R_w(x,y)': 0.9,
-                'R_b(x,y)': 0.9,
-                # 'R_b_head(x,y)': 0.000001,
-                # 'R_w_head(x,y)': 0.9
-            }
-
-
-
-    BoltzmannSampler.oracle = BinaryTreeOracle()
+    BoltzmannSampler.oracle = binary_tree_test_oracle
     [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K', 'x', 'y'))]
     tree = binary_tree_grammar.sample('K', 'x', 'y')
     print(tree)
@@ -100,8 +84,10 @@ def binary_tree_test():
 
     return tree
 
+
 def pretty_print_tree(tree):
     tree.pretty()
+
 
 def plot_binary_tree(tree):
     import networkx as nx
@@ -109,7 +95,7 @@ def plot_binary_tree(tree):
     import matplotlib.pyplot as plt
 
     stack = deque([tree])
-    G=nx.empty_graph(tree._id+1)
+    G = nx.empty_graph(tree._id + 1)
 
     while stack:
         node = stack.pop()
@@ -133,31 +119,29 @@ def plot_binary_tree(tree):
         else:
             colors.append('#DDDDDD')
 
-
     nx.draw(G, node_color=colors)
     plt.show()
 
 
 def closure_test():
-    # tree = binary_tree.BinaryTreeSampler().binary_tree_sampler()
-    class BinaryTreeOracle(Oracle):
-        def __init__(self):
-            self.evaluations = {
-                'x': 0.0149875,
-                'y': 1.0,
-                'R_b_as(x,y)': 1,
-                'R_w_as(x,y)': 1,
-                'R_w(x,y)': 0.9,
-                'R_b(x,y)': 0.9,
-                'R_b_head(x,y)': 0.000001,
-                'R_w_head(x,y)': 0.9
-            }
-    BoltzmannSampler.oracle = BinaryTreeOracle()
+    binary_tree_oracle = EvaluationOracle({
+        'x': 0.0149875,
+        'y': 1.0,
+        'R_b_as(x,y)': 1,
+        'R_w_as(x,y)': 1,
+        'R_w(x,y)': 0.9,
+        'R_b(x,y)': 0.9,
+        'R_b_head(x,y)': 0.000001,
+        'R_w_head(x,y)': 0.9
+    })
+
+    BoltzmannSampler.oracle = binary_tree_oracle
     tree = binary_tree_grammar.sample('K_dy', 'x', 'y')
     c = Closure()
 
     init_half_edge = c.test_closure()
-    return (c, init_half_edge)
+    return c, init_half_edge
+
 
 def plot_closure(closure, init_half_edge):
     import networkx as nx
@@ -167,23 +151,24 @@ def plot_closure(closure, init_half_edge):
     nx.draw(G)
     plt.show()
 
+
 def irreducible_dissection_test():
     from framework.irreducible_dissection_decomposition import irreducible_dissection_grammar
-    class BinaryTreeOracle(Oracle):
-        def __init__(self):
-            self.evaluations = {
-                'x': 0.0149875,
-                'y': 1.0,
-                'R_w(x,y)': 0.9,
-                'R_b(x,y)': 0.9,
-            }
-    BoltzmannSampler.oracle = BinaryTreeOracle()
+
+    dissection_oracle = EvaluationOracle({
+        'x': 0.0149875,
+        'y': 1.0,
+        'R_w(x,y)': 0.9,
+        'R_b(x,y)': 0.9,
+    })
+
+    BoltzmannSampler.oracle = dissection_oracle
     x = irreducible_dissection_grammar.sample('J_a', 'x', 'y')
     print(x)
 
     x_dx = irreducible_dissection_grammar.sample('J_a_dx', 'x', 'y')
     print(x_dx)
-    
+
 
 # Run the primal map test.
 def primal_map_test():
@@ -199,7 +184,7 @@ def whiney_bijection_test():
 
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
-    argparser.add_argument('-d', dest='loglevel', action='store_const',const=logging.DEBUG, help='Print Debug info')
+    argparser.add_argument('-d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
     argparser.add_argument('-b', '--binary-tree', action='store_true', help='Run the binary_tree_test function')
     argparser.add_argument('--plot', action='store_true', help='Plot the binary_tree_test function result')
     argparser.add_argument('--print', action='store_true', help='print the binary_tree_test function result')
@@ -225,9 +210,9 @@ def main():
         other_test()
 
     if args.closure:
-        (i,j) = closure_test()
+        (i, j) = closure_test()
         if args.plot:
-            plot_closure(i,j)
+            plot_closure(i, j)
     if args.irdi:
         irreducible_dissection_test()
 

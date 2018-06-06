@@ -1,27 +1,35 @@
-class Oracle:
-    # todo fill it with the evaluations
-    def __init__(self):
-        self.evaluations = {
-            '1+D(x*G_1_dx(x,y),y)': 0.5,
-            'D(x*G_1_dx(x,y),y)': 0.5,
-            'D_dx(x*G_1_dx(x,y),y)': 0.5,
-            'G_1_dx(x,y)': 0.5,
-            'G_1_dx_dx(x,y)': 0.5,
-            'H(x*G_1_dx(x,y),y)': 0.5,
-            'H_dx(x*G_1_dx(x,y),y)': 0.5,
-            'P(x*G_1_dx(x,y),y)': 0.5,
-            'P_dx(x*G_1_dx(x,y),y)': 0.5,
-            'S(x*G_1_dx(x,y),y)': 0.5,
-            'S_dx(x*G_1_dx(x,y),y)': 0.5,
-            'exp_0(G_1(x,y))': 0.5,
-            'x': 0.5,
-            'x*G_1_dx(x,y)': 0.5,
-            'y': 0.5,
-        }
+class EvaluationOracle:
+    """Maintains a table of evaluations used by the samplers.
+
+    """
+
+    def __init__(self, evals=None):
+        """
+
+        :rtype: object
+        :type evals: dict
+        :param evals: The evals this oracle knows
+        """
+        if evals is None:
+            evals = {}
+        self.evals = evals
+
+    def add_evals(self, evals):
+        """Adds evaluations, overwrites existing keys.
+
+        :type evals: dict
+        :param evals: The new evaluations to be added
+        """
+        self.evals = {**self.evals, **evals}
 
     def get(self, query_string):
+        """Gets an evaluation
+
+        :type query_string: str
+        :param query_string: The key in the evaluations dict
+        :rtype: float
+        """
         try:
-            return self.evaluations[query_string]
-        except(KeyError):
-            print('Oracle key missing: {}'.format(query_string))
-            return 0.5
+            return self.evals[query_string]
+        except KeyError:
+            raise KeyError('Oracle key missing: {}'.format(query_string))

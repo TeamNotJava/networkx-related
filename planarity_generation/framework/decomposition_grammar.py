@@ -129,7 +129,7 @@ class DecompositionGrammar:
             self.recursive_rules |= set(visitor.get_result())
         # automatically set target class labels of transformation sampler where possible
         self.infer_target_class_labels()
-        # precompute evaluations
+        # precompute evals
         # todo
 
     ### visitors ###
