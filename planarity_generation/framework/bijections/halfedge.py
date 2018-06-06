@@ -31,6 +31,8 @@ class HalfEdge:
 		self.index = 0
 		#Indicates if the half-edge belongs to the hexagon
 		self.is_hexagonal = False
+		#Indicates if the half-edge is an edge added by the complete closure
+		self.added_by_comp_clsr = False
 
 
 	#Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)	
@@ -70,6 +72,11 @@ class HalfEdge:
 			repr = repr + ", NOT hexagonal"
 		else:
 			repr = repr + ", hexagonal"
+
+		if self.added_by_comp_clsr == False:
+			repr = repr + ", NOT added by clsr"
+		else:
+			repr = repr + ", added by clsr"
 			
 		repr = repr + ')'
 		
