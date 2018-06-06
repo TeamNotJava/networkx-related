@@ -129,9 +129,9 @@ class PrimalMap:
 
 
     def create_sample_closure_output(self):
-        half_edges = [HalfEdge() for i in range(45)]
+        half_edges = [HalfEdge() for i in range(65)]
         # Set indices
-        for i in range(45):
+        for i in range(65):
             half_edges[i].index = i
         # Set node_nrs
         for i in range(1, 5): half_edges[i].node_nr = 1
@@ -281,6 +281,20 @@ class PrimalMap:
         half_edges[44].prior = half_edges[43]
         half_edges[44].next = half_edges[41]
         half_edges[41].prior = half_edges[44]
+
+        # Mark the half edges from the haxagon
+        half_edges[3].is_hexagonal = True
+        half_edges[19].is_hexagonal = True
+        half_edges[20].is_hexagonal = True
+        half_edges[21].is_hexagonal = True
+        half_edges[22].is_hexagonal = True
+        half_edges[44].is_hexagonal = True
+        half_edges[42].is_hexagonal = True
+        half_edges[38].is_hexagonal = True
+        half_edges[35].is_hexagonal = True
+        half_edges[7].is_hexagonal = True
+        half_edges[5].is_hexagonal = True
+        half_edges[1].is_hexagonal = True
 
         return half_edges
 

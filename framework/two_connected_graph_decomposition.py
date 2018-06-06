@@ -1,4 +1,4 @@
-from framework.decomposition_grammar import Alias
+from framework.decomposition_grammar import AliasSampler
 from framework.three_connected_graph_decomposition import three_connected_graph_grammar
 from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
@@ -10,24 +10,24 @@ import logging
 Z = ZeroAtomSampler()
 L = LAtomSampler()
 U = UAtomSampler()
-G_3_arrow = Alias('G_3_arrow')
-G_3_arrow_dx = Alias('G_3_arrow_dx')
-G_3_arrow_dy = Alias('G_3_arrow_dy')
-Link = Alias('Link')
-D = Alias('D')
-D_dx = Alias('D_dx')
-S = Alias('S')
-S_dx = Alias('S_dx')
-P = Alias('P')
-P_dx = Alias('P_dx')
-H = Alias('H')
-H_dx = Alias('H_dx')
-F = Alias('F')
-F_dx = Alias('F_dx')
-G_2_dy = Alias('G_2_dy')
-G_2_dy_dx = Alias('G_2_dy_dx')
-G_2_arrow = Alias('G_2_arrow')
-G_2_arrow_dx = Alias('G_2_arrow_dx')
+G_3_arrow = AliasSampler('G_3_arrow')
+G_3_arrow_dx = AliasSampler('G_3_arrow_dx')
+G_3_arrow_dy = AliasSampler('G_3_arrow_dy')
+Link = AliasSampler('Link')
+D = AliasSampler('D')
+D_dx = AliasSampler('D_dx')
+S = AliasSampler('S')
+S_dx = AliasSampler('S_dx')
+P = AliasSampler('P')
+P_dx = AliasSampler('P_dx')
+H = AliasSampler('H')
+H_dx = AliasSampler('H_dx')
+F = AliasSampler('F')
+F_dx = AliasSampler('F_dx')
+G_2_dy = AliasSampler('G_2_dy')
+G_2_dy_dx = AliasSampler('G_2_dy_dx')
+G_2_arrow = AliasSampler('G_2_arrow')
+G_2_arrow_dx = AliasSampler('G_2_arrow_dx')
 Bij = BijectionSampler
 DyFromDx = UDerFromLDerSampler
 Trans = TransformationSampler

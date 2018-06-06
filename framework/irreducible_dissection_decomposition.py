@@ -1,21 +1,21 @@
-from framework.decomposition_grammar import Alias
+from framework.decomposition_grammar import AliasSampler
 from framework.binary_tree_decomposition import binary_tree_grammar
 from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
 from framework.utils import bern
 from framework.bijections.closure import Closure
-from framework.rejections.irreducability_check import check_irreducible_dissection
+from framework.rejections.admissibility_check import check_admissibility
 from random import choice
 import logging
 
 L = LAtomSampler()
 U = UAtomSampler()
-K = Alias('K')
-K_dx = Alias('K_dx')
-I = Alias('I')
-I_dx = Alias('I_dx')
-J = Alias('J')
-J_dx = Alias('J_dx')
+K = AliasSampler('K')
+K_dx = AliasSampler('K_dx')
+I = AliasSampler('I')
+I_dx = AliasSampler('I_dx')
+J = AliasSampler('J')
+J_dx = AliasSampler('J_dx')
 color_black = 0
 color_white = 1
 Bij = BijectionSampler
@@ -90,14 +90,14 @@ def rej_admiss(decomp):
     """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
     to avoid 4 cycles
     """
-    return check_irreducible_dissection(decomp)
+    return check_admissibility(decomp)
 
 
 def rej_admiss_dx(decomp):
     """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
     to avoid 4 cycles
     """
-    return check_irreducible_dissection(decomp)
+    return check_admissibility(decomp)
 
 
 irreducible_dissection_grammar = DecompositionGrammar()
