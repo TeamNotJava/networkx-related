@@ -1,45 +1,40 @@
+import logging
+from random import choice
+
+from framework.bijections.closure import Closure
+from framework.binary_tree_decomposition import binary_tree_grammar, BinaryTree
 from framework.decomposition_grammar import AliasSampler
-from framework.binary_tree_decomposition import binary_tree_grammar
+from framework.rejections.admissibility_check import check_admissibility
 from framework.samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
-from framework.utils import bern
-from framework.bijections.closure import Closure
-from framework.rejections.admissibility_check import check_admissibility
-from random import choice
-import logging
-
-L = LAtomSampler()
-U = UAtomSampler()
-K = AliasSampler('K')
-K_dx = AliasSampler('K_dx')
-I = AliasSampler('I')
-I_dx = AliasSampler('I_dx')
-J = AliasSampler('J')
-J_dx = AliasSampler('J_dx')
-color_black = 0
-color_white = 1
-Bij = BijectionSampler
-Rej = RejectionSampler
 
 
 class RootedIrreducibleDissection(CombinatorialClass):
-    def __init__(self, dissection):
+    def __init__(self, dissection, root_edge=None):
         self.base_object = dissection
-        self.root_edge = dissection
+        self.root_edge = root_edge
 
     def __str__(self):
         return str(self.base_object) + '->' + str(self.root_edge)
 
 
-def bij_closure(decomp):
-    return Closure().closure(decomp)
+def closure(binary_tree):
+    """To be used as bijection in the grammar.
 
-
-def bij_closure_dx(decomp):
-    return LDerivedClass(Closure().closure(decomp.get_base_class_object()))
+    :param binary_tree: The binary tree of l-derived binary tree to be closed
+    :return: The closure/l-derived cosure of the tree/l-derived tree
+    """
+    c = Closure()
+    if isinstance(binary_tree, LDerivedClass):
+        return c.closure(binary_tree.get_base_class_object())
+    else:
+        assert isinstance(binary_tree, BinaryTree)
+        return c.closure(binary_tree)
 
 
 def random_rooted_edge(half_edge_ptr):
+    color_black = 0
+    color_white = 1
     possible_roots = []
     edge = half_edge_ptr
     visited = [edge.node_nr]
@@ -70,20 +65,19 @@ def random_rooted_edge(half_edge_ptr):
     return rooted_edge
 
 
-def bij_j(decomp):
+def add_random_root_edge(decomp):
     """From ((L, U), HalfEdge) to RootedIrreducibleDissection
     """
-    rooted_edge = random_rooted_edge(decomp.second)
+    dissection = decomp.second
+    root_edge = random_rooted_edge(dissection)
+    return RootedIrreducibleDissection(dissection, root_edge)
 
-    return RootedIrreducibleDissection(rooted_edge)
 
-
-def bij_j_dx(decomp):
-    """From (L, HalfEdge) or ((L, U), HalfEdge) to RootedIrreducibleDissection
+def add_random_root_edge_dx(decomp):
+    """From (U, HalfEdge) or ((L, U), HalfEdge) to RootedIrreducibleDissection
     """
-    rooted_edge = random_rooted_edge(decomp.second)
-
-    return RootedIrreducibleDissection(rooted_edge)
+    pass
+    # todo I think we dont need it
 
 
 def rej_admiss(decomp):
@@ -100,13 +94,26 @@ def rej_admiss_dx(decomp):
     return check_admissibility(decomp)
 
 
+L = LAtomSampler()
+U = UAtomSampler()
+
+K = AliasSampler('K')
+K_dx = AliasSampler('K_dx')
+I = AliasSampler('I')
+I_dx = AliasSampler('I_dx')
+J = AliasSampler('J')
+J_dx = AliasSampler('J_dx')
+
+Bij = BijectionSampler
+Rej = RejectionSampler
+
 irreducible_dissection_grammar = DecompositionGrammar()
 irreducible_dissection_grammar.add_rules(binary_tree_grammar.get_rules())
 irreducible_dissection_grammar.add_rules({
-    'I': Bij(K, bij_closure),
-    'I_dx': Bij(K_dx, bij_closure_dx),
-    'J': Bij((L + L + L) * U * I, bij_j),
-    'J_dx': Bij(((L + L + L) * I) + ((L + L + L) * U * I_dx), bij_j_dx),
+    'I': Bij(K, closure),
+    'I_dx': Bij(K_dx, closure),
+    'J': Bij((L + L + L) * U * I, add_random_root_edge),
+    'J_dx': Bij(((U + U + U) * I) + ((L + L + L) * U * I_dx), add_random_root_edge),
     'J_a': Rej(J, rej_admiss),
     'J_a_dx': Rej(J_dx, rej_admiss_dx)
 })

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
-from framework.decomposition_grammar import *
-from framework.evaluation_oracle import EvaluationOracle
-from framework.binary_tree_decomposition import binary_tree_grammar
+import argparse
+import logging
+from collections import deque
+
 from framework.bijections.closure import Closure
 from framework.bijections.primal_map import PrimalMap
 from framework.bijections.whitney_3map_to_3graph import WhitneyBijection
-from collections import deque
-
-import argparse
-import logging, sys
+from framework.binary_tree_decomposition import binary_tree_grammar
+from framework.decomposition_grammar import *
+from framework.evaluation_oracle import EvaluationOracle
+from framework.evaluations_planar_graph import planar_graph_evals
 
 
 def other_test():
@@ -67,20 +68,23 @@ def binary_tree_test():
         # 'R_w_head(x,y)': 0.9
     })
 
-    BoltzmannSampler.oracle = binary_tree_test_oracle
-    [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K', 'x', 'y'))]
-    tree = binary_tree_grammar.sample('K', 'x', 'y')
+    # BoltzmannSampler.oracle = binary_tree_test_oracle
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals)
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K', symbolic_x, symbolic_y))]
+    tree = binary_tree_grammar.sample('K', symbolic_x, symbolic_y)
     print(tree)
     print("Black Nodes: {}".format(tree.get_attribute('numblacknodes')))
     print("White Nodes: {}".format(tree.get_attribute('numwhitenodes')))
     print("Total Nodes: {}".format(tree.get_attribute('numtotal')))
 
-    [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dx', 'x', 'y'))]
-    tree2 = binary_tree_grammar.sample('K_dx', 'x', 'y')
-    print(tree2)
-    print("Black Nodes: {}".format(tree2.get_base_class_object().get_attribute('numblacknodes')))
-    print("White Nodes: {}".format(tree2.get_base_class_object().get_attribute('numwhitenodes')))
-    print("Total Nodes: {}".format(tree2.get_base_class_object().get_attribute('numtotal')))
+    # [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dx', 'x', 'y'))]
+    # tree2 = binary_tree_grammar.sample('K_dx', 'x', 'y')
+    # print(tree2)
+    # print("Black Nodes: {}".format(tree2.get_base_class_object().get_attribute('numblacknodes')))
+    # print("White Nodes: {}".format(tree2.get_base_class_object().get_attribute('numwhitenodes')))
+    # print("Total Nodes: {}".format(tree2.get_base_class_object().get_attribute('numtotal')))
 
     return tree
 
@@ -91,7 +95,6 @@ def pretty_print_tree(tree):
 
 def plot_binary_tree(tree):
     import networkx as nx
-    import numpy as np
     import matplotlib.pyplot as plt
 
     stack = deque([tree])
@@ -124,21 +127,7 @@ def plot_binary_tree(tree):
 
 
 def closure_test():
-    binary_tree_oracle = EvaluationOracle({
-        'x': 0.0149875,
-        'y': 1.0,
-        'R_b_as(x,y)': 1,
-        'R_w_as(x,y)': 1,
-        'R_w(x,y)': 0.9,
-        'R_b(x,y)': 0.9,
-        'R_b_head(x,y)': 0.000001,
-        'R_w_head(x,y)': 0.9
-    })
-
-    BoltzmannSampler.oracle = binary_tree_oracle
-    tree = binary_tree_grammar.sample('K_dy', 'x', 'y')
     c = Closure()
-
     init_half_edge = c.test_closure()
     return c, init_half_edge
 
@@ -155,20 +144,26 @@ def plot_closure(closure, init_half_edge):
 def irreducible_dissection_test():
     from framework.irreducible_dissection_decomposition import irreducible_dissection_grammar
 
-    dissection_oracle = EvaluationOracle({
-        'x': 0.0149875,
-        'y': 1.0,
-        'R_w(x,y)': 0.9,
-        'R_b(x,y)': 0.9,
-    })
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    BoltzmannSampler.oracle = dissection_oracle
-    x = irreducible_dissection_grammar.sample('J_a', 'x', 'y')
-    print(x)
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals)
+    irreducible_dissection_grammar.init()
 
-    x_dx = irreducible_dissection_grammar.sample('J_a_dx', 'x', 'y')
-    print(x_dx)
+    dissection = irreducible_dissection_grammar.sample('J', symbolic_x, symbolic_y)
+    print(dissection)
+    return dissection
 
+    # admissibe_dissection_dx = irreducible_dissection_grammar.sample('J_a_dx', symbolic_x, symbolic_y)
+    # print(admissibe_dissection_dx)
+
+def plot_dissection(dissection):
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    G = Closure().half_edges_to_graph(dissection)
+    nx.draw(G)
+    plt.show()
 
 # Run the primal map test.
 def primal_map_test():
@@ -214,7 +209,9 @@ def main():
         if args.plot:
             plot_closure(i, j)
     if args.irdi:
-        irreducible_dissection_test()
+        dissection = irreducible_dissection_test()
+        if args.plot:
+            plot_dissection(dissection)
 
     if args.primal_map:
         primal_map_test()

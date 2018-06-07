@@ -1,25 +1,10 @@
-from framework.decomposition_grammar import AliasSampler
-from framework.samplers.generic_samplers import *
-from framework.decomposition_grammar import DecompositionGrammar
-from framework.utils import bern
-from framework.bijections.closure import Closure
-from framework.combinatorial_classes import BinaryTree
 import logging
 
-L = LAtomSampler()
-U = UAtomSampler()
-
-K_dy = AliasSampler('K_dy')
-R_b_as = AliasSampler('R_b_as')
-R_w_as = AliasSampler('R_w_as')
-R_b_head = AliasSampler('R_b_head')
-R_w_head = AliasSampler('R_w_head')
-R_b = AliasSampler('R_b')
-R_w = AliasSampler('R_w')
-K = AliasSampler('K')
-Bij = BijectionSampler
-Rej = RejectionSampler
-DxFromDy = LDerFromUDerSampler
+from framework.combinatorial_classes import BinaryTree
+from framework.decomposition_grammar import AliasSampler
+from framework.decomposition_grammar import DecompositionGrammar
+from framework.samplers.generic_samplers import *
+from framework.utils import bern
 
 
 def decomp_to_binary_tree_b_3(decomp):
@@ -218,14 +203,30 @@ def decomp_to_binary_tree_w_1_2(decomp):
     return tree
 
 
-def rejection_step(decomp):
-    return bern(2 / (decomp.get_u_size() + 1))
+L = LAtomSampler()
+U = UAtomSampler()
 
+K_dy = AliasSampler('K_dy')
+R_b_as = AliasSampler('R_b_as')
+R_w_as = AliasSampler('R_w_as')
+R_b_head = AliasSampler('R_b_head')
+R_w_head = AliasSampler('R_w_head')
+R_b = AliasSampler('R_b')
+R_w = AliasSampler('R_w')
+K = AliasSampler('K')
+
+Bij = BijectionSampler
+Rej = RejectionSampler
+DxFromDy = LDerFromUDerSampler
 
 binary_tree_grammar = DecompositionGrammar()
 binary_tree_grammar.add_rules({
-    'K': Bij(Rej(K_dy, rejection_step), lambda dy: dy.get_base_class_object()),
-    'K_dx': DxFromDy(K_dy, 2 / 3),
+    # see section 4.1.6. for the rejection
+    'K': Bij(
+        Rej(K_dy, lambda gamma: bern(2 / (gamma.get_u_size() + 1))),
+        lambda dy: dy.get_base_class_object()
+    ),
+    'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),
     'K_dy': Bij(R_b_as + R_w_as, lambda tree: UDerivedClass(tree)),
     'R_b_as': Bij((R_w * L * U) + (U * L * R_w) + (R_w * L * R_w), decomp_to_binary_tree_b_3),
     'R_w_as': Bij((R_b_head * U) + (U * R_b_head) + (R_b * R_b), decomp_to_binary_tree_w_2),
