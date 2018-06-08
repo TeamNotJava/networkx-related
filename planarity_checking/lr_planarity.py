@@ -98,15 +98,20 @@ class LRPlanarity(object):
     def __init__(self, G: nx.Graph):
         self.G = G
         self.roots = []
-        # we treat None as infinity
+
+        # distance from tree root
         self.height = defaultdict(lambda: None)
 
-        self.lowpt = {}
-        self.lowpt2 = {}
-        self.nesting_depth = {}
-        self.oriented = []
+        self.lowpt = {} # height of lowest return point of an edge
+        self.lowpt2 = {} # height of second lowest return point
+        self.nesting_depth = {} # for nesting order
+        
+        #self.oriented = [] # TODO: is unused?
+        
         # None -> missing edge
         self.parent_edge = defaultdict(lambda: None)
+
+        # oriented DFS graph
         self.DG = nx.DiGraph()
         self.DG.add_nodes_from(G.nodes)
 
@@ -114,6 +119,8 @@ class LRPlanarity(object):
 
         self.ref = defaultdict(lambda: None)
         self.side = defaultdict(lambda: 1)
+
+        # stack of conflict pairs
         self.S = []
         self.stack_bottom = {}
         self.lowpt_edge = {}
@@ -124,10 +131,10 @@ class LRPlanarity(object):
         self.embedding = defaultdict(lambda: [])
 
     def lr_planarity(self):
-        if self.G.order() > 2 and self.G.size() > 3*self.G.order() - 6:
+        if self.G.order() > 2 and self.G.size() > 3 * self.G.order() - 6:
             raise nx.NetworkXUnfeasible()
 
-        # ordering
+        # orientation of the graph by depth first search traversal
         for v in self.G:
             if self.height[v] is None:
                 self.height[v] = 0
@@ -137,12 +144,13 @@ class LRPlanarity(object):
         self.G = None # just unsetting this for correctness purposes
 
         # testing
-        for v in self.DG:
+        for v in self.DG: # sort the adjacency lists by nesting depth
+            # note: this can be done in linear time, but will it be actually faster?
             self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
         for v in self.roots:
             self.dfs2(v)
 
-
+        # function to resolve the relative side of an edge to the absolute side 
         def sign(e):
             if self.ref[e] is not None:
                 self.side[e] = self.side[e] * sign(self.ref[e])
@@ -150,40 +158,40 @@ class LRPlanarity(object):
             return self.side[e]
 
         for e in self.DG.edges:
-            self.nesting_depth[e] = sign(e)*self.nesting_depth[e]
+            self.nesting_depth[e] = sign(e) * self.nesting_depth[e]
         for v in self.DG:
+            # sort the adjacency lists again
             self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
+            # initialize the embedding
             self.embedding[v] = self.ordered_adjs[v].copy()
 
-
-
+        # compute the complete embedding
         for v in self.roots:
             self.dfs3(v)
 
         return dict(self.embedding)
 
-
+    # Orient the graph by DFS-traversal, compute lowpoints and nesting order
     def dfs1(self, v):
         e = self.parent_edge[v]
         for w in self.G[v]:
             if (v, w) in self.DG.edges or (w, v) in self.DG.edges:
-                continue
+                continue # the edge was already oriented
             vw = (v, w)
-            self.DG.add_edge(v, w)
+            self.DG.add_edge(v, w) # orient the edge
 
             self.lowpt[vw] = self.height[v]
             self.lowpt2[vw] = self.height[v]
-            if self.height[w] is None:
+            if self.height[w] is None: # (v, w) is a tree edge
                 self.parent_edge[w] = vw
                 self.height[w] = self.height[v] + 1
                 self.dfs1(w)
-            else:
+            else: # (v, w) is a back edge
                 self.lowpt[vw] = self.height[w]
 
              # determine nesting graph
             self.nesting_depth[vw] = 2 * self.lowpt[vw]
-            if self.lowpt2[vw] < self.height[v]:
-                # chordal
+            if self.lowpt2[vw] < self.height[v]: # chordal
                 self.nesting_depth[vw] += 1
 
             # update lowpoints of parent edge e
@@ -196,9 +204,13 @@ class LRPlanarity(object):
                 else:
                     self.lowpt2[e] = min(self.lowpt2[e], self.lowpt2[vw])
 
+    # Test for LR partition
+    # Raise nx.NetworkXUnfeasible() in case of unresolvable conflict
     def dfs2(self, v):
+        # Return True if interval I conflicts with edge b
         def conflicting(I, b):
             return not I.empty() and self.lowpt[I.high] > self.lowpt[b]
+        # Return the lowest lowpoint of a conflict pair
         def lowest(P):
             if P.left.empty():
                 return self.lowpt[P.right.low]
@@ -207,42 +219,36 @@ class LRPlanarity(object):
             return min(self.lowpt[P.left.low], self.lowpt[P.right.low])
 
         e = self.parent_edge[v]
-        # note: this can be done in linear time, but will it be actually faster?
         for w in self.ordered_adjs[v]:
             ei = (v, w)
             self.stack_bottom[ei] = top_of_stack(self.S)
-            if ei == self.parent_edge[w]:
-                # tree edge
+            if ei == self.parent_edge[w]: # tree edge
                 self.dfs2(w)
-            else:
-                # back edge
+            else: # back edge
                 self.lowpt_edge[ei] = ei
                 self.S.append(ConflictPair(right=Interval(ei, ei)))
+
             # integrate new return edges
             if self.lowpt[ei] < self.height[v]:
-                # e_i has return edge
-                if w == self.ordered_adjs[v][0]:
+                if w == self.ordered_adjs[v][0]: # e_i has return edge
                     self.lowpt_edge[e] = self.lowpt_edge[ei]
-                else:
-                    # add constraints of e_i
+                else: # add constraints of e_i
                     P = ConflictPair()
                     # merge return edges of e_i into P.right
                     while True:
                         Q = self.S.pop()
                         if not Q.left.empty():
                             Q.swap()
-                        if not Q.left.empty():
+                        if not Q.left.empty(): # not planar
                             raise nx.NetworkXUnfeasible()
                         if self.lowpt[Q.right.low] > self.lowpt[e]:
                             # merge intervals
-                            if P.right.empty():
-                                # topmost interval
+                            if P.right.empty(): # topmost interval
                                 P.right = Q.right.copy()
                             else:
                                 self.ref[P.right.low] = Q.right.high
                             P.right.low = Q.right.low
-                        else:
-                            # align
+                        else: # align
                             self.ref[Q.right.low] = self.lowpt_edge[e]
                         if top_of_stack(self.S) == self.stack_bottom[ei]:
                             break
@@ -251,24 +257,24 @@ class LRPlanarity(object):
                         Q = self.S.pop()
                         if conflicting(Q.right, ei):
                             Q.swap()
-                        if conflicting(Q.right, ei):
+                        if conflicting(Q.right, ei): # not planar
                             raise nx.NetworkXUnfeasible()
                         # merge interval below lowpt(e_i) into P.R
                         self.ref[P.right.low] = Q.right.high
                         if Q.right.low is not None:
                             P.right.low = Q.right.low
 
-                        if P.left.empty():
-                            # topmost interval
+                        if P.left.empty(): # topmost interval
                             P.left = Q.left.copy()
                         else:
                             self.ref[P.left.low] = Q.left.high
                         P.left.low = Q.left.low
+
                     if not (P.left.empty() and P.right.empty()):
                         self.S.append(P)
+        
         # remove back edges returning to parent
-        if e is not None:
-            # v isn't root
+        if e is not None: # v isn't root
             u = e[0]
             # trim back edges ending at parent u
             # drop entire conflict pairs
@@ -276,9 +282,10 @@ class LRPlanarity(object):
                 P = self.S.pop()
                 if P.left.low is not None:
                     self.side[P.left.low] = -1
-            if self.S:
-                # one more conflict pair to consider
+
+            if self.S: # one more conflict pair to consider
                 P = self.S.pop()
+                # trim left interval
                 while P.left.high is not None and P.left.high[1] == u:
                     P.left.high = self.ref[P.left.high]
                 if P.left.high is None and P.left.low is not None:
@@ -295,9 +302,9 @@ class LRPlanarity(object):
                     self.side[P.right.low] = -1
                     P.right.low = None
                 self.S.append(P)
+           
             # side of e is side of a highest return edge
-            if self.lowpt[e] < self.height[u]:
-                # e has return edge
+            if self.lowpt[e] < self.height[u]: # e has return edge
                 hl = top_of_stack(self.S).left.high
                 hr = top_of_stack(self.S).right.high
 
@@ -306,21 +313,21 @@ class LRPlanarity(object):
                 else:
                     self.ref[e] = hr
 
+    # Complete the embedding
     def dfs3(self, v):
         for w in self.ordered_adjs[v]:
             ei = (v, w)
-            if ei == self.parent_edge[w]:
-                # tree edge
-                #self.embedding[v].insert(0, w) # this deviates from the paper
-                self.embedding[w].insert(0, v) # according to paper
+            if ei == self.parent_edge[w]: # tree edge
+                # make v the first node in embedding list of w
+                self.embedding[w].insert(0, v)
                 self.left_ref[v] = w
                 self.right_ref[v] = w
                 self.dfs3(w)
-            else:
-                # back edge
+            else: # back edge
                 if self.side[ei] == 1:
+                    # place v directly after right_ref[w] in embedding list of w
                     self.embedding[w].insert(self.embedding[w].index(self.right_ref[w]) + 1, v)
                 else:
-
+                    # place v directly before left_ref[w] in embedding list of w
                     self.embedding[w].insert(self.embedding[w].index(self.left_ref[w]), v)
                     self.left_ref[w] = v
