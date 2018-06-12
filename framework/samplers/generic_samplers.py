@@ -31,6 +31,14 @@ class BoltzmannSampler:
         """
         raise NotImplementedError
 
+    def sample_dummy(self, x, y):
+        """Samples a dummy object that just records l-size and u-size
+
+        :param x:
+        :param y:
+        """
+        raise NotImplementedError
+
     def get_eval(self, x, y):
         """Gets the evaluation of the generating function of the class being sampled.
 
@@ -113,6 +121,9 @@ class AtomSampler(BoltzmannSampler):
     def sample(self, x, y):
         raise NotImplementedError
 
+    def sample_dummy(self, x, y):
+        raise NotImplementedError
+
     def get_eval(self, x, y):
         # see 3.2
         return self.oracle.get(self.oracle_query_string(x, y))
@@ -136,6 +147,9 @@ class ZeroAtomSampler(AtomSampler):
     def sample(self, x, y):
         return ZeroAtomClass()
 
+    def sample_dummy(self, x, y):
+        return DummyClass()
+
     def get_eval(self, x, y):
         # see 3.2, instead of querying '1' to the oracle we just return it.
         return 1
@@ -156,6 +170,9 @@ class LAtomSampler(AtomSampler):
     def sample(self, x, y):
         return LAtomClass()
 
+    def sample_dummy(self, x, y):
+        return DummyClass(l_size=1)
+
     def oracle_query_string(self, x, y):
         # generating function of the l-atom is just x
         return x
@@ -171,6 +188,9 @@ class UAtomSampler(AtomSampler):
 
     def sample(self, x, y):
         return UAtomClass()
+
+    def sample_dummy(self, x, y):
+        return DummyClass(u_size=1)
 
     def oracle_query_string(self, x, y):
         # generating function of the u-atom is just y
@@ -197,6 +217,9 @@ class BinarySampler(BoltzmannSampler):
         raise NotImplementedError
 
     def sample(self, x, y):
+        raise NotImplementedError
+
+    def sample_dummy(self, x, y):
         raise NotImplementedError
 
     def get_eval(self, x, y):
@@ -227,6 +250,12 @@ class SumSampler(BinarySampler):
         else:
             return self.rhs.sample(x, y)
 
+    def sample_dummy(self, x, y):
+        if bern(self.lhs.get_eval(x, y) / self.get_eval(x, y)):
+            return self.lhs.sample_dummy(x, y)
+        else:
+            return self.rhs.sample_dummy(x, y)
+
     def get_eval(self, x, y):
         # see 3.2: for sum class (= disjoint union) the generating function is the sum of the 2 generating functions
         return self.lhs.get_eval(x, y) + self.rhs.get_eval(x, y)
@@ -248,6 +277,13 @@ class ProdSampler(BinarySampler):
 
     def sample(self, x, y):
         return ProdClass(self.lhs.sample(x, y), self.rhs.sample(x, y))
+
+    def sample_dummy(self, x, y):
+        dummy_lhs = self.lhs.sample_dummy(x, y)
+        dummy_rhs = self.rhs.sample_dummy(x, y)
+        l_size = dummy_lhs.get_l_size() + dummy_rhs.get_l_size()
+        u_size = dummy_lhs.get_u_size() + dummy_rhs.get_u_size()
+        return DummyClass(l_size, u_size)
 
     def get_eval(self, x, y):
         # see 3.2: for product class (= cartesian prod.) the generating function is the product of the 2 generating
@@ -272,13 +308,26 @@ class LSubsSampler(BinarySampler):
 
     def sample(self, x, y):
         gamma = self.lhs.sample(self.rhs.oracle_query_string(x, y), y)
+        # todo this is wrong, we must replace using different sample calls
         gamma.replace_l_atoms(self.rhs.sample, x, y)
         return gamma
 
+    def sample_dummy(self, x, y):
+        gamma = self.lhs.sample_dummy(self.rhs.oracle_query_string(x, y), y)
+        l_size  = 0
+        u_size = gamma.get_u_size()
+        for _ in range(gamma.get_l_size()):
+            dummy = self.rhs.sample_dummy(x, y)
+            l_size += dummy.get_l_size()
+            u_size += dummy.get_u_size()
+        return DummyClass(l_size, u_size)
+
     def get_eval(self, x, y):
-        return self.oracle.get(self.oracle_query_string(x, y))
+        # return self.oracle.get(self.oracle_query_string(x, y))
+        return self.lhs.get_eval(self.rhs.oracle_query_string(x, y), y)
 
     def oracle_query_string(self, x, y):
+
         # see 3.2: A(B(x,y),y) where A = lhs and B = rhs
         return self.lhs.oracle_query_string(self.rhs.oracle_query_string(x, y), y)
 
@@ -300,8 +349,20 @@ class USubsSampler(BinarySampler):
         gamma.replace_u_atoms(self.rhs.sample, x, y)
         return gamma
 
+    def sample_dummy(self, x, y):
+        gamma = self.lhs.sample_dummy(x, self.rhs.oracle_query_string(x, y))
+        l_size  = gamma.get_l_size()
+        u_size = 0
+        for _ in range(gamma.get_u_size()):
+            dummy = self.rhs.sample_dummy(x, y)
+            l_size += dummy.get_l_size()
+            u_size += dummy.get_u_size()
+        return DummyClass(l_size, u_size)
+
     def get_eval(self, x, y):
-        return self.oracle.get(self.oracle_query_string(x, y))
+        # todo not 100% sure about this yet
+        return self.lhs.get_eval(x, self.rhs.oracle_query_string(x, y))
+        #return self.oracle.get(self.oracle_query_string(x, y))
 
     def oracle_query_string(self, x, y):
         # see 3.2: A(x,B(x,y)) where A = lhs and B = rhs
@@ -326,6 +387,9 @@ class UnarySampler(BoltzmannSampler):
         raise NotImplementedError
 
     def sample(self, x, y):
+        raise NotImplementedError
+
+    def sample_dummy(self, x, y):
         raise NotImplementedError
 
     def get_eval(self, x, y):
@@ -359,6 +423,16 @@ class SetSampler(UnarySampler):
         k = pois(self.d, self.sampler.get_eval(x, y))
         return SetClass([self.sampler.sample(x, y) for _ in range(k)])
 
+    def sample_dummy(self, x, y):
+        k = pois(self.d, self.sampler.get_eval(x, y))
+        l_size = 0
+        u_size = 0
+        for _ in range(k):
+            dummy = self.sampler.sample_dummy(x, y)
+            l_size += dummy.get_l_size()
+            u_size += dummy.get_u_size()
+        return DummyClass(l_size, u_size)
+
     def get_eval(self, x, y):
         # see 3.2
         return exp_tail(self.d, self.sampler.get_eval(x, y))
@@ -378,13 +452,14 @@ class TransformationSampler(UnarySampler):
 
         :param sampler: Sampler of the underlying class.
         :param f: Function from the underlying class to the target class.
-        :param eval_transform: Optional transformation of the evaluation function.
+        :param eval_transform: Optional transformation of the evaluation of the generating function.
         :param target_class_label: Optional label of the sampled class.
         """
         super(TransformationSampler, self).__init__(sampler)
         self.f = f
         self.eval_transform = eval_transform
         if target_class_label is None:
+            # set a default label for the target class based on the nume of the transformation function
             self.target_class_label = f.__name__ + '(' + sampler.sampled_class() + ')'
         else:
             self.target_class_label = target_class_label
@@ -395,6 +470,9 @@ class TransformationSampler(UnarySampler):
     def sample(self, x, y):
         # sample from the underlying class and apply the bijection
         return self.f(self.sampler.sample(x, y))
+
+    def sample_dummy(self, x, y):
+        return self.sampler.sample_dummy(x, y)
 
     def get_eval(self, x, y):
         # if a transformation is given, apply it here
@@ -451,16 +529,30 @@ class RejectionSampler(TransformationSampler):
         :param target_class_label: Optional label of the sampled class.
         """
         super(RejectionSampler, self).__init__(sampler, is_acceptable, eval_transform, target_class_label)
+        self.rejections_count = 0
 
     def sample(self, x, y):
+        self.rejections_count = 0
         gamma = self.sampler.sample(x, y)
         while not self.f(gamma):
+            self.rejections_count += 1
             gamma = self.sampler.sample(x, y)
         return gamma
 
+    def sample_dummy(self, x, y):
+        self.rejections_count = 0
+        gamma = self.sampler.sample_dummy(x, y)
+        while not self.f(gamma):
+            self.rejections_count += 1
+            gamma = self.sampler.sample_dummy(x, y)
+        return gamma
+
+    def get_rejections_count(self):
+        return self.rejections_count
+
 
 class UDerFromLDerSampler(TransformationSampler):
-    """Samples the u-derived (dy) class of the given l-derived (dx) class.
+    """Samples the u-derived (dy) class of the given l-derived (dx) class sampler.
 
     """
 
@@ -483,6 +575,16 @@ class UDerFromLDerSampler(TransformationSampler):
                 gamma = gamma.get_base_class_object()
                 rand_u_atom = gamma.random_u_atom()
                 return UDerivedClass(gamma, rand_u_atom)
+
+    def sample_dummy(self, x, y):
+        while True:
+            gamma = self.sampler.sample_dummy(x, y)
+            p = (1 / self.alpha_u_l) * (gamma.get_u_size() / (gamma.get_l_size() + 1))
+            if bern(p):
+                gamma.l_size += 1
+                gamma.u_size -= 1
+                assert gamma.get_u_size() >= 0
+                return gamma
 
 
 class LDerFromUDerSampler(TransformationSampler):
@@ -508,3 +610,13 @@ class LDerFromUDerSampler(TransformationSampler):
                 gamma = gamma.get_base_class_object()
                 rand_l_atom = gamma.random_l_atom()
                 return LDerivedClass(gamma, rand_l_atom)
+
+    def sample_dummy(self, x, y):
+        while True:
+            gamma = self.sampler.sample_dummy(x, y)
+            p = (1 / self.alpha_l_u) * (gamma.get_l_size() / (gamma.get_u_size() + 1))
+            if bern(p):
+                gamma.l_size -= 1
+                gamma.u_size += 1
+                assert gamma.get_l_size() >= 0
+                return gamma

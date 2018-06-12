@@ -63,6 +63,11 @@ class AliasSampler(BoltzmannSampler):
             sys.exit(self.alias + self.grammar_not_initialized_error_msg)
         return self.grammar.get_rule(self.alias).sample(x, y)
 
+    def sample_dummy(self, x, y):
+        if self.grammar is None:
+            sys.exit(self.alias + self.grammar_not_initialized_error_msg)
+        return self.grammar.get_rule(self.alias).sample_dummy(x, y)
+
 
 class DecompositionGrammar:
     def __init__(self, rules={}):
@@ -114,6 +119,12 @@ class DecompositionGrammar:
         if alias not in self.rules:
             sys.exit(alias + ": is not a rule in the grammar")
         return self.rules[alias].sample(x, y)
+
+    # samples from the rule identified by the key "alias"
+    def sample_dummy(self, alias, x, y):
+        if alias not in self.rules:
+            sys.exit(alias + ": is not a rule in the grammar")
+        return self.rules[alias].sample_dummy(x, y)
 
     def init(self):
         # initialize the alias samplers (set their referenced grammar to this grammar)

@@ -39,6 +39,34 @@ class CombinatorialClass:
         raise NotImplementedError
 
 
+class DummyClass(CombinatorialClass):
+
+    def __init__(self, l_size=0, u_size=0):
+        self.l_size = l_size
+        self.u_size = u_size
+
+    def get_u_size(self):
+        return self.u_size
+
+    def get_l_size(self):
+        return self.l_size
+
+    def u_atoms(self):
+        raise NotImplementedError
+
+    def l_atoms(self):
+        raise NotImplementedError
+
+    def replace_u_atoms(self, sampler, x, y):
+        raise NotImplementedError
+
+    def replace_l_atoms(self, sampler, x, y):
+        raise NotImplementedError
+
+    def __str__(self):
+        return '(l: ' + str(self.l_size) + ", u: " + str(self.u_size) + ')'
+
+
 class ZeroAtomClass(CombinatorialClass):
     def get_u_size(self):
         return 0
@@ -239,6 +267,7 @@ class DerivedClass(CombinatorialClass):
         """Exception raised when invert derivation order fails.
 
         """
+
         def __init__(self, message):
             self.message = message
 
@@ -248,7 +277,7 @@ class LDerivedClass(DerivedClass):
 
     """
 
-    def __init__(self, base_class_object, marked_l_atom = None):
+    def __init__(self, base_class_object, marked_l_atom=None):
         super(LDerivedClass, self).__init__(base_class_object, marked_l_atom)
 
     def get_l_size(self):
@@ -275,6 +304,7 @@ class UDerivedClass(DerivedClass):
     """Wrapper for a u-derived class.
 
     """
+
     def __init__(self, base_class_object, marked_u_atom=None):
         super(UDerivedClass, self).__init__(base_class_object, marked_u_atom)
 
