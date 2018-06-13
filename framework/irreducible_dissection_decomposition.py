@@ -6,7 +6,9 @@ from framework.binary_tree_decomposition import binary_tree_grammar, BinaryTree
 from framework.decomposition_grammar import AliasSampler
 from framework.rejections.admissibility_check import check_admissibility
 from framework.samplers.generic_samplers import *
-from .decomposition_grammar import DecompositionGrammar
+from framework.decomposition_grammar import DecompositionGrammar
+from framework.evaluation_oracle import EvaluationOracle
+from framework.evaluations_planar_graph import planar_graph_evals_n100
 
 
 class RootedIrreducibleDissection(CombinatorialClass):
@@ -80,11 +82,11 @@ def add_random_root_edge_dx(decomp):
     # todo I think we dont need it
 
 
-def rej_admiss(decomp):
+def rej_admiss(rooted_irred_dissection):
     """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
     to avoid 4 cycles
     """
-    return check_admissibility(decomp)
+    return check_admissibility(rooted_irred_dissection.root_edge)
 
 
 def rej_admiss_dx(decomp):
@@ -117,4 +119,15 @@ irreducible_dissection_grammar.add_rules({
     'J_a': Rej(J, rej_admiss),
     'J_a_dx': Rej(J_dx, rej_admiss_dx)
 })
-irreducible_dissection_grammar.init()
+
+if __name__ == "__main__":
+    irreducible_dissection_grammar.init()
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+
+    sampled_class = 'J_a'
+
+    irreducible_dissection_grammar.sample(sampled_class, symbolic_x, symbolic_y)
+    print("number of rejections in admissable: " + irreducible_dissection_grammar.get_rule('J_a').get_rejections_count())
