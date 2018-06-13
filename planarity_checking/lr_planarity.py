@@ -139,7 +139,7 @@ class LRPlanarity(object):
             if self.height[v] is None:
                 self.height[v] = 0
                 self.roots.append(v)
-                self.dfs1(v)
+                self.dfs_orientation(v)
 
         self.G = None # just unsetting this for correctness purposes
 
@@ -148,7 +148,7 @@ class LRPlanarity(object):
             # note: this can be done in linear time, but will it be actually faster?
             self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
         for v in self.roots:
-            self.dfs2(v)
+            self.dfs_testing(v)
 
         # function to resolve the relative side of an edge to the absolute side 
         def sign(e):
@@ -167,12 +167,12 @@ class LRPlanarity(object):
 
         # compute the complete embedding
         for v in self.roots:
-            self.dfs3(v)
+            self.dfs_embedding(v)
 
         return dict(self.embedding)
 
     # Orient the graph by DFS-traversal, compute lowpoints and nesting order
-    def dfs1(self, v):
+    def dfs_orientation(self, v):
         e = self.parent_edge[v]
         for w in self.G[v]:
             if (v, w) in self.DG.edges or (w, v) in self.DG.edges:
@@ -185,7 +185,7 @@ class LRPlanarity(object):
             if self.height[w] is None: # (v, w) is a tree edge
                 self.parent_edge[w] = vw
                 self.height[w] = self.height[v] + 1
-                self.dfs1(w)
+                self.dfs_orientation(w)
             else: # (v, w) is a back edge
                 self.lowpt[vw] = self.height[w]
 
@@ -206,7 +206,7 @@ class LRPlanarity(object):
 
     # Test for LR partition
     # Raise nx.NetworkXUnfeasible() in case of unresolvable conflict
-    def dfs2(self, v):
+    def dfs_testing(self, v):
         # Return True if interval I conflicts with edge b
         def conflicting(I, b):
             return not I.empty() and self.lowpt[I.high] > self.lowpt[b]
@@ -223,7 +223,7 @@ class LRPlanarity(object):
             ei = (v, w)
             self.stack_bottom[ei] = top_of_stack(self.S)
             if ei == self.parent_edge[w]: # tree edge
-                self.dfs2(w)
+                self.dfs_testing(w)
             else: # back edge
                 self.lowpt_edge[ei] = ei
                 self.S.append(ConflictPair(right=Interval(ei, ei)))
@@ -314,7 +314,7 @@ class LRPlanarity(object):
                     self.ref[e] = hr
 
     # Complete the embedding
-    def dfs3(self, v):
+    def dfs_embedding(self, v):
         for w in self.ordered_adjs[v]:
             ei = (v, w)
             if ei == self.parent_edge[w]: # tree edge
@@ -322,7 +322,7 @@ class LRPlanarity(object):
                 self.embedding[w].insert(0, v)
                 self.left_ref[v] = w
                 self.right_ref[v] = w
-                self.dfs3(w)
+                self.dfs_embedding(w)
             else: # back edge
                 if self.side[ei] == 1:
                     # place v directly after right_ref[w] in embedding list of w
