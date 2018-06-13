@@ -5,7 +5,6 @@ import networkx as nx
 
 from planarity_checking import lr_planarity
 
-
 class TestLRPlanarity:
     """Nose Unit tests for the :mod:`networkx.algorithms.TODO` module.
 
@@ -193,7 +192,7 @@ class TestLRPlanarity:
         else:
             raise nx.NetworkXException("Bad counter example.")
 
-    def check_graph(self, G, is_planar = None, msg = None):
+    def check_graph(self, G, is_planar=None, msg=None):
         """Raises an exception if the lr_planarity check returs a wrong result
 
         Parameters
@@ -208,7 +207,7 @@ class TestLRPlanarity:
         """
 
         # Obtain planarity results
-        is_planar_lr, result = lr_planarity.check_planarity(G, cert=True)
+        is_planar_lr, result = lr_planarity.check_planarity(G, counterexample=True)
 
         if is_planar is not None:
             # Set a default message for the assert

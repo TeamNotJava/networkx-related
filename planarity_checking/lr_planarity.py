@@ -20,7 +20,7 @@ def get_counterexample(G):
     return subgraph
 
 
-def check_planarity(G, cert=False):
+def check_planarity(G, counterexample=False):
     """Checks if a graph is planar and returns a counter example or an embedding
 
      A graph is said to be planar, if it can be drawn in the plane without
@@ -30,6 +30,7 @@ def check_planarity(G, cert=False):
     ----------
     G : graph
         A NetworkX graph
+    TODO counterexample
 
     Returns
     -------
@@ -45,6 +46,7 @@ def check_planarity(G, cert=False):
     A (combinatorial) embedding consists of cyclic orderings of the incident edges at each vertex, given such
     an embedding there are multiple approaches discussed in literature to drawing the graph (subject to various constraints, e.g.
     integer coordinates), see e.g. [2].
+    TODO time complexity
 
     TODO
     References
@@ -63,7 +65,7 @@ def check_planarity(G, cert=False):
     try:
         embedding = planarity.lr_planarity()
     except nx.NetworkXUnfeasible:
-        if cert:
+        if counterexample:
             return False, get_counterexample(G)
         return False, None
     return True, embedding
