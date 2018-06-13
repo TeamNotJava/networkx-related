@@ -1,8 +1,8 @@
 import networkx as nx
 
-from framework.combinatorial_classes.generic_classes import CombinatorialClass
-from framework.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
-from framework.samplers.generic_samplers import BoltzmannSampler
+from ..combinatorial_classes.generic_classes import CombinatorialClass
+from ..combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
+from ..samplers.generic_samplers import BoltzmannSampler
 
 
 class SpecialSampler1(BoltzmannSampler):

@@ -17,8 +17,8 @@ into a Boltzmann sampler for 3-connected planar graphs.
 """
 
 import networkx as nx
-from framework.bijections.halfedge import HalfEdge
-from framework.combinatorial_classes import BinaryTree
+from ..bijections.halfedge import HalfEdge
+from ..combinatorial_classes import BinaryTree
 
 class Closure:
 

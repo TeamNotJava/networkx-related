@@ -3,7 +3,7 @@
 import networkx as nx
 from networkx.algorithms.operators import union, union_all
 from networkx.algorithms.minors import contracted_nodes
-from framework.combinatorial_classes.network import NetworkClass
+from ..combinatorial_classes.network import NetworkClass
 
 
 # creates a link_graph (from a u-atom)

@@ -17,8 +17,8 @@
 
 import networkx as nx
 import matplotlib.pyplot as plt
-from framework.bijections.primal_map import  PrimalMap
-from framework.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
+from ..bijections.primal_map import  PrimalMap
+from ..combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 
 def whitney(map):

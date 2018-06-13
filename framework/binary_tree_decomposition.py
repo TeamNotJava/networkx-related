@@ -1,10 +1,10 @@
 import logging
 
-from framework.combinatorial_classes import BinaryTree
-from framework.decomposition_grammar import AliasSampler
-from framework.decomposition_grammar import DecompositionGrammar
-from framework.samplers.generic_samplers import *
-from framework.utils import bern
+from .combinatorial_classes import BinaryTree
+from .decomposition_grammar import AliasSampler
+from .decomposition_grammar import DecompositionGrammar
+from .samplers.generic_samplers import *
+from .utils import bern
 
 
 def decomp_to_binary_tree_b_3(decomp):

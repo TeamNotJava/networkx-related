@@ -9,7 +9,7 @@ from framework.bijections.whitney_3map_to_3graph import WhitneyBijection
 from framework.binary_tree_decomposition import binary_tree_grammar
 from framework.decomposition_grammar import *
 from framework.evaluation_oracle import EvaluationOracle
-from framework.evaluations_planar_graph import planar_graph_evals
+from framework.evaluations_planar_graph import planar_graph_evals_n100
 
 
 def other_test():
@@ -69,7 +69,7 @@ def binary_tree_test():
     })
 
     # BoltzmannSampler.oracle = binary_tree_test_oracle
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals)
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
     [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K', symbolic_x, symbolic_y))]

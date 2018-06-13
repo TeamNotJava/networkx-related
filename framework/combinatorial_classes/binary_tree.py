@@ -1,4 +1,4 @@
-from framework.combinatorial_classes.generic_classes import CombinatorialClass
+from ..combinatorial_classes.generic_classes import CombinatorialClass
 
 class BinaryTree(CombinatorialClass):
     _id = 0

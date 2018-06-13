@@ -1,6 +1,6 @@
-from framework.combinatorial_classes.generic_classes import *
-from framework.utils import *
-from framework.combinatorial_classes import CombinatorialClass
+from ..combinatorial_classes.generic_classes import *
+from ..utils import *
+from ..combinatorial_classes import CombinatorialClass
 
 
 # All references in comments in this file refer to:

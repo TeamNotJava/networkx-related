@@ -15,7 +15,7 @@
 """Make a bijection between the irreducible quadrangulation to a 3-connected map.
 """
 
-from framework.bijections.halfedge import HalfEdge
+from ..bijections.halfedge import HalfEdge
 import matplotlib.pyplot as plt
 
 

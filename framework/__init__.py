@@ -1,2 +1,11 @@
-__all__ = ["generic_samplers.py", "bijections", "combinatorial_classes", "decomposition_grammar", "evaluation_oracle",
-           "utils"]
+from .samplers import *
+from .rejections import *
+from .bijections import *
+from .combinatorial_classes import *
+__all__ = ["bijections", 
+            "combinatorial_classes", 
+            "rejections",
+            "decomposition_grammar", 
+            "evaluation_oracle",
+            "utils",
+            "samplers"]

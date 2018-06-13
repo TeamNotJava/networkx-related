@@ -1,14 +1,14 @@
 import logging
 from random import choice
 
-from framework.bijections.closure import Closure
-from framework.binary_tree_decomposition import binary_tree_grammar, BinaryTree
-from framework.decomposition_grammar import AliasSampler
-from framework.rejections.admissibility_check import check_admissibility
-from framework.samplers.generic_samplers import *
-from framework.decomposition_grammar import DecompositionGrammar
-from framework.evaluation_oracle import EvaluationOracle
-from framework.evaluations_planar_graph import planar_graph_evals_n100
+from .bijections.closure import Closure
+from .binary_tree_decomposition import binary_tree_grammar, BinaryTree
+from .decomposition_grammar import AliasSampler
+from .rejections.admissibility_check import check_admissibility
+from .samplers.generic_samplers import *
+from .decomposition_grammar import DecompositionGrammar
+from .evaluation_oracle import EvaluationOracle
+from .evaluations_planar_graph import planar_graph_evals_n100
 
 
 class RootedIrreducibleDissection(CombinatorialClass):

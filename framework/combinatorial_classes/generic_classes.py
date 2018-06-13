@@ -1,5 +1,5 @@
 import random as rn
-from framework.utils import *
+from ..utils import *
 
 
 class BoltzmannFrameworkError(Exception):

@@ -17,7 +17,7 @@ Check the dissection if ti is irreducible, which means there is no path of lengt
 the opposite outer vertex.
 """
 
-from framework.bijections.primal_map import PrimalMap
+from ..bijections.primal_map import PrimalMap
 
 
 def check_admissibility(dissection):
@@ -151,6 +151,3 @@ class AdmissibilityChecker:
 
         is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[2])
         print(is_admissible)  # True
-
-if __name__ == "__main__":
-    AdmissibilityChecker().test_admissibility_check()

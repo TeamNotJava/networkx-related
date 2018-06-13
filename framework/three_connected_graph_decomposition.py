@@ -1,9 +1,9 @@
-from framework.decomposition_grammar import AliasSampler
-from framework.irreducible_dissection_decomposition import irreducible_dissection_grammar
-from framework.samplers.generic_samplers import *
+from .decomposition_grammar import AliasSampler
+from .irreducible_dissection_decomposition import irreducible_dissection_grammar
+from .samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
-from framework.bijections.primal_map import primal_map
-from framework.bijections.whitney_3map_to_3graph import whitney
+from .bijections.primal_map import primal_map
+from .bijections.whitney_3map_to_3graph import whitney
 import logging
 
 L = LAtomSampler()

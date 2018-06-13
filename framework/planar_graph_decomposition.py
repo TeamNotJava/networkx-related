@@ -1,6 +1,6 @@
-from framework.decomposition_grammar import AliasSampler
-from framework.samplers.generic_samplers import *
-from framework.samplers.special_samplers import SpecialSampler1, SpecialSampler2, \
+from .decomposition_grammar import AliasSampler
+from .samplers.generic_samplers import *
+from .samplers.special_samplers import SpecialSampler1, SpecialSampler2, \
     EdgeRootedThreeConnectedPlanarGraphSampler, LDerThreeConnectedPlanarGraphSampler
 from .decomposition_grammar import DecompositionGrammar
 from .bijections.networks import *

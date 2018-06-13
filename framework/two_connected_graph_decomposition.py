@@ -1,9 +1,9 @@
-from framework.decomposition_grammar import AliasSampler
-from framework.three_connected_graph_decomposition import three_connected_graph_grammar
-from framework.samplers.generic_samplers import *
+from .decomposition_grammar import AliasSampler
+from .three_connected_graph_decomposition import three_connected_graph_grammar
+from .samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
-from framework.utils import bern
-from framework.bijections.closure import Closure
+from .utils import bern
+from .bijections.closure import Closure
 from random import choice
 import logging
 
