@@ -55,6 +55,13 @@ class TestLRPlanarity:
 
         # Check all components
         for component in connected_components:
+            if len(component) == 1:
+                if len(embedding[list(component)[0]]) != 0:
+                    # The node should not have a neighbor
+                    raise nx.NetworkXException("Bad embedding. Single node component has neighbors.")
+                else:
+                    continue
+
             component_subgraph = nx.subgraph(G, component)
             # Count the number of faces
             number_faces = 0
@@ -134,7 +141,7 @@ class TestLRPlanarity:
 
             # Check that all edges have been counted
             for u, v in component_subgraph.edges:
-                if (u, v) not in edges_counted or (v, u) not in edges_counted:
+                if u != v and ( (u, v) not in edges_counted or (v, u) not in edges_counted) :
                     raise nx.NetworkXException("Bad planar embedding. An edge has not been counted")
 
             # Check if the number of faces matches the expected value (euler's formula)
@@ -149,8 +156,6 @@ class TestLRPlanarity:
         G : NetworkX graph
         subdivision_nodes : A set of nodes inducing a subgraph as a counterexample
         """
-        # TODO: Just returns early, because subdivision_nodes is currently always None
-        #return
         # 1. Create the sub graph (sub)
         sub_graph = nx.Graph(G.subgraph(subdivision_nodes))
 

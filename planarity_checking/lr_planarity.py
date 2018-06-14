@@ -98,7 +98,12 @@ def top_of_stack(l: list):
 
 class LRPlanarity(object):
     def __init__(self, G: nx.Graph):
-        self.G = G
+        self.G = nx.Graph()
+        self.G.add_nodes_from(G.nodes)
+        for v, w in G.edges:
+            if v != w:
+                self.G.add_edge(v, w)
+
         self.roots = []
 
         # distance from tree root
