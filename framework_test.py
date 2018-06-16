@@ -238,7 +238,7 @@ def main():
     if args.closure:
         (i, tree, j) = closure_test()
         if args.plot:
-            if args.graphviz and args.gephi is not None:
+            if args.gephi is not None:
                 save_closure(i, tree, j, args.gephi)
             import matplotlib.pyplot as plt
             plt.figure(1)
