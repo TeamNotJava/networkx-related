@@ -58,26 +58,26 @@ def other_test():
 
 def binary_tree_test():
     binary_tree_test_oracle = EvaluationOracle({
-        'x': 0.0127,
+        'x': 0.0475080992953792,
         'y': 1.0,
         # 'R_b_as(x,y)': 1,
         # 'R_w_as(x,y)': 1,
-        'R_w(x,y)': 0.9,
-        'R_b(x,y)': 0.9,
+        'R_w(x,y)': 1,
+        'R_b(x,y)': 1,
         # 'R_b_head(x,y)': 0.000001,
         # 'R_w_head(x,y)': 0.9
     })
 
-    # BoltzmannSampler.oracle = binary_tree_test_oracle
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    symbolic_x = 'x*G_1_dx(x,y)'
-    symbolic_y = 'D(x*G_1_dx(x,y),y)'
-    [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K', symbolic_x, symbolic_y))]
-    tree = binary_tree_grammar.sample('K', symbolic_x, symbolic_y)
+    BoltzmannSampler.oracle = binary_tree_test_oracle
+    # BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    symbolic_x = 'x'
+    symbolic_y = 'y'
+    [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
+    tree = binary_tree_grammar.sample('K_dy', symbolic_x, symbolic_y)
     print(tree)
-    print("Black Nodes: {}".format(tree.get_attribute('numblacknodes')))
-    print("White Nodes: {}".format(tree.get_attribute('numwhitenodes')))
-    print("Total Nodes: {}".format(tree.get_attribute('numtotal')))
+    print("Black Nodes: {}".format(tree.get_base_class_object().get_attribute('numblacknodes')))
+    print("White Nodes: {}".format(tree.get_base_class_object().get_attribute('numwhitenodes')))
+    print("Total Nodes: {}".format(tree.get_base_class_object().get_attribute('numtotal')))
 
     # [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dx', 'x', 'y'))]
     # tree2 = binary_tree_grammar.sample('K_dx', 'x', 'y')
@@ -86,7 +86,7 @@ def binary_tree_test():
     # print("White Nodes: {}".format(tree2.get_base_class_object().get_attribute('numwhitenodes')))
     # print("Total Nodes: {}".format(tree2.get_base_class_object().get_attribute('numtotal')))
 
-    return tree
+    return tree.get_base_class_object()
 
 
 def pretty_print_tree(tree):
@@ -98,12 +98,13 @@ def plot_binary_tree(tree):
     import matplotlib.pyplot as plt
 
     stack = deque([tree])
-    G = nx.empty_graph(tree._id + 1)
-
+    G = nx.empty_graph()
+    root = tree._id
     while stack:
         node = stack.pop()
         label_node = node._id
-        G.nodes[label_node]['color'] = node.get_attribute('color')
+        
+        
         if node.left is not None:
             left = node.left
             stack.append(left)
@@ -114,31 +115,57 @@ def plot_binary_tree(tree):
             stack.append(right)
             label_right = right._id
             G.add_edge(label_node, label_right)
+        G.nodes[label_node]['color'] = node.get_attribute('color')
+
 
     colors = []
     for x in nx.get_node_attributes(G, 'color').values():
         if x is 'black':
-            colors.append('#222222')
+            colors.append('#333333')
+        elif x is 'white':
+            colors.append('#999999')
+    sizes = []
+    for x in G:
+        if x is root:
+            sizes.append(900)
         else:
-            colors.append('#DDDDDD')
+            sizes.append(300)
 
-    nx.draw(G, node_color=colors)
-    plt.show()
+    nx.draw(G, node_color=colors, node_size=sizes, with_labels=True)
+    
 
 
 def closure_test():
     c = Closure()
-    init_half_edge = c.test_closure()
-    return c, init_half_edge
+    # init_half_edge = c.test_closure()
+    tree = binary_tree_test()
+    init_half_edge = c.closure(tree)
+    return c, tree, init_half_edge
 
 
-def plot_closure(closure, init_half_edge):
+def plot_closure(closure, tree, init_half_edge, graphviz=False):
     import networkx as nx
     import matplotlib.pyplot as plt
-
+    
     G = closure.half_edges_to_graph(init_half_edge)
-    nx.draw(G)
-    plt.show()
+    colors = []
+    for x in nx.get_node_attributes(G, 'color').values():
+        if x is 'black':
+            colors.append('#333333')
+        elif x is 'white':
+            colors.append('#999999')
+    if graphviz:
+        # nx.nx_agraph.write_dot(G, "C:\\Users\\Valkum\\py.dot")
+        nx.draw(G, nx.nx_agraph.graphviz_layout(G, prog='neato', args='-Gstart=self -Gepsilon=.0000001'), with_labels=True, node_color=colors)
+    else:
+        nx.draw(G, with_labels=True, node_color=colors)
+
+def save_closure(closure, tree, init_half_edge, path):
+    import networkx as nx
+    G = closure.half_edges_to_graph(init_half_edge)
+    # nx.nx_agraph.write_dot(G, path)
+    nx.readwrite.gexf.write_gexf(G, path)
+    
 
 
 def irreducible_dissection_test():
@@ -183,9 +210,11 @@ def main():
     argparser.add_argument('-b', '--binary-tree', action='store_true', help='Run the binary_tree_test function')
     argparser.add_argument('--plot', action='store_true', help='Plot the binary_tree_test function result')
     argparser.add_argument('--print', action='store_true', help='print the binary_tree_test function result')
+    argparser.add_argument('--gephi', action='store', help='save as gephi file to path')
     argparser.add_argument('--other', action='store_true', help='Run the other_test function')
     argparser.add_argument('--closure', action='store_true', help='Run the closure_test function')
     argparser.add_argument('--irdi', action='store_true', help='Run the irreducible_dissection_test function')
+    argparser.add_argument('--graphviz', action='store_true', help='Use Graphviz layout')
 
     argparser.add_argument('--primal_map', action='store_true', help='Run the primal_map_test function')
     argparser.add_argument('--whitney_bijection', action='store_true', help='Run the whitney_bijection_test function')
@@ -199,19 +228,31 @@ def main():
         if args.print:
             plot_binary_tree(tree)
         if args.plot:
+            import matplotlib.pyplot as plt
             plot_binary_tree(tree)
+            plt.show()
 
     if args.other:
         other_test()
 
     if args.closure:
-        (i, j) = closure_test()
+        (i, tree, j) = closure_test()
         if args.plot:
-            plot_closure(i, j)
+            if args.graphviz and args.gephi is not None:
+                save_closure(i, tree, j, args.gephi)
+            import matplotlib.pyplot as plt
+            plt.figure(1)
+            plot_binary_tree(tree)
+            plt.figure(2)
+            plot_closure(i, tree, j, graphviz=args.graphviz)
+            plt.show()
+        
     if args.irdi:
         dissection = irreducible_dissection_test()
         if args.plot:
+            import matplotlib.pyplot as plt
             plot_dissection(dissection)
+            plt.show()
 
     if args.primal_map:
         primal_map_test()

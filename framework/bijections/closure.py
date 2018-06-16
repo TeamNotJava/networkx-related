@@ -58,18 +58,18 @@ class Closure:
 
         #Set the colors of the half-edges
         color = btree.get_attribute('color')
-        if color == "white":
-            color = 1
-        else:
-            color = 0
+        # if color is "white":
+        #     color = 1
+        # else:
+        #     color = 0
         half_edge_1.color = color
         half_edge_2.color = color
         half_edge_3.color = color
 
         #Set the number of node the edges asre assigned to
-        half_edge_1.node_nr = node_nr
-        half_edge_2.node_nr = node_nr
-        half_edge_3.node_nr = node_nr
+        half_edge_1.node_nr = btree._id
+        half_edge_2.node_nr = btree._id
+        half_edge_3.node_nr = btree._id
 
         #Set the indices of the half-edges
         half_edge_1.index = half_edge_index 
@@ -77,10 +77,11 @@ class Closure:
         half_edge_3.index = half_edge_index + 2
 
         #Construct the planar map on the children
-        if btree.left != None:
-            return self.___construct_planar_map(btree.left, half_edge_2, node_nr+1, half_edge_index+3)
-        if btree.right != None:
-            return self.___construct_planar_map(btree.right, half_edge_3, node_nr+1, half_edge_index+3)
+        if btree.left is not None:
+            self.___construct_planar_map(btree.left, half_edge_2, node_nr+1, half_edge_index+3)
+        if btree.right is not None:
+            self.___construct_planar_map(btree.right, half_edge_3, node_nr+1, half_edge_index+3)
+        return
 
 
 
@@ -131,8 +132,7 @@ class Closure:
         # for i in list_closure:
         #     print(i)
         return_edge = self.___return_smallest_half_edge(init_half_edge)
-        print("Partial closure returns the edge:",end=" ")
-        print(return_edge)
+        print("Partial closure returns the edge: {}".format(return_edge.index))
         return return_edge
 
 
@@ -177,8 +177,7 @@ class Closure:
         index = index + 1
         
         
-        print("Connecting hexagon and partal with: ",end=" ")
-        print(new_half_edge)
+        print("Connecting hexagon and partal with: {}".format(new_half_edge.index))
         
         #Now traverse the planar map. Depending on the distance between a new inner edge and
         #the next half-edge one can assign the new half edge to a certain hexagon node
@@ -248,8 +247,7 @@ class Closure:
         list_closure = self.list_half_edges(hexagon[0], [])
         for i in list_closure:
             print(i)
-        print("Complete closure returns the edge:", end=" ")
-        print(hexagon[0])
+        print("Complete closure returns the edge: {}".format(hexagon[0].index))
         return hexagon[0]
 
 
@@ -272,10 +270,10 @@ class Closure:
     def ___construct_hexagon(self, hexagon_half_edges, partial_closure_edge, index):
         inv_color = None
         color = partial_closure_edge.color
-        if color == 1:
-            inv_color = 0
+        if color is 'white':
+            inv_color = 'black'
         else:
-            inv_color = 1
+            inv_color = 'white'
 
 
         #Indicate that they belong to the hexagon
@@ -344,8 +342,7 @@ class Closure:
 
 
         #Return the starting half-edge
-        print("Hexagon returns the edge:",end=" ")
-        print(hexagon_half_edges[0])
+        print("Hexagon returns the edge: {}".format(hexagon_half_edges[0].index))
         return hexagon_half_edges[0]
 
 
@@ -388,11 +385,10 @@ class Closure:
         fresh_half_edge.node_nr = current_half_edge.node_nr
         fresh_half_edge.color = current_half_edge.color
 
-        if return_edge.color != 0:
+        if return_edge.color is not 'black':
             return_edge = fresh_half_edge
 
-        print("Quadrangulation returns the edge:", end=" ")
-        print(return_edge)
+        print("Quadrangulation returns the edge: {}".format(return_edge))
         return return_edge
 
 
@@ -427,6 +423,7 @@ class Closure:
         while len(half_edge_list) > 0:
             half_edge = half_edge_list.pop()
             G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
+            G.nodes[half_edge.node_nr]['color'] = half_edge.color
             half_edge_list.remove(half_edge.opposite)
         return G
 
@@ -503,30 +500,30 @@ class Closure:
         half_edges[23].node_nr = 7
 
         #Set colors
-        half_edges[0].color = 0
-        half_edges[1].color = 0
-        half_edges[2].color = 0
-        half_edges[3].color = 1
-        half_edges[4].color = 1
-        half_edges[5].color = 1
-        half_edges[6].color = 0
-        half_edges[7].color = 0
-        half_edges[8].color = 0
-        half_edges[9].color = 1
-        half_edges[10].color = 1
-        half_edges[11].color = 1
-        half_edges[12].color = 1
-        half_edges[13].color = 1
-        half_edges[14].color = 1
-        half_edges[15].color = 0
-        half_edges[16].color = 0
-        half_edges[17].color = 0
-        half_edges[18].color = 0
-        half_edges[19].color = 0
-        half_edges[20].color = 0
-        half_edges[21].color = 1
-        half_edges[22].color = 1
-        half_edges[23].color = 1
+        half_edges[0].color = 'black'
+        half_edges[1].color = 'black'
+        half_edges[2].color = 'black'
+        half_edges[3].color = 'white'
+        half_edges[4].color = 'white'
+        half_edges[5].color = 'white'
+        half_edges[6].color = 'black'
+        half_edges[7].color = 'black'
+        half_edges[8].color = 'black'
+        half_edges[9].color = 'white'
+        half_edges[10].color = 'white'
+        half_edges[11].color = 'white'
+        half_edges[12].color = 'white'
+        half_edges[13].color = 'white'
+        half_edges[14].color = 'white'
+        half_edges[15].color = 'black'
+        half_edges[16].color = 'black'
+        half_edges[17].color = 'black'
+        half_edges[18].color = 'black'
+        half_edges[19].color = 'black'
+        half_edges[20].color = 'black'
+        half_edges[21].color = 'white'
+        half_edges[22].color = 'white'
+        half_edges[23].color = 'white'
 
 
         #Set opposite half-edges

@@ -39,44 +39,47 @@ class HalfEdge:
 	def __repr__(self):
 		repr = '('
 		repr = repr + str(self.index)
-		repr = repr + ", "
+		repr = repr + ", \t"
 		repr = repr + str(self.node_nr)
-		repr = repr + ", "
+		repr = repr + ", \t"
 
 		if self.opposite == None:
 			repr = repr  + "None"
 		else:	
 			repr =  repr + str(self.opposite.index)
-		repr = repr + ", "
+		repr = repr + ", \t"
+
+		if self.opposite == None:
+			repr = repr  + "None"
+		else:	
+			repr =  repr + str(self.opposite.node_nr)
+		repr = repr + ", \t"
 
 		if self.next == None:
 			repr = repr + "None"
 		else:
 			repr = repr + str(self.next.index)
-		repr = repr + ", "
+		repr = repr + ", \t"
 	
 		if self.prior == None:
 			repr = repr + "None"
 		else:
 			repr = repr + str(self.prior.index)
 		if self.color == None:
-			repr = repr + ", None"
+			repr = repr + ", \tNone"
 		else:
-			if self.color == 0:
-				repr = repr + ", black"
-			else:
-				repr = repr + ", white"
+				repr = repr + ", \t" + self.color
 		repr = repr + ", "
 		repr = repr + str(self.number_proximate_inner_edges)
 		if self.is_hexagonal == False:
-			repr = repr + ", NOT hexagonal"
+			repr = repr + ", \tNOT hexagonal"
 		else:
-			repr = repr + ", hexagonal"
+			repr = repr + ", \thexagonal"
 
 		if self.added_by_comp_clsr == False:
-			repr = repr + ", NOT added by clsr"
+			repr = repr + ", \tNOT added by clsr"
 		else:
-			repr = repr + ", added by clsr"
+			repr = repr + ", \tadded by clsr"
 			
 		repr = repr + ')'
 		
