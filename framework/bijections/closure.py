@@ -43,14 +43,19 @@ class Closure:
         half_edge_2 = HalfEdge()
         half_edge_3 = HalfEdge()
 
+        #Set the indices of the half-edges
+        half_edge_1.index = half_edge_index 
+        half_edge_2.index = half_edge_index + 1
+        half_edge_3.index = half_edge_index + 2
+
         half_edge_1.opposite = init_half_edge
         init_half_edge.opposite = half_edge_1
-        
+    
         #Next edge is the one in ccw order around the incident vertex
         half_edge_1.next = half_edge_2
         half_edge_2.next = half_edge_3
         half_edge_3.next = half_edge_1
-        
+       
         #Prior edge is the one in cw order around the incident vertex
         half_edge_1.prior = half_edge_3
         half_edge_3.prior = half_edge_2
@@ -70,11 +75,6 @@ class Closure:
         half_edge_1.node_nr = btree._id
         half_edge_2.node_nr = btree._id
         half_edge_3.node_nr = btree._id
-
-        #Set the indices of the half-edges
-        half_edge_1.index = half_edge_index 
-        half_edge_2.index = half_edge_index + 1
-        half_edge_3.index = half_edge_index + 2
 
         #Construct the planar map on the children
         if btree.left is not None:
@@ -127,10 +127,10 @@ class Closure:
                     else:
                         stack.append(top_half_edge)
 
-        # print("Partial closure list:")
-        # list_closure = self.list_half_edges(init_half_edge, [])
-        # for i in list_closure:
-        #     print(i)
+        print("Partial closure list:")
+        list_closure = self.list_half_edges(init_half_edge, [])
+        for i in list_closure:
+            print(i)
         return_edge = self.___return_smallest_half_edge(init_half_edge)
         print("Partial closure returns the edge: {}".format(return_edge.index))
         return return_edge
@@ -144,18 +144,18 @@ class Closure:
     def ___bicolored_complete_closure(self, init_half_edge):
         print("BICOLORED COMPLETE CLOSURE")
         starting_half_edge = self.___bicolored_partial_closure(init_half_edge)
-        print("Partial closure list:")
-        list_partial = self.list_half_edges(init_half_edge, [])
-        for i in list_partial:
-            print(i)
+        # print("Partial closure list:")
+        # list_partial = self.list_half_edges(init_half_edge, [])
+        # for i in list_partial:
+        #     print(i)
 
         hexagon = [HalfEdge() for i in range(12)]
         index = self.___get_max_half_edge_index(starting_half_edge) + 1
         hexagon_start_half_edge = self.___construct_hexagon(hexagon, starting_half_edge, index)
-        print("Hexagon list:")
-        list_hexagon = self.list_half_edges(hexagon_start_half_edge, [])
-        for i in list_hexagon:
-            print(i)
+        # print("Hexagon list:")
+        # list_hexagon = self.list_half_edges(hexagon_start_half_edge, [])
+        # for i in list_hexagon:
+        #     print(i)
 
 
         #Connect the starting half-edge of our planar map with the first node of the hexagon
@@ -163,8 +163,6 @@ class Closure:
         starting_half_edge.opposite = new_half_edge
         new_half_edge.opposite = starting_half_edge
         new_half_edge.prior = hexagon_start_half_edge
-        #Do the edges connecting the hexagon and the partial closer be marked as hexagon edges????!!
-        # new_half_edge.is_hexagonal = True
         new_half_edge.next = hexagon[11]
         hexagon_start_half_edge.next = new_half_edge
         hexagon[11].prior = new_half_edge
@@ -184,25 +182,24 @@ class Closure:
         distance = 0
         hexagon_iter = hexagon_start_half_edge
         current_half_edge = starting_half_edge
-        number_of_stems = len(self.list_half_edges(hexagon_start_half_edge, []))
+        #number_of_stems = len(self.list_half_edges(hexagon_start_half_edge, []))
         while True:
             current_half_edge = current_half_edge.next
             if current_half_edge == starting_half_edge:
                 break
             if current_half_edge.opposite == None:
-                number_of_stems = number_of_stems - 1
+                #number_of_stems = number_of_stems - 1
                 fresh_half_edge = HalfEdge()
                 fresh_half_edge.opposite = current_half_edge
                 current_half_edge.opposite = fresh_half_edge
-                #fresh_half_edge.is_hexagonal = True??????
 
                 if distance == 0:
                     #Move 4 half-edges further
-                    hexagon_iter = hexagon[(hexagon_iter.index - hexagon_start_half_edge.index + 4)%11]
+                    hexagon_iter = hexagon[(hexagon_iter.index - hexagon_start_half_edge.index + 4)%12]
 
                 elif distance == 1:
                     #Move 2 half-edges further
-                    hexagon_iter = hexagon[(hexagon_iter.index - hexagon_start_half_edge.index + 2)%11]
+                    hexagon_iter = hexagon[(hexagon_iter.index - hexagon_start_half_edge.index + 2)%12]
                 
                 else:
                     #Stay at current half-edge
@@ -214,7 +211,6 @@ class Closure:
                 while True:
                     temp_half_edge = temp_half_edge.next
                     if temp_half_edge.added_by_comp_clsr == True:
-
                         last_added_half_edge = temp_half_edge
                         break
                     if temp_half_edge == hexagon_iter:

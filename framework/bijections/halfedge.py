@@ -28,7 +28,7 @@ class HalfEdge:
 		#Node the half-edge is  assigned to
 		self.node_nr = -1
 		#Index
-		self.index = 0
+		self.index = -1
 		#Indicates if the half-edge belongs to the hexagon
 		self.is_hexagonal = False
 		#Indicates if the half-edge is an edge added by the complete closure
@@ -49,11 +49,11 @@ class HalfEdge:
 			repr =  repr + str(self.opposite.index)
 		repr = repr + ", \t"
 
-		if self.opposite == None:
-			repr = repr  + "None"
-		else:	
-			repr =  repr + str(self.opposite.node_nr)
-		repr = repr + ", \t"
+		# if self.opposite == None:
+		# 	repr = repr  + "None"
+		# else:	
+		# 	repr =  repr + str(self.opposite.node_nr)
+		# repr = repr + ", \t"
 
 		if self.next == None:
 			repr = repr + "None"
