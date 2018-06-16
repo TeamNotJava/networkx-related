@@ -17,6 +17,7 @@ into a Boltzmann sampler for 3-connected planar graphs.
 """
 
 import networkx as nx
+import matplotlib.pyplot as plt
 from ..bijections.halfedge import HalfEdge
 from ..combinatorial_classes import BinaryTree
 
@@ -25,32 +26,52 @@ class Closure:
     #Convert a binary tree int o planar map
     def ___btree_to_planar_map(self, btree):
         init_half_edge = HalfEdge()
-        self.___construct_planar_map(btree, init_half_edge, 0, 0)
+        #self.___construct_planar_map(btree, init_half_edge, 0, 0)
+        self.___construct_planar_map(btree, init_half_edge)
         #Destroy the initial half-edge as it is only needed to construct its opposite
         init_half_edge.opposite.opposite = None
         print("btree to planar map return: ")
+        #Check if every half-edge occurs exactly once in the list
+        
         liste = self.list_half_edges(init_half_edge.opposite, [])
+
         for l in liste:
             print(l)
+
+        for l in liste:
+            count = 0
+            for i in liste:
+                if l.index == i.index:
+                    count += 1
+                    if count > 1:
+                        print(l)
+                    assert (count < 2)     
+        print("return: {}",format(init_half_edge.opposite))    
         return init_half_edge.opposite
 
-
-
-    #Consturct planer map out of a binary tree, i.e., make the binary tree
-    #tri-oriented
-    def ___construct_planar_map(self, btree, init_half_edge, node_nr, half_edge_index):
+    # Construct planar map of the binary tree
+    def ___construct_planar_map(self, btree, init_half_edge):
         half_edge_1 = HalfEdge()
         half_edge_2 = HalfEdge()
         half_edge_3 = HalfEdge()
 
+        half_edge_1.opposite = init_half_edge
+        init_half_edge.opposite = half_edge_1
+
+        if init_half_edge.index == -1:
+            half_edge_index = 0
+        else:
+            half_edge_index = self.___get_max_half_edge_index(init_half_edge) + 1
+            # print("Maximum half-edge index: {}".format(half_edge_index))
+
+
+        # print("half edge index:",end=" ")
+        # print(half_edge_index)
         #Set the indices of the half-edges
         half_edge_1.index = half_edge_index 
         half_edge_2.index = half_edge_index + 1
         half_edge_3.index = half_edge_index + 2
 
-        half_edge_1.opposite = init_half_edge
-        init_half_edge.opposite = half_edge_1
-    
         #Next edge is the one in ccw order around the incident vertex
         half_edge_1.next = half_edge_2
         half_edge_2.next = half_edge_3
@@ -74,34 +95,35 @@ class Closure:
 
         #Construct the planar map on the children
         if btree.left is not None:
-            self.___construct_planar_map(btree.left, half_edge_2, node_nr+1, half_edge_index+3)
+            self.___construct_planar_map(btree.left, half_edge_2)
         if btree.right is not None:
-            self.___construct_planar_map(btree.right, half_edge_3, node_nr+1, half_edge_index+3)
+            self.___construct_planar_map(btree.right, half_edge_3)
         return
-
-
 
     #Performs bicolored partial closure on a binary tree. When possible build
     #new edges in order to get faces of degree 4.
     def ___bicolored_partial_closure(self, init_half_edge):
+        print("PARTIAL CLOSURE")
         stack = []
         stack.append(init_half_edge)
         break_edge = init_half_edge
         current_half_edge = init_half_edge
 
         while True:
+            print(current_half_edge)
             current_half_edge = current_half_edge.next
 
             if current_half_edge.opposite == None:
                 if len(stack) == 0:
                     break_edge = current_half_edge
-                if current_half_edge == break_edge:
+                if current_half_edge == break_edge and len(stack) > 0:
                     break
                 stack.append(current_half_edge)
             else:
                 current_half_edge = current_half_edge.opposite
                 if len(stack) > 0:
                     top_half_edge = stack.pop()
+                    print("Pop edge: ",format(top_half_edge))
                     top_half_edge.number_proximate_inner_edges += 1
 
                     if top_half_edge.number_proximate_inner_edges == 3:
@@ -119,6 +141,12 @@ class Closure:
                         current_half_edge.next = new_half_edge
 
                         current_half_edge = top_half_edge.prior
+                        #current_half_edge = self.___get_next_stem_cw(top_half_edge.prior)
+                        print("New half edge: {}",format(new_half_edge))
+                        print("Look next at: {}",format(current_half_edge))
+                        #current_half_edge.number_proximate_inner_edges = 0
+                        #stack.append(current_half_edge)
+
                     else:
                         stack.append(top_half_edge)
 
@@ -128,7 +156,59 @@ class Closure:
             print(i)
         return_edge = self.___return_smallest_half_edge(init_half_edge)
         print("Partial closure returns the edge: {}".format(return_edge.index))
+
+        #Check partial closure
+        self.___test_partial_closure(return_edge)
         return return_edge
+
+
+    # Checks if there is any stem that has three full edges as successors
+    def ___test_partial_closure(self, init_half_edge):
+        edge_list = self.list_half_edges(init_half_edge, [])
+        stem_list = []
+
+        for edge in edge_list:
+            if edge.opposite == None:
+                stem_list.append(edge)
+
+        # Check for each stem if it has at most two full edges as successors
+        for stem in stem_list:
+            count = 0
+            current_half_edge = stem
+            while True:
+                current_half_edge = current_half_edge.next
+                if current_half_edge == stem:
+                    break
+                if current_half_edge.opposite != None:
+                    current_half_edge = current_half_edge.opposite
+                    print("current: ",format(current_half_edge))
+                    count = count + 1            
+                    if count > 2:
+                        print("ERROR: partial closure failed at: ", format(stem))
+                    assert(count < 3)
+                else:
+                    break
+
+        print("Partial closure is okay.")
+            
+
+
+
+    #Return the next stem starting from a given half-edge to next stem clock wise
+    def ___get_next_stem_cw(self, half_edge):
+        if half_edge.opposite == None:
+            return half_edge
+        else:  
+            current_half_edge = half_edge.opposite
+            while True:
+                current_half_edge = current_half_edge.prior
+                if current_half_edge == half_edge:
+                    break
+                elif current_half_edge.opposite == None:
+                    return current_half_edge
+                else:
+                    current_half_edge = current_half_edge.opposite
+
 
 
 
@@ -179,12 +259,24 @@ class Closure:
 
                 if distance == 0:
                     #Move 4 hexagon half-edges further
-                    hexagon_iter = hexagon[(hexagon_iter.index - hexagon_start_half_edge.index + 4)%12]
-
+                    pos = (hexagon_iter.index - hexagon_start_half_edge.index + 4) % 12
+                    if hexagon_iter.index - hexagon_start_half_edge.index + 4 >= 13:
+                        print("Current half-edge:",end=" ")
+                        print(current_half_edge)
+                        print("Hexagon iter:",end=" ")
+                        print(hexagon_iter)
+                    assert (hexagon_iter.index - hexagon_start_half_edge.index + 4 < 13)
+                    hexagon_iter = hexagon[pos]
                 elif distance == 1:
                     #Move 2 hexagon half-edges further
-                    hexagon_iter = hexagon[(hexagon_iter.index - hexagon_start_half_edge.index + 2)%12]
-                
+                    pos = (hexagon_iter.index - hexagon_start_half_edge.index + 2) % 12
+                    if hexagon_iter.index - hexagon_start_half_edge.index + 4 >= 13:
+                        print("Current half-edge:",end=" ")
+                        print(current_half_edge)
+                        print("Hexagon iter:",end=" ")
+                        print(hexagon_iter)
+                    assert (hexagon_iter.index - hexagon_start_half_edge.index + 2 < 13)
+                    hexagon_iter = hexagon[pos]
                 else:
                     #Stay at current hexagon half-edge
                     pass
@@ -216,7 +308,7 @@ class Closure:
                 fresh_half_edge.node_nr = hexagon_iter.node_nr
                 fresh_half_edge.index = index 
                 fresh_half_edge.added_by_comp_clsr = True
-                
+                print("fresh-half-edge: {}".format(fresh_half_edge))
                 index += 1
                 distance = 0
             else:
@@ -377,14 +469,17 @@ class Closure:
     def list_half_edges(self, init_half_edge, edge_list):       
         edge_list.append(init_half_edge)
         current_half_edge = init_half_edge
-
+        assert (current_half_edge != None)
         while True:
-            current_half_edge = current_half_edge.next
-            if current_half_edge != init_half_edge and current_half_edge not in edge_list:
-                edge_list.append(current_half_edge)
-                if current_half_edge.opposite != None:
-                    if current_half_edge.opposite not in edge_list:
-                        self.list_half_edges(current_half_edge.opposite, edge_list)
+            if current_half_edge.next != None:
+                current_half_edge = current_half_edge.next
+                if current_half_edge != init_half_edge and current_half_edge not in edge_list:
+                    edge_list.append(current_half_edge)
+                    if current_half_edge.opposite != None:
+                        if current_half_edge.opposite not in edge_list:
+                            self.list_half_edges(current_half_edge.opposite, edge_list)
+                else:
+                    break
             else:
                 break
         return edge_list
@@ -407,7 +502,8 @@ class Closure:
 
 
     #Returns the highest index of the current graph
-    def ___get_max_half_edge_index(self, init_half_edge):        
+    def ___get_max_half_edge_index(self, init_half_edge):    
+        assert (init_half_edge != None)    
         edge_list = self.list_half_edges(init_half_edge, [])
         max_index = 0
         for x in edge_list:
@@ -424,6 +520,20 @@ class Closure:
             if x.node_nr > max_node:
                 max_node = x.node_nr
         return max_node
+
+    # Checks if the planar map is correct.
+    def check_planar_map(self, init_half_edge, current_half_edge):
+        edge_list = self.list_half_edges(init_half_edge, [])
+
+        #Check if each edge is listed exactly once
+        counter = 0
+        for edge in edge_list:
+            if edge.index == current_half_edge.index:
+                counter = counter + 1
+                assert (counter == 1)
+
+
+        
 
 
     def closure(self, binary_tree):

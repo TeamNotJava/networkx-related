@@ -137,8 +137,8 @@ def plot_binary_tree(tree):
 
 def closure_test():
     c = Closure()
-    # init_half_edge = c.test_closure()
     tree = binary_tree_test()
+    plot_binary_tree(tree)
     init_half_edge = c.closure(tree)
     return c, tree, init_half_edge
 
