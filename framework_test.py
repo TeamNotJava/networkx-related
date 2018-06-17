@@ -154,9 +154,9 @@ def binary_tree_test_V2():
    # [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
     tree = binary_tree_grammar.sample('K_dy', symbolic_x, symbolic_y)
    # print(tree)
-    print(tree.get_base_class_object().get_attribute('numblacknodes'),end=" ")
-    print(tree.get_base_class_object().get_attribute('numwhitenodes'),end=" ")
-    print(tree.get_base_class_object().get_attribute('numtotal'),end=" ")
+    print(tree.get_base_class_object().get_attribute('numblacknodes'),end="\t")
+    print(tree.get_base_class_object().get_attribute('numwhitenodes'),end="\t")
+    print(tree.get_base_class_object().get_attribute('numtotal'),end="\t")
     return tree.get_base_class_object()
 
 def closure_test():

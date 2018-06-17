@@ -5,10 +5,16 @@
 NUM_EXEC=$2
 COUNT=0
 TIMEOUT=$3
-while [ "$COUNT" != "$NUM_EXEC" ]
-do
-#($1 >> stat.log) & (sleep $TIMEOUT; echo "timeout" >> stat.log); kill $! 2> /dev/null || :
-gtimeout $TIMEOUT $1 >> stat.log
-echo "\n" >> stat.log
-COUNT=$((COUNT+1))
+while [ "$COUNT" != "$NUM_EXEC" ]; do
+    gtimeout $TIMEOUT $1 >> stat.log
+    # gtimeout exists with status 124 if timeout
+    if [ "$?" == 124 ]; then
+        echo "timeout" >> stat.log
+    elif [ "$?" == 137 ]; then
+        # gtime exists with status 137 if some error in the code occured
+        echo "error" >> stat.log
+    else
+        echo "" >> stat.log
+    fi
+    COUNT=$((COUNT+1))
 done
