@@ -18,6 +18,8 @@ into a Boltzmann sampler for 3-connected planar graphs.
 
 import networkx as nx
 import matplotlib.pyplot as plt
+import sys
+import os
 from ..bijections.halfedge import HalfEdge
 from ..combinatorial_classes import BinaryTree
 
@@ -62,11 +64,7 @@ class Closure:
             half_edge_index = 0
         else:
             half_edge_index = self.___get_max_half_edge_index(init_half_edge) + 1
-            # print("Maximum half-edge index: {}".format(half_edge_index))
 
-
-        # print("half edge index:",end=" ")
-        # print(half_edge_index)
         #Set the indices of the half-edges
         half_edge_1.index = half_edge_index 
         half_edge_2.index = half_edge_index + 1
@@ -141,7 +139,6 @@ class Closure:
                         current_half_edge.next = new_half_edge
 
                         current_half_edge = top_half_edge.prior
-                        #current_half_edge = self.___get_next_stem_cw(top_half_edge.prior)
                         print("New half edge: {}",format(new_half_edge))
                         print("Look next at: {}",format(current_half_edge))
                         #current_half_edge.number_proximate_inner_edges = 0
@@ -160,55 +157,6 @@ class Closure:
         #Check partial closure
         self.___test_partial_closure(return_edge)
         return return_edge
-
-
-    # Checks if there is any stem that has three full edges as successors
-    def ___test_partial_closure(self, init_half_edge):
-        edge_list = self.list_half_edges(init_half_edge, [])
-        stem_list = []
-
-        for edge in edge_list:
-            if edge.opposite == None:
-                stem_list.append(edge)
-
-        # Check for each stem if it has at most two full edges as successors
-        for stem in stem_list:
-            count = 0
-            current_half_edge = stem
-            while True:
-                current_half_edge = current_half_edge.next
-                if current_half_edge == stem:
-                    break
-                if current_half_edge.opposite != None:
-                    current_half_edge = current_half_edge.opposite
-                    print("current: ",format(current_half_edge))
-                    count = count + 1            
-                    if count > 2:
-                        print("ERROR: partial closure failed at: ", format(stem))
-                    assert(count < 3)
-                else:
-                    break
-
-        print("Partial closure is okay.")
-            
-
-
-
-    #Return the next stem starting from a given half-edge to next stem clock wise
-    def ___get_next_stem_cw(self, half_edge):
-        if half_edge.opposite == None:
-            return half_edge
-        else:  
-            current_half_edge = half_edge.opposite
-            while True:
-                current_half_edge = current_half_edge.prior
-                if current_half_edge == half_edge:
-                    break
-                elif current_half_edge.opposite == None:
-                    return current_half_edge
-                else:
-                    current_half_edge = current_half_edge.opposite
-
 
 
 
@@ -532,8 +480,49 @@ class Closure:
                 counter = counter + 1
                 assert (counter == 1)
 
+    # Disable print
+    def blockPrint(self):
+        sys.stdout = open(os.devnull, 'w')
 
+    # Enable print again
+    def enablePrint(self):
+        sys.stdout = sys.__stdout__
         
+
+    # Checks if there is any stem that has three full edges as successors
+    def ___test_partial_closure(self, init_half_edge):
+        edge_list = self.list_half_edges(init_half_edge, [])
+        stem_list = []
+
+        for edge in edge_list:
+            if edge.opposite == None:
+                stem_list.append(edge)
+
+        # Check for each stem if it has at most two full edges as successors
+        for stem in stem_list:
+            count = 0
+            current_half_edge = stem
+            while True:
+                current_half_edge = current_half_edge.next
+                if current_half_edge == stem:
+                    break
+                if current_half_edge.opposite != None:
+                    current_half_edge = current_half_edge.opposite
+                    print("current: ",format(current_half_edge))
+                    count = count + 1            
+                    if count > 2:
+                        print("ERROR: partial closure failed at: ", format(stem))
+                    assert(count < 3)
+                else:
+                    break
+
+        print("Partial closure is okay.")
+
+
+    #Checks if quadrangulation is correct
+    def ___test_quadrangulation(self, init_half_edge):
+        #TODO
+        pass
 
 
     def closure(self, binary_tree):
@@ -546,9 +535,11 @@ class Closure:
         The last step is to make the outer face of the graph to a four-edge
         face (quadrangulation of the hexagon).
         """
+        self.blockPrint()
         init_half_edge = self.___btree_to_planar_map(binary_tree)
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
         # if self.___reject(init_half_edge):
         #     return None
         init_half_edge = self.___quadrangulate(init_half_edge)
+        self.enablePrint()
         return init_half_edge

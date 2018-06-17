@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 import argparse
 import logging
+import time
 from collections import deque
-
 from framework.bijections.closure import Closure
 from framework.bijections.primal_map import PrimalMap
 from framework.bijections.whitney_3map_to_3graph import WhitneyBijection
@@ -135,10 +135,33 @@ def plot_binary_tree(tree):
     
 
 
+def binary_tree_test_V2():
+    binary_tree_test_oracle = EvaluationOracle({
+        'x': 0.0475080992953792,
+        'y': 1.0,
+        # 'R_b_as(x,y)': 1,
+        # 'R_w_as(x,y)': 1,
+        'R_w(x,y)': 1,
+        'R_b(x,y)': 1,
+        # 'R_b_head(x,y)': 0.000001,
+        # 'R_w_head(x,y)': 0.9
+    })
+
+    BoltzmannSampler.oracle = binary_tree_test_oracle
+    # BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    symbolic_x = 'x'
+    symbolic_y = 'y'
+   # [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
+    tree = binary_tree_grammar.sample('K_dy', symbolic_x, symbolic_y)
+   # print(tree)
+    print(tree.get_base_class_object().get_attribute('numblacknodes'),end=" ")
+    print(tree.get_base_class_object().get_attribute('numwhitenodes'),end=" ")
+    print(tree.get_base_class_object().get_attribute('numtotal'),end=" ")
+    return tree.get_base_class_object()
+
 def closure_test():
     c = Closure()
-    tree = binary_tree_test()
-    plot_binary_tree(tree)
+    tree = binary_tree_test_V2()
     init_half_edge = c.closure(tree)
     return c, tree, init_half_edge
 
@@ -205,6 +228,7 @@ def whiney_bijection_test():
 
 
 def main():
+    start = time.time()
     argparser = argparse.ArgumentParser(description='Test stuff')
     argparser.add_argument('-d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
     argparser.add_argument('-b', '--binary-tree', action='store_true', help='Run the binary_tree_test function')
@@ -259,7 +283,9 @@ def main():
 
     if args.whitney_bijection:
         whiney_bijection_test()
-
+   
+    end = time.time()
+    print((end - start)*1000)
 
 if __name__ == '__main__':
     main()
