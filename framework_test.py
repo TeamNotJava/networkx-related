@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import argparse
 import logging
-import time
 from collections import deque
 from framework.bijections.closure import Closure
 from framework.bijections.primal_map import PrimalMap
@@ -228,7 +227,6 @@ def whiney_bijection_test():
 
 
 def main():
-    start = time.time()
     argparser = argparse.ArgumentParser(description='Test stuff')
     argparser.add_argument('-d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
     argparser.add_argument('-b', '--binary-tree', action='store_true', help='Run the binary_tree_test function')
@@ -283,9 +281,6 @@ def main():
 
     if args.whitney_bijection:
         whiney_bijection_test()
-   
-    end = time.time()
-    print((end - start)*1000)
 
 if __name__ == '__main__':
     main()
