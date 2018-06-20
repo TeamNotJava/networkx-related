@@ -189,7 +189,7 @@ class Closure:
         index = index + 1
         
         
-        print("Connecting hexagon and partal with: {}".format(new_half_edge.index))
+        print("Connecting hexagon and partal with: {}".format(new_half_edge))
         
         #Now traverse the planar map. Depending on the distance between a new inner edge and
         #the next half-edge one can assign the new half edge to a certain hexagon node
@@ -241,10 +241,17 @@ class Closure:
                         break
 
                 if last_added_half_edge != None:
-                    fresh_half_edge.next = last_added_half_edge
-                    fresh_half_edge.prior = hexagon_iter
-                    last_added_half_edge.prior = fresh_half_edge
-                    hexagon_iter.next = fresh_half_edge
+                    #fresh_half_edge.next = last_added_half_edge
+                    #fresh_half_edge.prior = hexagon_iter
+                    #last_added_half_edge.prior = fresh_half_edge
+                    #hexagon_iter.next = fresh_half_edge
+                    #??????
+                    fresh_half_edge.next = hexagon_iter.prior
+                    fresh_half_edge.prior = last_added_half_edge
+                    last_added_half_edge.next = fresh_half_edge
+                    hexagon_iter.prior.prior = fresh_half_edge
+                    #######
+                    
                 else:
                     fresh_half_edge.next = hexagon_iter.prior
                     fresh_half_edge.prior = hexagon_iter
@@ -448,6 +455,12 @@ class Closure:
             half_edge_list.remove(half_edge.opposite)
         return G
 
+    def closure_size(self, init_half_edge):
+        G = self.half_edges_to_graph(init_half_edge)
+        closure_nodes = len(list(G.nodes))
+        return closure_nodes
+        
+
 
     #Returns the highest index of the current graph
     def ___get_max_half_edge_index(self, init_half_edge):    
@@ -521,8 +534,28 @@ class Closure:
 
     #Checks if quadrangulation is correct
     def ___test_quadrangulation(self, init_half_edge):
-        #TODO
-        pass
+        #Check if every cycle is of degree 4
+        edge_list = self.list_half_edges(init_half_edge, [])
+
+        for half_edge in edge_list:
+            current_half_edge = half_edge
+            print("Check: ",format(current_half_edge))
+            cycle_degree = 0
+            while True:
+                current_half_edge = current_half_edge.next
+                print(current_half_edge)
+                cycle_degree += 1
+                print("Cycle degree: ",format(cycle_degree))
+                assert(current_half_edge.opposite != None)
+                if current_half_edge == half_edge:
+                    break
+                assert(cycle_degree < 5)
+                current_half_edge = current_half_edge.opposite
+                if current_half_edge == half_edge:
+                    break
+                print(current_half_edge)
+            
+                
 
 
     def closure(self, binary_tree):
@@ -535,11 +568,12 @@ class Closure:
         The last step is to make the outer face of the graph to a four-edge
         face (quadrangulation of the hexagon).
         """
-        self.blockPrint()
+        #self.blockPrint()
         init_half_edge = self.___btree_to_planar_map(binary_tree)
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
         # if self.___reject(init_half_edge):
         #     return None
         init_half_edge = self.___quadrangulate(init_half_edge)
-        self.enablePrint()
+        self.___test_quadrangulation(init_half_edge)
+        #self.enablePrint()
         return init_half_edge
