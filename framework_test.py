@@ -196,7 +196,7 @@ def irreducible_dissection_test():
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals)
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
     irreducible_dissection_grammar.init()
 
     dissection = irreducible_dissection_grammar.sample('J', symbolic_x, symbolic_y)

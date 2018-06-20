@@ -3,9 +3,11 @@ from framework.samplers import ZeroAtomSampler, LAtomSampler, UAtomSampler
 from framework.samplers import SetSampler, BijectionSampler, RejectionSampler, TransformationSampler
 from framework.samplers import LSubsSampler, USubsSampler, LDerFromUDerSampler, UDerFromLDerSampler
 from framework.combinatorial_classes.generic_classes import DummyClass
-from framework.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000_mu2
+from framework.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000, planar_graph_evals_n1000_mu2
 from framework.evaluation_oracle import EvaluationOracle
 from framework.utils import bern
+
+from timeit import default_timer as timer
 # All references in comments in this file refer to:
 # "E. Fusy: Uniform Random Sampling of Planar Graphs in Linear Time"
 
@@ -176,6 +178,7 @@ planar_graphs_rules = {
 }
 
 if __name__ == "__main__":
+    start_main = timer()
     grammar = DecompositionGrammar()
     grammar.add_rules(binary_tree_rules)
     grammar.add_rules(irreducible_dissection_rules)
@@ -185,8 +188,14 @@ if __name__ == "__main__":
     grammar.add_rules(connected_rules)
     grammar.add_rules(planar_graphs_rules)
     grammar.init()
-
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000_mu2)
+    oracles = {
+        '100': {'oracle': planar_graph_evals_n100, 'size': 100},
+        '1000': {'oracle': planar_graph_evals_n1000, 'size': 1000},
+        '1000m2': {'oracle': planar_graph_evals_n1000_mu2, 'size': 1000},
+    }
+    oracle = '100'
+    BoltzmannSampler.oracle = EvaluationOracle(oracles[oracle]['oracle'])
+    end_main = timer()
 
     # symbolic_x = 'x*G_1_dx(x,y)'
     # symbolic_y = 'D(x*G_1_dx(x,y),y)'
@@ -205,11 +214,44 @@ if __name__ == "__main__":
 
     samples = 1
     sampled_objects = []
-
-    for _ in range(samples):
-        dummy = grammar.sample_dummy(sampled_class, symbolic_x, symbolic_y)
+    first_hit = None
+    first_near_hit = None
+    first_near_near_hit = None
+    hits = 0
+    near_hits = 0
+    near_near_hits = 0
+    start_sample = timer()
+    recErrorCounter = 0
+    for i in range(samples):
+        try:
+            dummy = grammar.sample_dummy(sampled_class, symbolic_x, symbolic_y)
+        except RecursionError:
+            recErrorCounter += 1
+            pass
+        wanted_size = oracles[oracle]['size']
+        if(dummy.get_l_size() is wanted_size):
+            first_hit is None:
+                first_hit = i
+                first_hit_time = timer()
+            hits += 1
+            print("exact after {0}".format(i))
+            print("exact after {0}s".format(timer() - start_sample))
+        if( dummy.get_l_size() >= wanted_size - (0.1 * wanted_size) and dummy.get_l_size() <= wanted_size + (0.1 * wanted_size)):
+            if first_near_hit is None:
+                first_near_hit = i
+                first_near_hit_time = timer()
+            near_hits += 1
+            print("size +-10% after {0}".format(i))
+            print("size +-10% after {0}s".format(timer() - start_sample))
+        if( dummy.get_l_size() >= wanted_size - (0.05 * wanted_size) and dummy.get_l_size() <= wanted_size + (0.05 * wanted_size)):
+            if first_near_hit is None:
+                first_near_near_hit = i
+                first_near_near_hit_time = timer()
+            near_near_hits += 1
+            print("size +-5% after {0}".format(i))
+            print("size +-5% after {0}s".format(timer() - start_sample))
         sampled_objects.append(dummy)
-
+    end_sample = timer()
     sum_l_sizes = sum([dummy.get_l_size() for dummy in sampled_objects])
     print("average l-size: " + str(sum_l_sizes / samples))
     sum_u_sizes = sum([dummy.get_u_size() for dummy in sampled_objects])
@@ -217,3 +259,21 @@ if __name__ == "__main__":
 
     print("max l-size: " + str(max([dummy.get_l_size() for dummy in sampled_objects])))
     print("max u-size: " + str(max([dummy.get_u_size() for dummy in sampled_objects])))
+    print("First hit of wanted size {0}: {1}".format(oracles[oracle]['size'], first_hit))
+    print("First hit of wanted size {0} +- 10%: {1}".format(oracles[oracle]['size'], first_near_hit))
+    print("First hit of wanted size {0} +- 5%: {1}".format(oracles[oracle]['size'], first_near_near_hit))
+
+    print("Max Rec. errors {}".format(recErrorCounter))
+    print("Timing:")
+    print("Oracle setup {}s".format(end_main - start_main))
+    print("Intermediate {}s".format(start_sample - end_main))
+    print("Sampling {}s".format(end_sample - start_sample))
+    if first_hit:
+        print("Time to size {}: {}s".format(oracles[oracle]['size'], first_hit_time - start_sample))
+
+    if first_near_hit:
+        print("Time to size {0} +- 10%: {1}s".format(oracles[oracle]['size'], first_near_hit_time - start_sample))
+        print("Amount of +- 10% hits: {}".format(near_hits))
+    if first_near_near_hit:
+        print("Time to size {0} +- 5%: {1}s".format(oracles[oracle]['size'], first_near_near_hit_time - start_sample))
+        print("Amount of +- 5% hits: {}".format(near_near_hits))
