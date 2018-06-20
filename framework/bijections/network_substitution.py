@@ -13,23 +13,25 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 """
-    Substitute and edge from the three connected map with a network.
+    Substitute and edge from the tree connected map with a network.
 """
 
 
 class EdgeByNetworkSubstitution:
 
-    def substitute_edge_by_network(self, three_connected_graph, half_edge_for_sub, network):
+    def substitute_edge_by_network(self, tree_connected_graph, half_edge_for_sub, network):
         '''
-        Substitute the edge from the three connected graph with the whole network given as an argument.
+        Substitute the edge from the tree connected graph with the whole network given as an argument.
 
-        :param three_connected_graph: target three connected graph where the network will be plugged in
+        :param tree_connected_graph: target tree connected graph where the network will be plugged in
         :param half_edge_for_sub: the half edge which corresponding full edge have to be changed
         :param network : the network for plugging in
         '''
 
+        # Extract the opposite half edge from the tree connected graph.
         half_edge_for_sub_opp = half_edge_for_sub.opposite
 
+        # Get the needed edges for manipulation from the network.
         net_root_half_edge = network.root_half_edge
         net_root_half_edge_next = net_root_half_edge.next
         net_root_half_edge_prior = net_root_half_edge.prior
@@ -63,4 +65,25 @@ class EdgeByNetworkSubstitution:
             half_edge_for_sub_opp_next.prior = net_root_half_edge_opp_prior
             net_root_half_edge_opp_prior.next = half_edge_for_sub_opp_next
 
-        # TODO finish the vertices in list adding !!
+        # Add the vertices from the network to the tree connected graph vertex list
+        # The poles are not part from the vertices list, therefore we don't have to exclude them.
+        tree_connected_graph.vertices_list.add(network.vertices_list)
+
+        # Add the edges from the network to the edges list from the tree connected graph.
+        result_edges_set = set()
+        # Add the edges from the tree connected graph and the network
+        result_edges_set += tree_connected_graph.edges_list
+        result_edges_set += network.edges_list
+
+        # Exclude all possible half edges from the tree and network to prevent both half edges that share and edge to be
+        # in the set
+        result_edges_set -= [net_root_half_edge, net_root_half_edge.opposite, net_root_half_edge_next,
+                             net_root_half_edge_opp_next, net_root_half_edge_next.opposite,
+                             net_root_half_edge_opp_next.opposite, half_edge_for_sub, half_edge_for_sub_opp]
+
+        # Add only the edges from one side
+        result_edges_set += [half_edge_for_sub, half_edge_for_sub_opp]
+
+        # Reinitialize the list of the edges from the tree_connected_graph
+        tree_connected_graph.edges_list.clear()
+        tree_connected_graph.edges_list += result_edges_set

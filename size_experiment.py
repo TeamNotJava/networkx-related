@@ -203,7 +203,7 @@ if __name__ == "__main__":
     [print(query) for query in sorted(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))]
     print()
 
-    samples = 100
+    samples = 1
     sampled_objects = []
 
     for _ in range(samples):

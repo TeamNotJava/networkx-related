@@ -15,9 +15,9 @@ class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
         return len(self.edges_list)
 
     def get_l_size(self):
-        # root vertices do not count
+        # The root vertices are not part from the vertices list, therefore we don't have to subtract 2.
         # see 3.4.2.
-        return len(self.vertices_list) - 2
+        return len(self.vertices_list)
 
     def u_atoms(self):
         raise NotImplementedError
