@@ -12,122 +12,55 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-"""Substitute the edge of the graph with whole network.
 """
-
-import networkx.classes.map
-import networkx as nx
-import copy.deepcopy as deepcopy
-
+    Substitute and edge from the three connected map with a network.
+"""
 
 
 class EdgeByNetworkSubstitution:
 
-
-    def _check_for_equal_edges(self, query_edge, edge_to_compare_with):
+    def substitute_edge_by_network(self, three_connected_graph, half_edge_for_sub, network):
         '''
-        Checks wether edges is the equal with network_root_edge.
-        :return: True if the edges are equal, False otherwise
-        '''
-        return (query_edge[0] is edge_to_compare_with[0] and query_edge[1] is edge_to_compare_with[1]) \
-               or (query_edge[0] is edge_to_compare_with[1] and query_edge[1] is edge_to_compare_with[0])
+        Substitute the edge from the three connected graph with the whole network given as an argument.
 
-
-
-    # Finds the closest prev edge of (u,v) in to_map with respect to u .
-    def _find_nonpoles_closest_prev_in_to_map(self, to_map, network, u, v, node_mapping):
-
-        # We check for the base case when the vertex is still not part of the graph or does not have any edges.
-        u_mapped = node_mapping[u]
-        if u_mapped not in to_map.nodes() or len(to_map[u_mapped]) == 0:
-            return None
-
-        # We search for closest prev edge of (u,v) with respect to u.
-        from_map_prev_edge_walker = network.get_prev_edge(u, v)
-        while from_map_prev_edge_walker[1] is not v:
-            if from_map_prev_edge_walker[1] in node_mapping:
-                prev_v_mapped = node_mapping[from_map_prev_edge_walker[1]]
-                if prev_v_mapped in to_map[u_mapped]:
-                    return prev_v_mapped
-
-            # Check the other ones
-            from_map_prev_edge_walker = network.get_prev_edge(from_map_prev_edge_walker[0], from_map_prev_edge_walker[1])
-
-        raise nx.exception.NetworkXException('A previous edge for ({0}, {1}) was not found ahtoulgh the base case '
-                                             'is fulfilled. This should not be the case.'.format(u, v))
-
-
-
-    def substitute_edge_by_network(self, original_map, edge_for_substitution, network):
-        '''
-        Substitute the edge from the map with the whole network given as an argument.
-
-        :param original_map: the original map in which the network will be plugged in
-        :param edge_for_substitution: the edge for substitution from the original map
+        :param three_connected_graph: target three connected graph where the network will be plugged in
+        :param half_edge_for_sub: the half edge which corresponding full edge have to be changed
         :param network : the network for plugging in
-        :return: new object from the map class where the edge from the original map is substituted with the network
         '''
 
-        to_map = deepcopy(original_map)
+        half_edge_for_sub_opp = half_edge_for_sub.opposite
 
-        network_root_ege = network.roog_edge()
-        zero_pole = network_root_ege[0]
-        inf_pole = network_root_ege[1]
+        net_root_half_edge = network.root_half_edge
+        net_root_half_edge_next = net_root_half_edge.next
+        net_root_half_edge_prior = net_root_half_edge.prior
+        net_root_half_edge_opp_next = net_root_half_edge.opposite.next
+        net_root_half_edge_opp_prior = net_root_half_edge.opposite.prior
 
-        network_zero_pole_prev = network.get_prev_edge(zero_pole, inf_pole)
-        network_zero_pole_next = network.get_next_edge(zero_pole, inf_pole)
+        # Identify the zero pole with the the half_edge_for_sub vertex.
+        half_edge_for_sub.opposite = net_root_half_edge_next.opposite
+        net_root_half_edge_next.opposite.opposite = half_edge_for_sub
+        if net_root_half_edge_next is not net_root_half_edge_prior:
+            # Switch the pointers so that the network_root_edge and its next are not included
+            half_edge_for_sub_next = half_edge_for_sub.next
 
-        network_inf_pole_prev = network.get_prev_edge(inf_pole, zero_pole)
-        network_inf_pole_next = network.get_next_edge(inf_pole, zero_pole)
+            half_edge_for_sub.next = net_root_half_edge_next.next
+            net_root_half_edge_next.prior = half_edge_for_sub
 
-        to_map_size = len(to_map.nodes())
-        index_for_map = to_map_size
+            half_edge_for_sub_next.prior = net_root_half_edge_prior
+            net_root_half_edge_prior.next = half_edge_for_sub_next
 
-        # We have to copy the network nodes and edges in the to_map. Only the edge between the poles and its next
-        # edges on both sides are excluded.
-        node_mapping = dict()
-        for edge in network.edges():
-            # We map the nodes to the new nodes in the to_map
-            u = edge[0]
-            v = edge[1]
-            if u not in node_mapping:
-                node_mapping[u] = index_for_map
-                index_for_map += 1
-            if v not in node_mapping:
-                node_mapping[v] = index_for_map
-                index_for_map += 1
 
-            # Exclude the root edge, and its poles next edges.
-            if self._check_for_equal_edges(edge, network_root_ege) or \
-                self._check_for_equal_edges(edge, network_zero_pole_next) or \
-                self._check_for_equal_edges(edge, network_inf_pole_next):
+        # Identify the inf pole with the the half_edge_for_sub_opp vertex.
+        half_edge_for_sub_opp.opposite = net_root_half_edge_opp_next.opposite
+        net_root_half_edge_opp_next.opposite.opposite = half_edge_for_sub_opp
+        if net_root_half_edge_opp_next is not net_root_half_edge_opp_prior:
+            # Switch the pointers so that the network_root_edge_opp and its next are not included
+            half_edge_for_sub_opp_next = half_edge_for_sub_opp.next
 
-                continue
+            half_edge_for_sub_opp.next = net_root_half_edge_opp_prior
+            net_root_half_edge_opp_prior.prior = half_edge_for_sub_opp
 
-            # We search for the closest previous edges with respect to u and v
-            prev_of_u_mapped = self._find_closest_prev_in_to_map(to_map, network, u, v, node_mapping)
-            prev_of_v_mapped = self._find_closest_prev_in_to_map(to_map, network, v, u, node_mapping)
+            half_edge_for_sub_opp_next.prior = net_root_half_edge_opp_prior
+            net_root_half_edge_opp_prior.next = half_edge_for_sub_opp_next
 
-            # Check whether the prev references are pointing to some of the poles. If that's the case then a switch to
-            # the vertices of the substitution edge is needed.
-            if node_mapping[zero_pole] is prev_of_u_mapped:
-                prev_of_u_mapped = edge_for_substitution[0]
-            if node_mapping[inf_pole] is prev_of_u_mapped:
-                prev_of_u_mapped = edge_for_substitution[1]
-            # Same for prev_of_v_mapped
-            if node_mapping[zero_pole] is prev_of_v_mapped:
-                prev_of_v_mapped = edge_for_substitution[0]
-            if node_mapping[inf_pole] is prev_of_v_mapped:
-                prev_of_v_mapped = edge_for_substitution[1]
-
-            # Check the special cases with the poles
-            if u is not zero_pole and u is not inf_pole and v is not zero_pole and v is not inf_pole:
-                # Get the mapped values
-                u_mapped = node_mapping[u]
-                v_mapped = node_mapping[v]
-                # Add the edge directly in the to_map
-                to_map.add_edge(u_mapped, v_mapped, prev_of_u_mapped, prev_of_v_mapped)
-            else:
-                # The poles have to be merged
-                # TODO RECHECK this part
-                to_map.add_edge(u_mapped, v_mapped, prev_of_u_mapped, prev_of_v_mapped)
+        # TODO finish the vertices in list adding !!

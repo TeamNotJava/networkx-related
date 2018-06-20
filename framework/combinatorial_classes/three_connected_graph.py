@@ -3,20 +3,21 @@ from ..bijections.networks import u_atom_to_network
 
 
 class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
-    def __init__(self, graph, root_edge):
-        # the graph does not contain the root edge!
-        self.graph = graph
+    def __init__(self, vertices_list, edges_list, root_edge):
+        self.vertices_list = vertices_list
+        # the edges list not contain the root edge!
+        self.edges_list = edges_list
         self.root_edge = root_edge
 
     def get_u_size(self):
         # root edge does not count
         # see 3.4.2.
-        return self.graph.numer_of_edges()
+        return len(self.edges_list)
 
     def get_l_size(self):
         # root vertices do not count
         # see 3.4.2.
-        return self.graph.number_of_nodes() - 2
+        return len(self.vertices_list) - 2
 
     def u_atoms(self):
         raise NotImplementedError
@@ -50,5 +51,6 @@ class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
 
     def __str__(self):
         repr = 'Root Edge : %s \n' % self.root_edge.__repr__()
-        repr += 'Graph Representation : %s' % self.graph.__repr__()
+        repr += 'Vertices : %s' % self.vertices_list.__repr__()
+        repr += 'Edges : %s' % self.edges_list.__repr__()
         return repr

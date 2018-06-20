@@ -54,9 +54,9 @@ class WhitneyBijection:
         root_edge = (root_half_edge.node_nr, root_half_edge.opposite.node_nr)
 
         # We transform the extracted components to the nx.Graph structure
-        nx_graph = self.__create_graph_from_components(root_edge, vertices_list, edges_list)
+        #nx_graph = self.__create_graph_from_components(root_edge, vertices_list, edges_list)
 
-        return EdgeRootedThreeConnectedPlanarGraph(nx_graph, root_edge)
+        return EdgeRootedThreeConnectedPlanarGraph(vertices_list, edges_list, root_edge)
 
 
 
