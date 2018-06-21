@@ -166,6 +166,7 @@ class Closure:
     #a planar map
     def ___bicolored_complete_closure(self, init_half_edge):
         print("BICOLORED COMPLETE CLOSURE")
+        made_round = False
         starting_half_edge = self.___bicolored_partial_closure(init_half_edge)
 
         hexagon = [HalfEdge() for i in range(12)]
@@ -229,6 +230,12 @@ class Closure:
                     #Stay at current hexagon half-edge
                     pass
 
+                if hexagon_iter.node_nr > hexagon[0].node_nr:
+                    made_round = True
+
+                if made_round == True and hexagon_iter == hexagon[0]:
+                    hexagon_iter = hexagon[0].next
+
                 #Check if the closure already added a half-edge to the current node
                 last_added_half_edge = None
                 temp_half_edge = hexagon_iter
@@ -240,18 +247,28 @@ class Closure:
                     if temp_half_edge == hexagon_iter:
                         break
 
+                #Recalculate if made round
+                if made_round == True and (hexagon_iter == hexagon[0].next or hexagon_iter == hexagon[0]):
+                    while True:
+                        temp_half_edge = temp_half_edge.prior
+                        if temp_half_edge.added_by_comp_clsr == True:
+                            last_added_half_edge = temp_half_edge
+                            break
+                        if temp_half_edge == hexagon_iter:
+                            break 
+
                 if last_added_half_edge != None:
-                    #fresh_half_edge.next = last_added_half_edge
-                    #fresh_half_edge.prior = hexagon_iter
-                    #last_added_half_edge.prior = fresh_half_edge
-                    #hexagon_iter.next = fresh_half_edge
-                    #??????
-                    fresh_half_edge.next = hexagon_iter.prior
-                    fresh_half_edge.prior = last_added_half_edge
-                    last_added_half_edge.next = fresh_half_edge
-                    hexagon_iter.prior.prior = fresh_half_edge
-                    #######
-                    
+                    if hexagon_iter == hexagon[0] and made_round == True:
+                        fresh_half_edge.next = hexagon_iter.prior
+                        fresh_half_edge.prior = last_added_half_edge
+                        last_added_half_edge.next = fresh_half_edge
+                        hexagon_iter.prior.prior = fresh_half_edge
+                        made_round = False
+                    else:
+                        fresh_half_edge.next = last_added_half_edge
+                        fresh_half_edge.prior = hexagon_iter
+                        last_added_half_edge.prior = fresh_half_edge
+                        hexagon_iter.next = fresh_half_edge                 
                 else:
                     fresh_half_edge.next = hexagon_iter.prior
                     fresh_half_edge.prior = hexagon_iter
