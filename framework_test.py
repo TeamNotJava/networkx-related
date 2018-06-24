@@ -248,7 +248,7 @@ def main():
     if args.binary_tree:
         tree = binary_tree_test()
         if args.print:
-            plot_binary_tree(tree)
+            pretty_print_tree(tree)
         if args.plot:
             import matplotlib.pyplot as plt
             plot_binary_tree(tree)
