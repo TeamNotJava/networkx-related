@@ -166,7 +166,7 @@ class Closure:
     #a planar map
     def ___bicolored_complete_closure(self, init_half_edge):
         print("BICOLORED COMPLETE CLOSURE")
-        made_round = False
+        hexagon_nodes_visited = 0
         starting_half_edge = self.___bicolored_partial_closure(init_half_edge)
 
         hexagon = [HalfEdge() for i in range(12)]
@@ -189,7 +189,8 @@ class Closure:
         new_half_edge.added_by_comp_clsr = True
         index = index + 1
         
-        
+        connecting_half_edge = new_half_edge
+
         print("Connecting hexagon and partal with: {}".format(new_half_edge))
         
         #Now traverse the planar map. Depending on the distance between a new inner edge and
@@ -197,6 +198,8 @@ class Closure:
         distance = 0
         hexagon_iter = hexagon_start_half_edge
         current_half_edge = starting_half_edge
+        first_time = True
+        hexagon_first_node = hexagon[0].node_nr
         while True:
             current_half_edge = current_half_edge.next
             if current_half_edge == starting_half_edge:
@@ -230,57 +233,24 @@ class Closure:
                     #Stay at current hexagon half-edge
                     pass
 
-                if hexagon_iter.node_nr > hexagon[0].node_nr:
-                    made_round = True
-
-                if made_round == True and hexagon_iter == hexagon[0]:
-                    hexagon_iter = hexagon[0].next
-
-                #Check if the closure already added a half-edge to the current node
-                last_added_half_edge = None
-                temp_half_edge = hexagon_iter
-                while True:
-                    temp_half_edge = temp_half_edge.next
-                    if temp_half_edge.added_by_comp_clsr == True:
-                        last_added_half_edge = temp_half_edge
-                        break
-                    if temp_half_edge == hexagon_iter:
-                        break
-
-                #Recalculate if made round
-                if made_round == True and (hexagon_iter == hexagon[0].next or hexagon_iter == hexagon[0]):
-                    while True:
-                        temp_half_edge = temp_half_edge.prior
-                        if temp_half_edge.added_by_comp_clsr == True:
-                            last_added_half_edge = temp_half_edge
-                            break
-                        if temp_half_edge == hexagon_iter:
-                            break 
-
-                if last_added_half_edge != None:
-                    if hexagon_iter == hexagon[0] and made_round == True:
-                        fresh_half_edge.next = hexagon_iter.prior
-                        fresh_half_edge.prior = last_added_half_edge
-                        last_added_half_edge.next = fresh_half_edge
-                        hexagon_iter.prior.prior = fresh_half_edge
-                        made_round = False
-                    else:
-                        fresh_half_edge.next = last_added_half_edge
-                        fresh_half_edge.prior = hexagon_iter
-                        last_added_half_edge.prior = fresh_half_edge
-                        hexagon_iter.next = fresh_half_edge                 
+                if hexagon_nodes_visited > 0 and hexagon_iter.node_nr == hexagon[0].node_nr:
+                    hexagon_nodes_visited = 6
                 else:
-                    fresh_half_edge.next = hexagon_iter.prior
-                    fresh_half_edge.prior = hexagon_iter
-                    hexagon_iter.prior.prior = fresh_half_edge
-                    hexagon_iter.next = fresh_half_edge
+                    hexagon_nodes_visited = hexagon_iter.node_nr - hexagon_first_node   
+
+                #prior_half_edge, next_half_edge, opposite_half_edge, fresh_half_edge, index
+                if hexagon_nodes_visited == 6:
+                    #last_added_edge = self.___get_last_added_edge(hexagon_iter, connecting_half_edge)
+                    last_added_edge = connecting_half_edge.next
+                    self.___add_to_closure(connecting_half_edge, last_added_edge, current_half_edge, fresh_half_edge, index)
+                else:
+                    #last_added_edge = self.___get_last_added_edge(hexagon_iter, None)
+                    last_added_edge = hexagon_iter.next
+                    self.___add_to_closure(hexagon_iter, last_added_edge, current_half_edge, fresh_half_edge, index)
 
 
-                fresh_half_edge.color = hexagon_iter.color
-                fresh_half_edge.node_nr = hexagon_iter.node_nr
-                fresh_half_edge.index = index 
-                fresh_half_edge.added_by_comp_clsr = True
-                print("fresh-half-edge: {}".format(fresh_half_edge))
+                
+
                 index += 1
                 distance = 0
             else:
@@ -295,6 +265,43 @@ class Closure:
         return hexagon[0]
 
 
+    def ___get_last_added_edge(self, starting_half_edge, break_half_edge):    
+        current_half_edge = starting_half_edge
+        if break_half_edge is not None:
+            while True:
+                current_half_edge = current_half_edge.prior
+                if current_half_edge.prior == break_half_edge:
+                    print("Last added: ",format(current_half_edge))
+                    return current_half_edge
+        else:
+            while True:
+                current_half_edge = current_half_edge.next
+                if current_half_edge.next == starting_half_edge:
+                    print("Last added: ",format(current_half_edge))
+                    return current_half_edge
+                if current_half_edge.added_by_comp_clsr == True:
+                    print("Last added: ",format(current_half_edge))
+                    return current_half_edge
+
+
+                
+    #Adds the fresh half edge to the closure between the prior and the next half-edge
+    def ___add_to_closure(self, prior_half_edge, next_half_edge, opposite_half_edge, fresh_half_edge, index):
+        fresh_half_edge.opposite = opposite_half_edge
+        opposite_half_edge.opposite = fresh_half_edge
+        fresh_half_edge.color = prior_half_edge.color
+        fresh_half_edge.node_nr = prior_half_edge.node_nr
+        fresh_half_edge.index = index
+        fresh_half_edge.added_by_comp_clsr = True
+
+        fresh_half_edge.prior = prior_half_edge
+        prior_half_edge.next = fresh_half_edge
+        fresh_half_edge.next = next_half_edge
+        next_half_edge.prior = fresh_half_edge
+        print("fresh-half-edge: {}".format(fresh_half_edge))
+        
+
+
     #Returns the smalles half-edge in the graph
     def ___return_smallest_half_edge(self, init_half_edge):
         half_edge_list = self.list_half_edges(init_half_edge, [])
@@ -303,7 +310,7 @@ class Closure:
         for edge in half_edge_list:
             if min_half_edge == None and edge.opposite == None:
                 min_half_edge = edge
-            elif min_half_edge != None and edge.opposite == None and edge.index < min_half_edge.index:
+            elif min_half_edge is not None and edge.opposite == None and edge.index < min_half_edge.index:
                 min_half_edge = edge 
 
         return min_half_edge
@@ -392,7 +399,10 @@ class Closure:
 
     #Makes the outer face of the irreducible dissection quadrangular by adding a new edge
     #between two opposite nodes of the hexagon
+    #Look for faces with degree larger than 4 and quadrangulate them
     def ___quadrangulate(self, init_half_edge):
+
+        #Add the outer edge
         new_half_edge = HalfEdge()
         new_half_edge.next = init_half_edge
         new_half_edge.prior = init_half_edge.prior
@@ -424,16 +434,107 @@ class Closure:
         current_half_edge.prior.next = fresh_half_edge
         current_half_edge.prior = fresh_half_edge
 
-
         fresh_half_edge.index = index 
         fresh_half_edge.node_nr = current_half_edge.node_nr
         fresh_half_edge.color = current_half_edge.color
 
+        #If there are faces with degree higher than 4 then quadrangulate them
+        #self.___quadrangulate_inner_faces(init_half_edge)
+
         if return_edge.color is not 'black':
             return_edge = fresh_half_edge
-
         print("Quadrangulation returns the edge: {}".format(return_edge))
         return return_edge
+
+    #Quadrangulates inner faces
+    def ___quadrangulate_inner_faces(self, init_half_edge):
+        print("QUADRANGULATE INNER FACES")
+        #Look for faces with degree higher than 4
+        edge_list = self.list_half_edges(init_half_edge, [])
+
+        for half_edge in edge_list:
+            edges_to_remove = []
+            current_half_edge = half_edge.next
+            print("Check: ",format(current_half_edge))
+            cycle_degree = 0
+            edges_to_remove.append(half_edge)
+            edges_to_remove.append(current_half_edge)
+            while True:
+                current_half_edge = current_half_edge.opposite
+                if current_half_edge not in edges_to_remove:
+                    edges_to_remove.append(current_half_edge)
+                cycle_degree += 1
+                if current_half_edge is half_edge:
+                    if cycle_degree != 4:
+                        #Check if it is possible to quadrangulate
+                        if cycle_degree < 4:
+                            raise Exception("Face degree too small.")
+
+                        num_edges_to_add = int(cycle_degree/3)
+                        check_number = cycle_degree + num_edges_to_add - (num_edges_to_add * 4 - num_edges_to_add)
+                        if check_number != 4:
+                            print("cycle degree: ", format(cycle_degree))
+                            raise Exception("Cannot quadrangulate an inner face!")
+                        #Quadrangulate
+                        current_half_edge = half_edge
+                        #Add an edge after three edges                  
+                        #Go three edges further 
+                        current_half_edge = current_half_edge.next          
+                        for j in range(3):
+                            current_half_edge = current_half_edge.opposite
+                            current_half_edge = current_half_edge.next
+                        #Add new edge between "current_half_edge" and "half_edge"
+                        self.___add_new_edge(current_half_edge, half_edge)
+                        #Add an edge after two edges
+                        for i in range(num_edges_to_add - 1):
+                            #Go two edges further           
+                            for j in range(2):
+                                current_half_edge = current_half_edge.opposite
+                                current_half_edge = current_half_edge.next
+                            #Add new edge between "current_half_edge" and "half_edge"
+                            self.___add_new_edge(current_half_edge, half_edge)
+                        #Remove the edges form the edge list
+                        for rm_edge in edges_to_remove:
+                            edge_list.remove(rm_edge)
+                    else:
+                        break
+                else:
+                    current_half_edge = current_half_edge.next
+                    if current_half_edge not in edges_to_remove:  
+                        edges_to_remove.append(current_half_edge)      
+                        
+
+
+
+
+
+    def ___add_new_edge(self, left_half_edge, right_half_edge):
+        new_half_edge_1 = HalfEdge()
+        new_half_edge_2 = HalfEdge()
+        index = self.___get_max_half_edge_index(left_half_edge) + 1
+
+        new_half_edge_1.opposite = new_half_edge_2
+        new_half_edge_2.opposite = new_half_edge_1
+
+        #Setup the first new half edge
+        new_half_edge_1.color = left_half_edge.color
+        new_half_edge_1.node_nr = left_half_edge.node_nr
+        new_half_edge_1.index = index
+        new_half_edge_1.next = left_half_edge.next
+        new_half_edge_1.prior = left_half_edge
+        left_half_edge.next.prior = new_half_edge_1
+        left_half_edge.next = new_half_edge_1
+
+        #Setup the second new half edge
+        new_half_edge_2.color = right_half_edge.color
+        new_half_edge_2.node_nr = right_half_edge.node_nr
+        new_half_edge_2.index = index
+        new_half_edge_2.next = right_half_edge.next
+        new_half_edge_2.prior = right_half_edge
+        right_half_edge.next.prior = new_half_edge_2
+        right_half_edge.next = new_half_edge_2
+
+
 
 
 
@@ -441,13 +542,13 @@ class Closure:
     def list_half_edges(self, init_half_edge, edge_list):       
         edge_list.append(init_half_edge)
         current_half_edge = init_half_edge
-        assert (current_half_edge != None)
+        assert (current_half_edge is not None)
         while True:
-            if current_half_edge.next != None:
+            if current_half_edge.next is not None:
                 current_half_edge = current_half_edge.next
                 if current_half_edge != init_half_edge and current_half_edge not in edge_list:
                     edge_list.append(current_half_edge)
-                    if current_half_edge.opposite != None:
+                    if current_half_edge.opposite is not None:
                         if current_half_edge.opposite not in edge_list:
                             self.list_half_edges(current_half_edge.opposite, edge_list)
                 else:
@@ -481,7 +582,7 @@ class Closure:
 
     #Returns the highest index of the current graph
     def ___get_max_half_edge_index(self, init_half_edge):    
-        assert (init_half_edge != None)    
+        assert (init_half_edge is not None)    
         edge_list = self.list_half_edges(init_half_edge, [])
         max_index = 0
         for x in edge_list:
@@ -536,7 +637,7 @@ class Closure:
                 current_half_edge = current_half_edge.next
                 if current_half_edge == stem:
                     break
-                if current_half_edge.opposite != None:
+                if current_half_edge.opposite is not None:
                     current_half_edge = current_half_edge.opposite
                     print("current: ",format(current_half_edge))
                     count = count + 1            
@@ -563,7 +664,7 @@ class Closure:
                 print(current_half_edge)
                 cycle_degree += 1
                 print("Cycle degree: ",format(cycle_degree))
-                assert(current_half_edge.opposite != None)
+                assert (current_half_edge.opposite is not None)
                 if current_half_edge == half_edge:
                     break
                 assert(cycle_degree < 5)
@@ -571,8 +672,26 @@ class Closure:
                 if current_half_edge == half_edge:
                     break
                 print(current_half_edge)
+        print("Quadrangulation is okay")
             
-                
+    #Check if the connections between the edges are correct
+    def ___test_connections_between_half_edges(self, init_half_edge): 
+        edge_list = self.list_half_edges(init_half_edge, [])
+
+        for edge in edge_list:
+            assert (edge == edge.next.prior)
+            assert (edge == edge.prior.next)
+            assert (edge == edge.opposite.opposite)
+
+    #Checks if half edges at every node are planar
+    def ___test_planarity_of_embedding(self, init_half_edge):
+        edge_list = self.list_half_edges(init_half_edge, [])
+
+        #Check if there are two different edges that have the same prior/next half-edge
+        for edge in edge_list:
+            for i in edge_list:
+                if i.index != edge.index and (i.prior == edge.prior or i.next == edge.next):
+                    raise Exception("There are two different edges with the samp prior/next.")
 
 
     def closure(self, binary_tree):
@@ -585,12 +704,12 @@ class Closure:
         The last step is to make the outer face of the graph to a four-edge
         face (quadrangulation of the hexagon).
         """
-        #self.blockPrint()
+        self.blockPrint()
         init_half_edge = self.___btree_to_planar_map(binary_tree)
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
-        # if self.___reject(init_half_edge):
-        #     return None
         init_half_edge = self.___quadrangulate(init_half_edge)
+        self.___test_connections_between_half_edges(init_half_edge)
+        self.___test_planarity_of_embedding(init_half_edge)
         self.___test_quadrangulation(init_half_edge)
-        #self.enablePrint()
+        self.enablePrint()
         return init_half_edge
