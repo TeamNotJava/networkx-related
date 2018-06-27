@@ -33,7 +33,7 @@ def check_planarity(G, counterexample=False):
     constraints, e.g. integer coordinates), see e.g. [2].
 
     The planarity check algorithm and extraction of the combinatorial embedding
-    is based on the algorithm from [1].
+    is based on the Left-Right Planarity Test [1].
 
     A counterexample is only generated if the corresponding parameter is set,
     because the complexity of the counterexample generation is higher.
@@ -68,7 +68,9 @@ def get_counterexample(G):
 
     Raises nx.NetworkXException if G is planar.
 
-    # TODO: Description how the method works
+    The function removes edges such that the graph is still not planar.
+    At some point the removal of any edge would make the graph planar.
+    This subgraph must be a Kuratowski subgraph.
 
     Parameters
     ----------
@@ -80,11 +82,13 @@ def get_counterexample(G):
         A Kuratowski subgraph that proves that G is not planar.
 
     """
-    # TODO: Copy G
+    # copy graph
+    G = nx.Graph(G)
 
     if check_planarity(G)[0]:
         raise nx.NetworkXException("G is planar - no counter example.")
 
+    # find Kuratowski subgraph
     subgraph = nx.Graph()
     for u in G:
         nbrs = list(G[u])
