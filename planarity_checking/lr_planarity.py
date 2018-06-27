@@ -247,7 +247,7 @@ class LRPlanarity(object):
         
         # remove back edges returning to parent
         if e is not None: # v isn't root
-            self.remove_back_edges(e, lowest)
+            self.remove_back_edges(e)
         return True
 
     def add_constraints(self, ei, e):
@@ -292,11 +292,11 @@ class LRPlanarity(object):
             self.S.append(P)
         return True
 
-    def remove_back_edges(self, e, lowest):
+    def remove_back_edges(self, e):
         u = e[0]
         # trim back edges ending at parent u
         # drop entire conflict pairs
-        while self.S and lowest(top_of_stack(self.S)) == self.height[u]:
+        while self.S and top_of_stack(self.S).lowest(self) == self.height[u]:
             P = self.S.pop()
             if P.left.low is not None:
                 self.side[P.left.low] = -1
