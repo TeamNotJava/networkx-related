@@ -81,6 +81,10 @@ class Interval(object):
     def copy(self):
         return Interval(self.low, self.high)
 
+    # Return True if interval I conflicts with edge b
+    def conflicting(self, b, planarityState):
+        return not self.empty() and planarityState.lowpt[self.high] > planarityState.lowpt[b]
+
 
 class ConflictPair(object):
     def __init__(self, left=Interval(), right=Interval()):
@@ -212,12 +216,51 @@ class LRPlanarity(object):
                 else:
                     self.lowpt2[e] = min(self.lowpt2[e], self.lowpt2[vw])
 
+    def add_constraint(self, ei, e):
+        P = ConflictPair()
+        # merge return edges of e_i into P.right
+        while True:
+            Q = self.S.pop()
+            if not Q.left.empty():
+                Q.swap()
+            if not Q.left.empty():  # not planar
+                raise nx.NetworkXUnfeasible()
+            if self.lowpt[Q.right.low] > self.lowpt[e]:
+                # merge intervals
+                if P.right.empty():  # topmost interval
+                    P.right = Q.right.copy()
+                else:
+                    self.ref[P.right.low] = Q.right.high
+                P.right.low = Q.right.low
+            else:  # align
+                self.ref[Q.right.low] = self.lowpt_edge[e]
+            if top_of_stack(self.S) == self.stack_bottom[ei]:
+                break
+        # merge conflicting return edges of e_1,...,e_i-1 into P.L
+        while top_of_stack(self.S).left.conflicting(ei, self) or top_of_stack(self.S).right.conflicting(ei, self):
+            Q = self.S.pop()
+            if Q.right.conflicting(ei, self):
+                Q.swap()
+            if Q.right.conflicting(ei, self):  # not planar
+                raise nx.NetworkXUnfeasible()
+            # merge interval below lowpt(e_i) into P.R
+            self.ref[P.right.low] = Q.right.high
+            if Q.right.low is not None:
+                P.right.low = Q.right.low
+
+            if P.left.empty():  # topmost interval
+                P.left = Q.left.copy()
+            else:
+                self.ref[P.left.low] = Q.left.high
+            P.left.low = Q.left.low
+
+        if not (P.left.empty() and P.right.empty()):
+            self.S.append(P)
+
     # Test for LR partition
     # Raise nx.NetworkXUnfeasible() in case of unresolvable conflict
     def dfs_testing(self, v):
-        # Return True if interval I conflicts with edge b
-        def conflicting(I, b):
-            return not I.empty() and self.lowpt[I.high] > self.lowpt[b]
+
         # Return the lowest lowpoint of a conflict pair
         def lowest(P):
             if P.left.empty():
@@ -241,45 +284,9 @@ class LRPlanarity(object):
                 if w == self.ordered_adjs[v][0]: # e_i has return edge
                     self.lowpt_edge[e] = self.lowpt_edge[ei]
                 else: # add constraints of e_i
-                    P = ConflictPair()
-                    # merge return edges of e_i into P.right
-                    while True:
-                        Q = self.S.pop()
-                        if not Q.left.empty():
-                            Q.swap()
-                        if not Q.left.empty(): # not planar
-                            raise nx.NetworkXUnfeasible()
-                        if self.lowpt[Q.right.low] > self.lowpt[e]:
-                            # merge intervals
-                            if P.right.empty(): # topmost interval
-                                P.right = Q.right.copy()
-                            else:
-                                self.ref[P.right.low] = Q.right.high
-                            P.right.low = Q.right.low
-                        else: # align
-                            self.ref[Q.right.low] = self.lowpt_edge[e]
-                        if top_of_stack(self.S) == self.stack_bottom[ei]:
-                            break
-                    # merge conflicting return edges of e_1,...,e_i-1 into P.L
-                    while conflicting(top_of_stack(self.S).left, ei) or conflicting(top_of_stack(self.S).right, ei):
-                        Q = self.S.pop()
-                        if conflicting(Q.right, ei):
-                            Q.swap()
-                        if conflicting(Q.right, ei): # not planar
-                            raise nx.NetworkXUnfeasible()
-                        # merge interval below lowpt(e_i) into P.R
-                        self.ref[P.right.low] = Q.right.high
-                        if Q.right.low is not None:
-                            P.right.low = Q.right.low
+                    #TODO
+                    self.add_constraints(ei)
 
-                        if P.left.empty(): # topmost interval
-                            P.left = Q.left.copy()
-                        else:
-                            self.ref[P.left.low] = Q.left.high
-                        P.left.low = Q.left.low
-
-                    if not (P.left.empty() and P.right.empty()):
-                        self.S.append(P)
         
         # remove back edges returning to parent
         if e is not None: # v isn't root
