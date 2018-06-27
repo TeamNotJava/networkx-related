@@ -1,5 +1,4 @@
 from collections import defaultdict
-from copy import deepcopy
 import networkx as nx
 
 
@@ -63,13 +62,16 @@ def check_planarity(G, counterexample=False):
     """
 
     planarity = LRPlanarity(G)
-    try:
-        embedding = planarity.lr_planarity()
-    except nx.NetworkXUnfeasible:
+    embedding = planarity.lr_planarity()
+    if embedding is None:
+        # Graph is not planar
         if counterexample:
             return False, get_counterexample(G)
-        return False, None
-    return True, embedding
+        else:
+            return False, None
+    else:
+        # Graph is planar
+        return True, embedding
 
 
 class Interval(object):
@@ -144,7 +146,8 @@ class LRPlanarity(object):
 
     def lr_planarity(self):
         if self.G.order() > 2 and self.G.size() > 3 * self.G.order() - 6:
-            raise nx.NetworkXUnfeasible()
+            # Graph is not planar
+            return None
 
         # orientation of the graph by depth first search traversal
         for v in self.G:
@@ -160,7 +163,8 @@ class LRPlanarity(object):
             # note: this can be done in linear time, but will it be actually faster?
             self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
         for v in self.roots:
-            self.dfs_testing(v)
+            if not self.dfs_testing(v):
+                return None
 
         # function to resolve the relative side of an edge to the absolute side 
         def sign(e):
@@ -235,7 +239,8 @@ class LRPlanarity(object):
             ei = (v, w)
             self.stack_bottom[ei] = top_of_stack(self.S)
             if ei == self.parent_edge[w]: # tree edge
-                self.dfs_testing(w)
+                if not self.dfs_testing(w):
+                    return False
             else: # back edge
                 self.lowpt_edge[ei] = ei
                 self.S.append(ConflictPair(right=Interval(ei, ei)))
@@ -245,11 +250,14 @@ class LRPlanarity(object):
                 if w == self.ordered_adjs[v][0]: # e_i has return edge
                     self.lowpt_edge[e] = self.lowpt_edge[ei]
                 else: # add constraints of e_i
-                    self.add_constraints(ei, e)
+                    if not self.add_constraints(ei, e):
+                        # Graph is not planar
+                        return False
         
         # remove back edges returning to parent
         if e is not None: # v isn't root
             self.remove_back_edges(e, lowest)
+        return True
 
     def add_constraints(self, ei, e):
         P = ConflictPair()
@@ -259,7 +267,7 @@ class LRPlanarity(object):
             if not Q.left.empty():
                 Q.swap()
             if not Q.left.empty():  # not planar
-                raise nx.NetworkXUnfeasible()
+                return False
             if self.lowpt[Q.right.low] > self.lowpt[e]:
                 # merge intervals
                 if P.right.empty():  # topmost interval
@@ -277,7 +285,7 @@ class LRPlanarity(object):
             if Q.right.conflicting(ei, self):
                 Q.swap()
             if Q.right.conflicting(ei, self):  # not planar
-                raise nx.NetworkXUnfeasible()
+                return False
             # merge interval below lowpt(e_i) into P.R
             self.ref[P.right.low] = Q.right.high
             if Q.right.low is not None:
@@ -291,6 +299,7 @@ class LRPlanarity(object):
 
         if not (P.left.empty() and P.right.empty()):
             self.S.append(P)
+        return True
 
     def remove_back_edges(self, e, lowest):
         u = e[0]
