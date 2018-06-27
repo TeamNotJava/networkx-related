@@ -11,11 +11,9 @@
 #           Petre Petrov <petrepp4@gmail.com>
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
-
 """
     Merges two networks in a series.
 """
-
 
 class NetworkMergeInSeries:
 

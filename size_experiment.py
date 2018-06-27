@@ -230,7 +230,7 @@ if __name__ == "__main__":
             pass
         wanted_size = oracles[oracle]['size']
         if(dummy.get_l_size() is wanted_size):
-            first_hit is None:
+            if first_hit is None:
                 first_hit = i
                 first_hit_time = timer()
             hits += 1
