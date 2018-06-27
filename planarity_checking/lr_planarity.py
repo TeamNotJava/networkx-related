@@ -10,27 +10,34 @@ def check_planarity(G, counterexample=False):
 
     Parameters
     ----------
-    G : graph
-        A NetworkX graph
-    TODO counterexample
+    G : NetworkX graph
+    counterexample : bool
+        A Kuratowski subgraph (to proof non planarity) is only returned if set
+        to true
 
     Returns
     -------
     is_planar : bool
         Is true if the graph is planar
 
-    result : TODO
-        If the graph is planar this is a planar embedding
-        If the graph is not planar this is a counter example
+    certificate :
+        If the graph is planar this is a planar embedding (dict).
+        If the graph is not planar and counterexample is true,
+        this is a Kuratowski subgraph.
 
     Notes
     -----
-    A (combinatorial) embedding consists of cyclic orderings of the incident edges at each vertex, given such
-    an embedding there are multiple approaches discussed in literature to drawing the graph (subject to various constraints, e.g.
-    integer coordinates), see e.g. [2].
-    TODO time complexity
+    A (combinatorial) embedding consists of cyclic orderings of the incident
+    edges at each vertex, given such an embedding there are multiple approaches
+    discussed in literature to drawing the graph (subject to various
+    constraints, e.g. integer coordinates), see e.g. [2].
 
-    TODO
+    The planarity check algorithm and extraction of the combinatorial embedding
+    is based on the algorithm from [1].
+
+    A counterexample is only generated if the corresponding parameter is set,
+    because the complexity of the counterexample generation is higher.
+
     References
     ----------
     .. [1] Ulrik Brandes:
@@ -43,8 +50,8 @@ def check_planarity(G, counterexample=False):
         2004
     """
 
-    planarity = LRPlanarity(G)
-    embedding = planarity.lr_planarity()
+    planarityState = LRPlanarity(G)
+    embedding = planarityState.lr_planarity()
     if embedding is None:
         # Graph is not planar
         if counterexample:
@@ -57,7 +64,24 @@ def check_planarity(G, counterexample=False):
 
 
 def get_counterexample(G):
-    """Return a kuratowski subgraph"""
+    """Obtains a Kuratowski subgraph
+
+    Raises nx.NetworkXException if G is planar.
+
+    # TODO: Description how the method works
+
+    Parameters
+    ----------
+    G : NetworkX graph
+
+    Returns
+    -------
+    subgraph : NetworkX graph
+        A Kuratowski subgraph that proves that G is not planar.
+
+    """
+    # TODO: Copy G
+
     if check_planarity(G)[0]:
         raise nx.NetworkXException("G is planar - no counter example.")
 
@@ -72,45 +96,69 @@ def get_counterexample(G):
 
     return subgraph
 
+
 class Interval(object):
+    """Represents a set of return edges
+
+    All return edges in an interval induce a same constraint on the contained
+    edges, which means that all edges must either have a left orientation or
+    all edges must have a right orientation.
+    """
     def __init__(self, low=None, high=None):
         self.low = low
         self.high = high
+
     def empty(self):
+        """Is the interval empty"""
         return self.low is None and self.high is None
+
     def copy(self):
+        """Return a copy of this interval"""
         return Interval(self.low, self.high)
 
-    # Return True if interval I conflicts with edge b
     def conflicting(self, b, planarityState):
-        return not self.empty() and planarityState.lowpt[self.high] > planarityState.lowpt[b]
+        """Return True if interval I conflicts with edge b"""
+        return (not self.empty() and
+                planarityState.lowpt[self.high] > planarityState.lowpt[b])
 
 
 class ConflictPair(object):
+    """Represents a different constraint between two intervals
+
+    The edges in the left interval must have a different orientation than
+    the one in the right interval.
+    """
     def __init__(self, left=Interval(), right=Interval()):
         self.left = left
         self.right = right
+
     def swap(self):
+        """Swap left and right intervals"""
         temp = self.left
         self.left = self.right
         self.right = temp
 
-    # Return the lowest lowpoint of a conflict pair
     def lowest(self, planarityState):
+        """Return the lowest lowpoint of a conflict pair"""
         if self.left.empty():
             return planarityState.lowpt[self.right.low]
         if self.right.empty():
             return planarityState.lowpt[self.left.low]
-        return min(planarityState.lowpt[self.left.low], planarityState.lowpt[self.right.low])
+        return min(planarityState.lowpt[self.left.low],
+                   planarityState.lowpt[self.right.low])
 
-def top_of_stack(l: list):
+
+def top_of_stack(l):
+    """Returns the element on top of the stack."""
     if not l:
         return None
-
     return l[-1]
 
+
 class LRPlanarity(object):
-    def __init__(self, G: nx.Graph):
+    """A class to maintain the state during planarity check"""
+    def __init__(self, G):
+        # Copy G without adding self-loops
         self.G = nx.Graph()
         self.G.add_nodes_from(G.nodes)
         for v, w in G.edges:
@@ -122,12 +170,10 @@ class LRPlanarity(object):
         # distance from tree root
         self.height = defaultdict(lambda: None)
 
-        self.lowpt = {} # height of lowest return point of an edge
-        self.lowpt2 = {} # height of second lowest return point
-        self.nesting_depth = {} # for nesting order
-        
-        #self.oriented = [] # TODO: is unused?
-        
+        self.lowpt = {}  # height of lowest return point of an edge
+        self.lowpt2 = {}  # height of second lowest return point
+        self.nesting_depth = {}  # for nesting order
+
         # None -> missing edge
         self.parent_edge = defaultdict(lambda: None)
 
@@ -162,12 +208,13 @@ class LRPlanarity(object):
                 self.roots.append(v)
                 self.dfs_orientation(v)
 
-        self.G = None # just unsetting this for correctness purposes
+        self.G = None  # just unsetting this for correctness purposes
 
         # testing
-        for v in self.DG: # sort the adjacency lists by nesting depth
-            # note: this can be done in linear time, but will it be actually faster?
-            self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
+        for v in self.DG:  # sort the adjacency lists by nesting depth
+            # note: this sorting leads to non linear time
+            self.ordered_adjs[v] = sorted(
+                self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
         for v in self.roots:
             if not self.dfs_testing(v):
                 return None
@@ -176,7 +223,8 @@ class LRPlanarity(object):
             self.nesting_depth[e] = self.sign(e) * self.nesting_depth[e]
         for v in self.DG:
             # sort the adjacency lists again
-            self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
+            self.ordered_adjs[v] = sorted(
+                self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
             # initialize the embedding
             self.embedding[v] = self.ordered_adjs[v].copy()
 
@@ -191,22 +239,22 @@ class LRPlanarity(object):
         e = self.parent_edge[v]
         for w in self.G[v]:
             if (v, w) in self.DG.edges or (w, v) in self.DG.edges:
-                continue # the edge was already oriented
+                continue  # the edge was already oriented
             vw = (v, w)
-            self.DG.add_edge(v, w) # orient the edge
+            self.DG.add_edge(v, w)  # orient the edge
 
             self.lowpt[vw] = self.height[v]
             self.lowpt2[vw] = self.height[v]
-            if self.height[w] is None: # (v, w) is a tree edge
+            if self.height[w] is None:  # (v, w) is a tree edge
                 self.parent_edge[w] = vw
                 self.height[w] = self.height[v] + 1
                 self.dfs_orientation(w)
-            else: # (v, w) is a back edge
+            else:  # (v, w) is a back edge
                 self.lowpt[vw] = self.height[w]
 
-             # determine nesting graph
+            # determine nesting graph
             self.nesting_depth[vw] = 2 * self.lowpt[vw]
-            if self.lowpt2[vw] < self.height[v]: # chordal
+            if self.lowpt2[vw] < self.height[v]:  # chordal
                 self.nesting_depth[vw] += 1
 
             # update lowpoints of parent edge e
@@ -219,34 +267,30 @@ class LRPlanarity(object):
                 else:
                     self.lowpt2[e] = min(self.lowpt2[e], self.lowpt2[vw])
 
-
-
-    # Test for LR partition
-    # Raise nx.NetworkXUnfeasible() in case of unresolvable conflict
     def dfs_testing(self, v):
-
+        """Test for LR partition"""
         e = self.parent_edge[v]
         for w in self.ordered_adjs[v]:
             ei = (v, w)
             self.stack_bottom[ei] = top_of_stack(self.S)
-            if ei == self.parent_edge[w]: # tree edge
+            if ei == self.parent_edge[w]:  # tree edge
                 if not self.dfs_testing(w):
                     return False
-            else: # back edge
+            else:  # back edge
                 self.lowpt_edge[ei] = ei
                 self.S.append(ConflictPair(right=Interval(ei, ei)))
 
             # integrate new return edges
             if self.lowpt[ei] < self.height[v]:
-                if w == self.ordered_adjs[v][0]: # e_i has return edge
+                if w == self.ordered_adjs[v][0]:  # e_i has return edge
                     self.lowpt_edge[e] = self.lowpt_edge[ei]
-                else: # add constraints of e_i
+                else:  # add constraints of e_i
                     if not self.add_constraints(ei, e):
                         # Graph is not planar
                         return False
-        
+
         # remove back edges returning to parent
-        if e is not None: # v isn't root
+        if e is not None:  # v isn't root
             self.remove_back_edges(e)
         return True
 
@@ -271,7 +315,8 @@ class LRPlanarity(object):
             if top_of_stack(self.S) == self.stack_bottom[ei]:
                 break
         # merge conflicting return edges of e_1,...,e_i-1 into P.L
-        while top_of_stack(self.S).left.conflicting(ei, self) or top_of_stack(self.S).right.conflicting(ei, self):
+        while (top_of_stack(self.S).left.conflicting(ei, self) or
+               top_of_stack(self.S).right.conflicting(ei, self)):
             Q = self.S.pop()
             if Q.right.conflicting(ei, self):
                 Q.swap()
@@ -336,19 +381,21 @@ class LRPlanarity(object):
     def dfs_embedding(self, v):
         for w in self.ordered_adjs[v]:
             ei = (v, w)
-            if ei == self.parent_edge[w]: # tree edge
+            if ei == self.parent_edge[w]:  # tree edge
                 # make v the first node in embedding list of w
                 self.embedding[w].insert(0, v)
                 self.left_ref[v] = w
                 self.right_ref[v] = w
                 self.dfs_embedding(w)
-            else: # back edge
+            else:  # back edge
                 if self.side[ei] == 1:
-                    # place v directly after right_ref[w] in embedding list of w
-                    self.embedding[w].insert(self.embedding[w].index(self.right_ref[w]) + 1, v)
+                    # place v directly after right_ref[w] in embed. list of w
+                    self.embedding[w].insert(
+                        self.embedding[w].index(self.right_ref[w]) + 1, v)
                 else:
-                    # place v directly before left_ref[w] in embedding list of w
-                    self.embedding[w].insert(self.embedding[w].index(self.left_ref[w]), v)
+                    # place v directly before left_ref[w] in embed. list of w
+                    self.embedding[w].insert(
+                        self.embedding[w].index(self.left_ref[w]), v)
                     self.left_ref[w] = v
 
     # function to resolve the relative side of an edge to the absolute side
