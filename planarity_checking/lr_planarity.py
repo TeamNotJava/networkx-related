@@ -97,6 +97,14 @@ class ConflictPair(object):
         self.left = self.right
         self.right = temp
 
+    # Return the lowest lowpoint of a conflict pair
+    def lowest(self, planarityState):
+        if self.left.empty():
+            return planarityState.lowpt[self.right.low]
+        if self.right.empty():
+            return planarityState.lowpt[self.left.low]
+        return min(planarityState.lowpt[self.left.low], planarityState.lowpt[self.right.low])
+
 def top_of_stack(l: list):
     if not l:
         return None
@@ -166,15 +174,8 @@ class LRPlanarity(object):
             if not self.dfs_testing(v):
                 return None
 
-        # function to resolve the relative side of an edge to the absolute side 
-        def sign(e):
-            if self.ref[e] is not None:
-                self.side[e] = self.side[e] * sign(self.ref[e])
-                self.ref[e] = None
-            return self.side[e]
-
         for e in self.DG.edges:
-            self.nesting_depth[e] = sign(e) * self.nesting_depth[e]
+            self.nesting_depth[e] = self.sign(e) * self.nesting_depth[e]
         for v in self.DG:
             # sort the adjacency lists again
             self.ordered_adjs[v] = sorted(self.DG[v], key=lambda w: self.nesting_depth[(v, w)])
@@ -225,14 +226,6 @@ class LRPlanarity(object):
     # Test for LR partition
     # Raise nx.NetworkXUnfeasible() in case of unresolvable conflict
     def dfs_testing(self, v):
-
-        # Return the lowest lowpoint of a conflict pair
-        def lowest(P):
-            if P.left.empty():
-                return self.lowpt[P.right.low]
-            if P.right.empty():
-                return self.lowpt[P.left.low]
-            return min(self.lowpt[P.left.low], self.lowpt[P.right.low])
 
         e = self.parent_edge[v]
         for w in self.ordered_adjs[v]:
@@ -359,3 +352,10 @@ class LRPlanarity(object):
                     # place v directly before left_ref[w] in embedding list of w
                     self.embedding[w].insert(self.embedding[w].index(self.left_ref[w]), v)
                     self.left_ref[w] = v
+
+    # function to resolve the relative side of an edge to the absolute side
+    def sign(self, e):
+        if self.ref[e] is not None:
+            self.side[e] = self.side[e] * self.sign(self.ref[e])
+            self.ref[e] = None
+        return self.side[e]
