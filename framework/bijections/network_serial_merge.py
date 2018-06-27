@@ -13,13 +13,13 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 """
-    Merges two networks in a serial manner.
+    Merges two networks in a series.
 """
 
 
-class EdgeByNetworkSubstitution:
+class NetworkMergeInSeries:
 
-    def substitute_edge_by_network(self, network, network_for_plugging):
+    def merge_networks_in_series(self, network, network_for_plugging):
         '''
         Merges the network for plugging into netwrok in a serial manner which means that the infinite pole from the
         network is identified with the 0-pole from network_for_plugging.
@@ -60,4 +60,5 @@ class EdgeByNetworkSubstitution:
 
         # Add the edges from the second network into the first one
         network.edges_list += network_for_plugging.edges_list
-        
+
+        return network
