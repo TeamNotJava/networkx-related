@@ -5,6 +5,7 @@ import networkx as nx
 
 
 def get_counterexample(G):
+    """Return a kuratowski subgraph"""
     if check_planarity(G)[0]:
         raise nx.NetworkXException("G is planar - no counter example.")
     
