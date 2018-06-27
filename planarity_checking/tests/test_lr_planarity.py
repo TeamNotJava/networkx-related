@@ -119,8 +119,7 @@ class TestLRPlanarity:
 
 def check_embedding(G, embedding):
     """Raises an exception if the combinatorial embedding is not correct
-    # TODO: Consider special cases for self loops
-    # TODO: More descriptive exceptions
+
     Parameters
     ----------
     G : NetworkX graph
@@ -145,8 +144,8 @@ def check_embedding(G, embedding):
             and nodes for each component
 
     The number of faces is determined by using the combinatorial embedding
-    to folowing a path around face. While following the path around the
-    face every edge on the way (in this direction) is marked such that the
+    to follow a path around face. While following the path around the face
+    every edge on the way (in this direction) is marked such that the
     face is not counted twice.
     """
 
@@ -240,6 +239,8 @@ def count_face(embedding, starting_node, face_idx, component_subgraph,
         The face has not been counted
     """
     outgoing_node = embedding[starting_node][face_idx]
+    incoming_node = embedding[starting_node][face_idx - 1]
+
     # 1. Check that the edges exists in the original graph
     # (check both directions in case of diGraph)
     has_outgoing_edge = component_subgraph.has_edge(
@@ -264,10 +265,7 @@ def count_face(embedding, starting_node, face_idx, component_subgraph,
         return False
     edges_counted.add((starting_node, outgoing_node))
 
-    # 4. Count this face
-    return True
-
-    # 5. Add all edges to edges_counted which have this face to their left
+    # 4. Add all edges to edges_counted which have this face to their left
     visited_nodes = set()  # Keep track of visited nodes
     current_node = starting_node
     next_node = outgoing_node
@@ -309,10 +307,13 @@ def count_face(embedding, starting_node, face_idx, component_subgraph,
         # remember that this edge has been counted
         edges_counted.add(current_edge)
 
-    # 6. Check if the incoming node is correct
+    # 5. Check if the incoming node is correct
     assert_equals(current_node, incoming_node,
                   "Bad planar embedding. "
                   "A path did not end at the expected incoming node.")
+
+    # 6. Count this face
+    return True
 
 
 def check_counterexample(G, subdivision_nodes):
