@@ -50,16 +50,16 @@ def check_planarity(G, counterexample=False):
         2004
     """
 
-    planarityState = LRPlanarity(G)
-    embedding = planarityState.lr_planarity()
+    planarity_state = LRPlanarity(G)
+    embedding = planarity_state.lr_planarity()
     if embedding is None:
-        # Graph is not planar
+        # graph is not planar
         if counterexample:
             return False, get_counterexample(G)
         else:
             return False, None
     else:
-        # Graph is planar
+        # graph is planar
         return True, embedding
 
 
@@ -109,17 +109,17 @@ class Interval(object):
         self.high = high
 
     def empty(self):
-        """Is the interval empty"""
+        """Check if the interval is empty"""
         return self.low is None and self.high is None
 
     def copy(self):
         """Return a copy of this interval"""
         return Interval(self.low, self.high)
 
-    def conflicting(self, b, planarityState):
+    def conflicting(self, b, planarity_state):
         """Return True if interval I conflicts with edge b"""
         return (not self.empty() and
-                planarityState.lowpt[self.high] > planarityState.lowpt[b])
+                planarity_state.lowpt[self.high] > planarity_state.lowpt[b])
 
 
 class ConflictPair(object):
@@ -138,14 +138,14 @@ class ConflictPair(object):
         self.left = self.right
         self.right = temp
 
-    def lowest(self, planarityState):
+    def lowest(self, planarity_state):
         """Return the lowest lowpoint of a conflict pair"""
         if self.left.empty():
-            return planarityState.lowpt[self.right.low]
+            return planarity_state.lowpt[self.right.low]
         if self.right.empty():
-            return planarityState.lowpt[self.left.low]
-        return min(planarityState.lowpt[self.left.low],
-                   planarityState.lowpt[self.right.low])
+            return planarity_state.lowpt[self.left.low]
+        return min(planarity_state.lowpt[self.left.low],
+                   planarity_state.lowpt[self.right.low])
 
 
 def top_of_stack(l):
@@ -158,7 +158,7 @@ def top_of_stack(l):
 class LRPlanarity(object):
     """A class to maintain the state during planarity check"""
     def __init__(self, G):
-        # Copy G without adding self-loops
+        # copy G without adding self-loops
         self.G = nx.Graph()
         self.G.add_nodes_from(G.nodes)
         for v, w in G.edges:
@@ -198,7 +198,7 @@ class LRPlanarity(object):
 
     def lr_planarity(self):
         if self.G.order() > 2 and self.G.size() > 3 * self.G.order() - 6:
-            # Graph is not planar
+            # graph is not planar
             return None
 
         # orientation of the graph by depth first search traversal
@@ -234,7 +234,7 @@ class LRPlanarity(object):
 
         return dict(self.embedding)
 
-    # Orient the graph by DFS-traversal, compute lowpoints and nesting order
+    # orient the graph by DFS-traversal, compute lowpoints and nesting order
     def dfs_orientation(self, v):
         e = self.parent_edge[v]
         for w in self.G[v]:
@@ -286,7 +286,7 @@ class LRPlanarity(object):
                     self.lowpt_edge[e] = self.lowpt_edge[ei]
                 else:  # add constraints of e_i
                     if not self.add_constraints(ei, e):
-                        # Graph is not planar
+                        # graph is not planar
                         return False
 
         # remove back edges returning to parent
@@ -377,7 +377,7 @@ class LRPlanarity(object):
             else:
                 self.ref[e] = hr
 
-    # Complete the embedding
+    # complete the embedding
     def dfs_embedding(self, v):
         for w in self.ordered_adjs[v]:
             ei = (v, w)
