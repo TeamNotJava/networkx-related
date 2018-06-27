@@ -216,7 +216,42 @@ class LRPlanarity(object):
                 else:
                     self.lowpt2[e] = min(self.lowpt2[e], self.lowpt2[vw])
 
-    def add_constraint(self, ei, e):
+
+
+    # Test for LR partition
+    # Raise nx.NetworkXUnfeasible() in case of unresolvable conflict
+    def dfs_testing(self, v):
+
+        # Return the lowest lowpoint of a conflict pair
+        def lowest(P):
+            if P.left.empty():
+                return self.lowpt[P.right.low]
+            if P.right.empty():
+                return self.lowpt[P.left.low]
+            return min(self.lowpt[P.left.low], self.lowpt[P.right.low])
+
+        e = self.parent_edge[v]
+        for w in self.ordered_adjs[v]:
+            ei = (v, w)
+            self.stack_bottom[ei] = top_of_stack(self.S)
+            if ei == self.parent_edge[w]: # tree edge
+                self.dfs_testing(w)
+            else: # back edge
+                self.lowpt_edge[ei] = ei
+                self.S.append(ConflictPair(right=Interval(ei, ei)))
+
+            # integrate new return edges
+            if self.lowpt[ei] < self.height[v]:
+                if w == self.ordered_adjs[v][0]: # e_i has return edge
+                    self.lowpt_edge[e] = self.lowpt_edge[ei]
+                else: # add constraints of e_i
+                    self.add_constraints(ei, e)
+        
+        # remove back edges returning to parent
+        if e is not None: # v isn't root
+            self.remove_back_edges(e, lowest)
+
+    def add_constraints(self, ei, e):
         P = ConflictPair()
         # merge return edges of e_i into P.right
         while True:
@@ -257,76 +292,45 @@ class LRPlanarity(object):
         if not (P.left.empty() and P.right.empty()):
             self.S.append(P)
 
-    # Test for LR partition
-    # Raise nx.NetworkXUnfeasible() in case of unresolvable conflict
-    def dfs_testing(self, v):
+    def remove_back_edges(self, e, lowest):
+        u = e[0]
+        # trim back edges ending at parent u
+        # drop entire conflict pairs
+        while self.S and lowest(top_of_stack(self.S)) == self.height[u]:
+            P = self.S.pop()
+            if P.left.low is not None:
+                self.side[P.left.low] = -1
 
-        # Return the lowest lowpoint of a conflict pair
-        def lowest(P):
-            if P.left.empty():
-                return self.lowpt[P.right.low]
-            if P.right.empty():
-                return self.lowpt[P.left.low]
-            return min(self.lowpt[P.left.low], self.lowpt[P.right.low])
+        if self.S:  # one more conflict pair to consider
+            P = self.S.pop()
+            # trim left interval
+            while P.left.high is not None and P.left.high[1] == u:
+                P.left.high = self.ref[P.left.high]
+            if P.left.high is None and P.left.low is not None:
+                # just emptied
+                self.ref[P.left.low] = P.right.low
+                self.side[P.left.low] = -1
+                P.left.low = None
+            # trim right interval
+            while P.right.high is not None and P.right.high[1] == u:
+                P.right.high = self.ref[P.right.high]
+            if P.right.high is None and P.right.low is not None:
+                # just emptied
+                self.ref[P.right.low] = P.left.low
+                self.side[P.right.low] = -1
+                P.right.low = None
+            self.S.append(P)
 
-        e = self.parent_edge[v]
-        for w in self.ordered_adjs[v]:
-            ei = (v, w)
-            self.stack_bottom[ei] = top_of_stack(self.S)
-            if ei == self.parent_edge[w]: # tree edge
-                self.dfs_testing(w)
-            else: # back edge
-                self.lowpt_edge[ei] = ei
-                self.S.append(ConflictPair(right=Interval(ei, ei)))
+        # side of e is side of a highest return edge
+        if self.lowpt[e] < self.height[u]:  # e has return edge
+            hl = top_of_stack(self.S).left.high
+            hr = top_of_stack(self.S).right.high
 
-            # integrate new return edges
-            if self.lowpt[ei] < self.height[v]:
-                if w == self.ordered_adjs[v][0]: # e_i has return edge
-                    self.lowpt_edge[e] = self.lowpt_edge[ei]
-                else: # add constraints of e_i
-                    #TODO
-                    self.add_constraints(ei)
-
-        
-        # remove back edges returning to parent
-        if e is not None: # v isn't root
-            u = e[0]
-            # trim back edges ending at parent u
-            # drop entire conflict pairs
-            while self.S and lowest(top_of_stack(self.S)) == self.height[u]:
-                P = self.S.pop()
-                if P.left.low is not None:
-                    self.side[P.left.low] = -1
-
-            if self.S: # one more conflict pair to consider
-                P = self.S.pop()
-                # trim left interval
-                while P.left.high is not None and P.left.high[1] == u:
-                    P.left.high = self.ref[P.left.high]
-                if P.left.high is None and P.left.low is not None:
-                    # just emptied
-                    self.ref[P.left.low] = P.right.low
-                    self.side[P.left.low] = -1
-                    P.left.low = None
-                # trim right interval
-                while P.right.high is not None and P.right.high[1] == u:
-                    P.right.high = self.ref[P.right.high]
-                if P.right.high is None and P.right.low is not None:
-                    # just emptied
-                    self.ref[P.right.low] = P.left.low
-                    self.side[P.right.low] = -1
-                    P.right.low = None
-                self.S.append(P)
-           
-            # side of e is side of a highest return edge
-            if self.lowpt[e] < self.height[u]: # e has return edge
-                hl = top_of_stack(self.S).left.high
-                hr = top_of_stack(self.S).right.high
-
-                if hl is not None and (hr is None or self.lowpt[hl] > self.lowpt[hr]):
-                    self.ref[e] = hl
-                else:
-                    self.ref[e] = hr
+            if hl is not None and (
+                    hr is None or self.lowpt[hl] > self.lowpt[hr]):
+                self.ref[e] = hl
+            else:
+                self.ref[e] = hr
 
     # Complete the embedding
     def dfs_embedding(self, v):

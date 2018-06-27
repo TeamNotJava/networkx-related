@@ -370,7 +370,6 @@ if __name__ == '__main__':
     # I have temporarily added a main method so you don't actually have to run nose
     t = TestLRPlanarity()
     t.test_planar_with_selfloop()
-    t.setUp()
     t.test_goldner_harary()
     t.test_k3_3()
     t.test_k5()
