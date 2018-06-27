@@ -2,24 +2,6 @@ from collections import defaultdict
 import networkx as nx
 
 
-
-def get_counterexample(G):
-    """Return a kuratowski subgraph"""
-    if check_planarity(G)[0]:
-        raise nx.NetworkXException("G is planar - no counter example.")
-    
-    subgraph = nx.Graph()
-    for u in G:
-        nbrs = list(G[u])
-        for v in nbrs:
-            G.remove_edge(u, v)
-            if check_planarity(G)[0]:
-                G.add_edge(u, v)
-                subgraph.add_edge(u, v)
-
-    return subgraph
-
-
 def check_planarity(G, counterexample=False):
     """Checks if a graph is planar and returns a counter example or an embedding
 
@@ -73,6 +55,22 @@ def check_planarity(G, counterexample=False):
         # Graph is planar
         return True, embedding
 
+
+def get_counterexample(G):
+    """Return a kuratowski subgraph"""
+    if check_planarity(G)[0]:
+        raise nx.NetworkXException("G is planar - no counter example.")
+
+    subgraph = nx.Graph()
+    for u in G:
+        nbrs = list(G[u])
+        for v in nbrs:
+            G.remove_edge(u, v)
+            if check_planarity(G)[0]:
+                G.add_edge(u, v)
+                subgraph.add_edge(u, v)
+
+    return subgraph
 
 class Interval(object):
     def __init__(self, low=None, high=None):
