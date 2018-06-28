@@ -24,15 +24,13 @@ def bij_primal(decomp):
     return primal_map(decomp)
 
 def bij_primal_dx(decomp):
-    logging.error('Primal bijection bound to grammer')
-    raise NotImplementedError
+    return primal_map(decomp)
 
 def bij_whitney(decomp):
     return whitney(decomp)
 
 def bij_whitney_dx(decomp):
-    logging.error('Whitney bijection bound to grammer')
-    raise NotImplementedError
+    return whitney(decomp)
 
 three_connected_graph_grammar = DecompositionGrammar()
 three_connected_graph_grammar.add_rules(irreducible_dissection_grammar.get_rules())

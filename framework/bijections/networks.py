@@ -1,42 +1,57 @@
 # to be used in the Bijection sampler
 
-import networkx as nx
 from networkx.algorithms.operators import union, union_all
 from networkx.algorithms.minors import contracted_nodes
-from ..combinatorial_classes.network import NetworkClass
+from framework.combinatorial_classes.network import NetworkClass
+from framework.combinatorial_classes.generic_classes import UAtomClass
+from framework.bijections.halfedge import HalfEdge
+from framework.bijections.network_serial_merge import NetworkMergeInSeries
+from framework.bijections.network_paralel_merge import NetworkMergeInParallel
 
+
+def _create_root_network_edge():
+    # Create the zero-pole of the network
+    root_half_edge = HalfEdge()
+    root_half_edge.next = root_half_edge
+    root_half_edge.prior = root_half_edge
+
+    # Creates the inf-pole
+    root_half_edge_opposite = HalfEdge
+    root_half_edge_opposite.next = root_half_edge_opposite
+    root_half_edge_opposite.prior = root_half_edge_opposite
+
+    # Link the poles
+    root_half_edge.opposite = root_half_edge_opposite
+    root_half_edge_opposite.opposite = root_half_edge
+
+    return root_half_edge
 
 # creates a link_graph (from a u-atom)
 # see sampler for Z_U in figure 9
 def u_atom_to_network(u_atom):
-    link_graph = nx.Graph()
-    zero_pole = 'zero'
-    inf_pole = 'inf'
-    link_graph.add_edge(zero_pole, inf_pole)
-    result = NetworkClass(link_graph, zero_pole, inf_pole)
+    vertices_list = []
+    edges_list = []
+    root_half_edge = _create_root_network_edge()
+    result = NetworkClass(vertices_list, edges_list, root_half_edge)
     assert (u_atom.get_u_size() == result.get_u_size())
     assert (u_atom.get_l_size() == result.get_l_size())
     return result
 
 
 # serial composition of two networks (head and tail)
-# see sampler for S in figure 9
+# see sampler for S in figure
 def s_decomp_to_network(decomp):
-    # decomp has this structure: ((head, l_atom), tail)
-    head = decomp.first.first
-    # middle = decomp.first.second  # we actually dont need this!
-    tail = decomp.second
+    # decomp has this structure: ((first_network, l_atom), second_network)
+    network = decomp.first.first
+    netwrok_for_plugging = decomp.second
 
-    # relabel graphs to make them disjoint
-    head.relabel('h')
-    tail.relabel('t')
-    # will raise exception if not disjoint
-    result = union(head, tail)
-    # merge zero pole of head and infinity pole of tail
-    result = contracted_nodes(result, head.zero_pole, tail.inf_pole)
+    # Use the serial merge bijection to merge the networks
+    result = NetworkMergeInSeries().merge_networks_in_series(network, netwrok_for_plugging)
+
+    # Check the properties
     assert (decomp.get_u_size() == result.get_u_size())
     assert (decomp.get_l_size() == result.get_l_size())
-    return NetworkClass(result, head.inf_pole, tail.zero_pole)
+    return result
 
 
 # parallel composition of a set of networks
@@ -47,7 +62,7 @@ def p_decomp1_to_network(decomp):
     # get the parallel composition of the networks
     result = p_decomp2_to_network(decomp.second)
     # add link between the poles
-    result.graph.add_edge(result.zero_pole, result.inf_pole)
+    result.edges_list.append(result.root_half_edge)
     assert (decomp.get_u_size() == result.get_u_size())
     assert (decomp.get_l_size() == result.get_l_size())
     return result
@@ -59,25 +74,28 @@ def p_decomp1_to_network(decomp):
 def p_decomp2_to_network(decomp):
     # decomp has the structure: [set of networks]
     networks = decomp
-    # relabel all networks appending their index to their node labels
-    for i in range(len(networks)):
-        networks[i].relabel(str(i))
-    # union_all takes only disjoint graphs
-    result_graph = union_all(networks)
-    # finally merge all the zero poles and all the inf poles
-    # this can be done much more efficient
-    for network in networks:
-        # networks[0].zero_pole (inf_pole) is the node label to be kept
-        result_graph = contracted_nodes(result_graph, networks[0].zero_pole, network.zero_pole)
-        result_graph = contracted_nodes(result_graph, networks[0].inf_pole, network.inf_pole)
-    result = NetworkClass(result_graph, networks[0].zero_pole, networks[0].inf_pole)
+
+    # Merge the netwowrks in parallel
+    result = networks[0]
+    for i in range(1, len(networks)):
+        result = NetworkMergeInParallel().merge_networks_in_parallel(result, networks[i])
+
+    # Check the properties
     assert (decomp.get_u_size() == result.get_u_size())
     assert (decomp.get_l_size() == result.get_l_size())
     return result
 
 
+# Creates a network class from tree connected rooted planar graph.
+# Basically just copy the vertices list, edges list and the root edge in the NetworkClass
 def g_3_arrow_to_network(three_connected_rooted_planar_graph):
-    # just make the root become the link
-    raise NotImplementedError
+    # Extract the components from the three connected rooted planar graph
+    vertices_list = list(three_connected_rooted_planar_graph.vertices_list)
+    edges_list = list(three_connected_rooted_planar_graph.edges_list)
+    root_half_edge = three_connected_rooted_planar_graph.root_half_edge
+
+    # Create and return the network.
+    return NetworkClass(vertices_list, edges_list, root_half_edge)
+
 
 ## and all the derived networks stuff also goes here

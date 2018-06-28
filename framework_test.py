@@ -196,7 +196,7 @@ def irreducible_dissection_test():
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals)
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
     irreducible_dissection_grammar.init()
 
     dissection = irreducible_dissection_grammar.sample('J', symbolic_x, symbolic_y)
@@ -248,7 +248,7 @@ def main():
     if args.binary_tree:
         tree = binary_tree_test()
         if args.print:
-            plot_binary_tree(tree)
+            pretty_print_tree(tree)
         if args.plot:
             import matplotlib.pyplot as plt
             plot_binary_tree(tree)

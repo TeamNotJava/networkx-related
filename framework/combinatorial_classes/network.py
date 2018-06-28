@@ -6,48 +6,25 @@ import random as rn
 
 
 class NetworkClass(CombinatorialClass):
-    def __init__(self, graph, zero_pole, inf_pole):
-        # graph must be connected a connected undirected networkx graph
-        self.graph = graph
-        # adding an edge between zero_pole and inf_pole must make the graph 2-connected
-        self.zero_pole = zero_pole
-        self.inf_pole = inf_pole
+    def __init__(self, vertices_list, edges_list, root_half_edge):
+        # It contains all the vertices excluding the poles. They can be easily approached by the root_half_edge.
+        self.vertices_list = vertices_list
+        # It contains all the edges in the network.
+        self.edges_list = edges_list
+        # The first part of the edge between the poles.
+        self.root_half_edge = root_half_edge
 
     # returns true if this is the link graph (u atom)
     def is_link_graph(self):
-        return self.graph.number_of_nodes() == 2 and self.graph.number_of_edges() == 2 and self.graph.has_edge(
-            self.zero_pole, self.inf_pole)
-
-    # maybe handy for debugging
-    def is_consistent(self):
-        if not self.zero_pole in self.graph or not self.inf_pole in self.graph:
-            return False
-        if not is_connected(self.graph):
-            return False
-        if not self.is_link_graph():
-            graph_copy = self.graph.copy()
-            graph_copy.add_edge(self.zero_pole, self.inf_pole)
-            if not is_biconnected(graph_copy):
-                return False
-        return True
-
-    # relabels the nodes appending the given suffix
-    def relabel(self, suffix):
-        def mapping(label):
-            return str(label) + str(suffix)
-
-        nx.relabel_nodes(self.graph, mapping, copy=False)
-        # also update this
-        self.zero_pole = mapping(self.zero_pole)
-        self.inf_pole = mapping(self.inf_pole)
+        return len(self.vertices_list) == 0
 
     def get_u_size(self):
-        # number of edges?
-        return self.graph.number_of_edges()
+        # number of edges + 1 because of the root edge
+        return len(self.edges_list) + 1
 
     def get_l_size(self):
-        # number of vertices not counting the poles?
-        return self.graph.number_of_nodes() - 2
+        # The poles are not part from the vertices list.
+        return len(self.vertices_list)
 
     def u_atoms(self):
         raise NotImplementedError
