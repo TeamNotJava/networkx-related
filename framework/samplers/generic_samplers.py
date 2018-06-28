@@ -107,6 +107,21 @@ class BoltzmannSampler:
         """
         return ProdSampler(self, other)
 
+    def __rmul__(self, other):
+        # other must be int
+        if other == 2:
+            return self + self
+        if other == 3:
+            return self + self + self
+        else:
+            raise NotImplementedError
+
+    def __pow__(self, power, modulo=None):
+        if power == 2:
+            return self * self
+        else:
+            raise NotImplementedError
+
 
 ### Atom Samplers ###
 
