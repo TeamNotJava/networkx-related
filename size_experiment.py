@@ -3,7 +3,7 @@ from framework.samplers import ZeroAtomSampler, LAtomSampler, UAtomSampler
 from framework.samplers import SetSampler, BijectionSampler, RejectionSampler, TransformationSampler
 from framework.samplers import LSubsSampler, USubsSampler, LDerFromUDerSampler, UDerFromLDerSampler
 from framework.combinatorial_classes.generic_classes import DummyClass
-from framework.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000_mu2
+from framework.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000_mu2, planar_graph_evals_n1000
 from framework.evaluation_oracle import EvaluationOracle
 from framework.utils import bern
 # All references in comments in this file refer to:
@@ -48,6 +48,7 @@ binary_tree_rules = {
     'R_b_as': (R_w * L * U) + (U * L * R_w) + (R_w * L * R_w),
     'R_w_as': (R_b_head * U) + (U * R_b_head) + (R_b * R_b),
     'R_b_head': (R_w_head * L * U * U) + (U * U * L * R_w_head) + (R_w_head * L * R_w_head),
+    # 'R_b_head': 2*(R_w_head * L * U**2) + (L * R_w_head**2),
     'R_w_head': U + (R_b * U) + (U * R_b) + (R_b * R_b),
     'R_b': (U + R_w) * L * (U + R_w),
     'R_w': (U + R_b) * (U + R_b)
@@ -73,7 +74,7 @@ irreducible_dissection_rules = {
     'I': K,
     'I_dx': K_dx,
     'J': (L + L + L) * U * I, # 1 of the 3 outer black nodes count and the outer face counts
-    'J_dx': ((L + L + L) * I) + ((L + L + L) * U * I_dx),
+    'J_dx': ((U + U + U) * I) + ((L + L + L) * U * I_dx),
     'J_a': Rej(J, admissible_approx),
     'J_a_dx': Trans(J_dx, admissible_approx),
 }
@@ -134,6 +135,9 @@ G_2_dx_dy = AliasSampler('G_2_dx_dy')
 F = AliasSampler('F')
 F_dx = AliasSampler('F_dx')
 
+def foo(evl, x, y):
+    evl / (1 + BoltzmannSampler.oracle.get(y))
+
 two_connected_rules = {
     'G_2_arrow': Trans(Z + D, id, # I think maybe sometimes the u-size can decrese by one
                                   # if there is already the root edge present.
@@ -145,6 +149,7 @@ two_connected_rules = {
 
     'G_2_arrow_dx': Trans(D_dx, id,
                           eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),
+                          #eval_transform=foo),
     'F_dx': L * L * G_2_arrow_dx + (L + L) * G_2_arrow,  # notice that 2 * L = L + L
     'G_2_dy_dx': Trans(F_dx, id,
                        eval_transform=lambda evl, x, y: 0.5 * evl),
@@ -186,10 +191,10 @@ if __name__ == "__main__":
     grammar.add_rules(planar_graphs_rules)
     grammar.init()
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000_mu2)
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
 
-    # symbolic_x = 'x*G_1_dx(x,y)'
-    # symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    #symbolic_x = 'x*G_1_dx(x,y)'
+    #symbolic_y = 'D(x*G_1_dx(x,y),y)'
     symbolic_x = 'x'
     symbolic_y = 'y'
 
@@ -203,12 +208,17 @@ if __name__ == "__main__":
     [print(query) for query in sorted(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))]
     print()
 
-    samples = 100
+    import sys
+    sys.setrecursionlimit(1000000)
+
+    samples = 10000
     sampled_objects = []
 
     for _ in range(samples):
         dummy = grammar.sample_dummy(sampled_class, symbolic_x, symbolic_y)
         sampled_objects.append(dummy)
+
+    #[print(dummy.get_l_size()) for dummy in sampled_objects]
 
     sum_l_sizes = sum([dummy.get_l_size() for dummy in sampled_objects])
     print("average l-size: " + str(sum_l_sizes / samples))
