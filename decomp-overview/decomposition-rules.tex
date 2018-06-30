@@ -1,0 +1,92 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage[left=1cm,right=1cm,top=1cm,bottom=2cm]{geometry}
+
+\usepackage{tabu}
+\usepackage{longtable}
+\usepackage{wasysym}
+
+\newcommand{\uatom}{\mathcal{Z}_U}
+\newcommand{\latom}{\mathcal{Z}_L}
+
+\begin{document}
+\extrarowsep = 1mm
+\begin{longtabu}{| l | X |} 
+\hline
+\textbf{Rules} & \textbf{Remarks} \\ \hline
+
+Assymetric rooted bicolored binary trees & Only 4 such trees are \emph{not} assymetric. The rooting corresponds to a u-derivation. \\ \tabucline[.5pt on1pt]-
+$\mathcal{R}_{\circ} := (\uatom + \mathcal{R}_{\bullet})^2$ & \\
+$\mathcal{R}_{\bullet} := (\uatom + \mathcal{R}_{\circ})^2 \star \latom$ & \\
+$\hat{\mathcal{R}}_{\circ} := \uatom + \mathcal{R}_{\bullet} \star \uatom + \uatom \star \mathcal{R}_{\bullet} + \mathcal{R}_{\bullet}^2$ & \\
+$\hat{\mathcal{R}}_\bullet := \hat{\mathcal{R}}_\circ \star \latom \star \uatom^2 + \uatom^2 \star \latom \star \hat{\mathcal{R}}_\circ + \hat{\mathcal{R}}_\circ \star \latom \star \hat{\mathcal{R}}_\circ$ & \\
+$\mathcal{R}^{\text{(as)}}_\circ := \hat{\mathcal{R}}_\bullet \star \uatom + \uatom \star \hat{\mathcal{R}}_\bullet + \mathcal{R}_\bullet^2$ & \\
+$\mathcal{R}^{\text{(as)}}_\bullet := \mathcal{R}_\circ \star \latom \star \uatom + \uatom \star \latom \star \mathcal{R}_\circ + \latom \star \mathcal{R}_\circ^2$ & \\
+$\underline{\mathcal{K}} := \mathcal{R}^{\text{(as)}}_\bullet + \mathcal{R}^{\text{(as)}}_\circ$ & \\ \tabucline[.5pt on1pt]-
+
+
+Assymetric (unrooted) bicolored binary trees & Get rid of the rooting = get rid of the u-derivation\\ \tabucline[.5pt on1pt]-
+$\mathcal{K} \leftarrow rejection(\underline{\mathcal{K}})$ & Two possible techniques: \begin{enumerate}
+	\item Sample from $\Gamma\underline{\mathcal{K}}$ until Bern$(\frac{2}{||\gamma||})$
+	\item Apply rejection already during the sampling of $\underline{\mathcal{K}}$ (Lemma 12)
+\end{enumerate} 2. is more efficient. \\ \tabucline[.5pt on1pt]-
+
+Assymetric l-derived bicolored binary trees &  \\ \tabucline[.5pt on1pt]-
+$\mathcal{K}' \leftarrow dx\_from\_dy(\underline{\mathcal{K}})$ & $\alpha_{L/U} = 2/3$, see 5.3.1 \\ 
+\hline
+
+Irreducible dissections (of the hexagon) & \\ \tabucline[.5pt on1pt]-
+$\mathcal{I} \leftarrow bijection(\mathcal{K})$ & Closure \\
+$\mathcal{I}' \leftarrow bijection(\mathcal{K}')$ & Closure \\
+$\mathcal{J} := 3 \star \latom \star \uatom \star \mathcal{I}$ & $3 \star \latom = \latom + \latom + \latom$ \\
+$\mathcal{J}' := 3 \star \uatom  \star \mathcal{I} + 3 \star \latom \star \uatom \star \mathcal{I}'$ &  \\
+$\mathcal{J}_a \leftarrow rejection(\mathcal{J})$ & \emph{admissible} rooted irreducible dissections; sample $\delta$ from $\Gamma\mathcal{J}$ until $\delta \in \mathcal{J}_a$ \\
+$\mathcal{J}_a' \leftarrow rejection(\mathcal{J}')$ & \\ \hline
+
+3-connected edge rooted planar graphs & \\ \tabucline[.5pt on1pt]-
+$\overrightarrow{\mathcal{M}_3} \leftarrow bijection(\mathcal{J}_a)$ & Primal map \\
+$\overrightarrow{\mathcal{M}_3}' \leftarrow bijection(\mathcal{J}_a')$ & Primal map \\
+$\overrightarrow{\mathcal{G}}_3 \leftarrow bijection(\overrightarrow{\mathcal{M}_3})$ & Just forget the planar embedding \\
+$\overrightarrow{\mathcal{G}}_3' \leftarrow bijection(\overrightarrow{\mathcal{M}_3}')$ & \\
+$\underline{\overrightarrow{\mathcal{G}}}_3 \leftarrow dy\_from\_dx(\overrightarrow{\mathcal{G}}_3')$ & $\alpha_{U/L} = 3$, see 5.3.3 \\ \hline
+
+Networks & \\ \tabucline[.5pt on1pt]-
+$\mathcal{D} := \uatom + \mathcal{S} + \mathcal{P} + \mathcal{H}$ & \\
+$\mathcal{S} := (\uatom + \mathcal{P} + \mathcal{H}) \star \latom \star \mathcal{D}$ & series-network \\
+$\mathcal{P} := \uatom \star SET_{\geq 1}(\mathcal{S} + \mathcal{H}) + SET_{\geq 2}(\mathcal{S} + \mathcal{H})$ & parallel-network \\
+$\mathcal{H} := \overrightarrow{\mathcal{G}}_3 \circ_U \mathcal{D}$ & polyhedral-network, this is the only time we need u-substitution \\ \tabucline[.5pt on1pt]-
+L-derived networks & \\ \tabucline[.5pt on1pt]-
+$\mathcal{D}' := \mathcal{S}' + \mathcal{P}' + \mathcal{H}'$ & \\
+$\mathcal{S}' := (\mathcal{P}' + \mathcal{H}') \star \latom \star \mathcal{D} + (\uatom + \mathcal{P} + \mathcal{H}) \star (\mathcal{D} + \latom \star \mathcal{D}')$ & \\
+$\mathcal{P}' := \uatom \star (\mathcal{S}' + \mathcal{H}') \star SET(\mathcal{S} + \mathcal{H}) + (\mathcal{S}' + \mathcal{H}') \star SET_{\geq 1}(\mathcal{S} + \mathcal{H})$ & \\
+$\mathcal{H}' := \overrightarrow{\mathcal{G}}'_3 \circ_U \mathcal{D} + \mathcal{D}' \star (\underline{\overrightarrow{\mathcal{G}}}_3 \circ_U \mathcal{D})$ & \\ \hline
+
+2-connected planar graphs & \\ \tabucline[.5pt on1pt]-
+$(1 + \uatom) \star \overrightarrow{\mathcal{G}}_2 = (1 + \mathcal{D})$ & Here we need a special technique to 'solve' this class equation: Sample network from $\Gamma(1 + \mathcal{D})$ and add an edge between the poles (Lemma 14). \\
+$\mathcal{F} := \latom^2 \star \overrightarrow{\mathcal{G}}_2$ & $\mathcal{F}$ ist just an intermediate auxiliary class \\
+$2 \star \underline{\mathcal{G}}_2 = \mathcal{F}$ & Once again we need a special sampler: Sample from $\Gamma\mathcal{F}$ and forget direction of the root \\
+$G_2' \leftarrow dx\_from\_dy(\underline{\mathcal{G}_2})$ & Obtain l-derived class from u-derived class, see Lemma 6. Here, $\alpha_{L/U} = 2.0$, see 4.2 \\ \tabucline[.5pt on1pt]-
+
+L-derived 2-connected planar graphs & \\ \tabucline[.5pt on1pt]-
+$(1 + \uatom) \star \overrightarrow{\mathcal{G}}_2' = \mathcal{D}'$ & Same special samples techniques as before, see 5.5 \\
+$\mathcal{F}' := \latom^2 \star \overrightarrow{\mathcal{G}}_2' + 2 \star \latom \star \overrightarrow{G}_2$ & \\
+$2 \star \underline{\mathcal{G}}_2' = \mathcal{F}'$ &  \\
+$G_2'' \leftarrow dx\_from\_dy(\underline{\mathcal{G}_2'})$ & $\alpha_{L/U} = 1.0$, see 5.5 \\ \hline
+
+1-connected planar graphs & \\ \tabucline[.5pt on1pt]-
+$\mathcal{G}_1' := SET(\mathcal{G}_2' \circ_L (\latom \star \mathcal{G}_1'))$ & Block decomposition. Only time we need l-substitution\\
+$\mathcal{G}_1'' := (\mathcal{G}_1' + \latom \star \mathcal{G}_1'') \star (\mathcal{G}_2'' \circ_L (\latom \star \mathcal{G}_1')) \star \mathcal{G}_1'$ & \\
+$\mathcal{G}_1 \leftarrow rejection(\mathcal{G}_1')$ & see Lemma 15 \\ \hline
+
+Planar graphs & \\ \tabucline[.5pt on1pt]-
+$\mathcal{G} := SET(G_1)$ & \\
+$\mathcal{G}' := \mathcal{G}_1' \star \mathcal{G}$ & \\
+$\mathcal{G}'' := \mathcal{G}_1'' \star \mathcal{G} + \mathcal{G}_1' \star \mathcal{G}'$ &  Our final sampler will sample from this rule and then forget the two marked vertices. \\
+
+\hline
+\end{longtabu}
+
+\end{document}
