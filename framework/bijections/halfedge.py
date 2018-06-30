@@ -84,4 +84,164 @@ class HalfEdge:
 		repr = repr + ')'
 		
 		return repr
+
+
+	#Returns a list with half-edges
+	def list_half_edges(self, edge_list):       
+		edge_list.append(self)
+		current_half_edge = self
+		assert (current_half_edge is not None)
+		while True:
+			if current_half_edge.next is not None:
+				current_half_edge = current_half_edge.next
+				if current_half_edge is not self and current_half_edge not in edge_list:
+					edge_list.append(current_half_edge)
+					if current_half_edge.opposite is not None:
+						if current_half_edge.opposite not in edge_list:
+							current_half_edge.opposite.list_half_edges(edge_list)
+				else:
+					break
+			else:
+				break
+		return edge_list
+
+	#Transforms a list of planar map half-edged into a networkx graph
+	def half_edges_to_graph(self):
+		half_edge_list = self.list_half_edges([])
+
+		#Remove all unpaired half-edges
+		half_edge_list = [x for x in half_edge_list if not x.opposite is None]
+		G = nx.Graph()
+		while len(half_edge_list) > 0:
+			half_edge = half_edge_list.pop()
+			G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
+			G.nodes[half_edge.node_nr]['color'] = half_edge.color
+			half_edge_list.remove(half_edge.opposite)
+		return G
+
 		
+	#Returns the half_edge with the highest index in the graph
+	def get_max_half_edge(self):    
+		assert (self is not None)    
+		edge_list = self.list_half_edges([])
+		max_index = 0
+		max_half_edge = None
+		for x in edge_list:
+			if x.index > max_index:
+				max_index = x.index
+				max_half_edge = x
+		return max_half_edge
+
+	#Returns the half-edge with the smallest index in the graph
+	def get_min_half_edge(self):
+		half_edge_list = self.list_half_edges([])
+		min_half_edge = None 
+		for edge in half_edge_list:
+			if min_half_edge is None and edge.opposite is None:
+				min_half_edge = edge
+			elif min_half_edge is not None and edge.opposite is None and edge.index < min_half_edge.index:
+				min_half_edge = edge 
+		return min_half_edge
+
+
+	#Returns the half-edge with the highest node number of the graph
+	def get_max_node_nr(self):
+		edge_list = self.list_half_edges([])
+		max_node = 0
+		max_edge = None
+		for x in edge_list:
+			if x.node_nr > max_node:
+				max_node = x.node_nr
+				max_edge = x
+		return max_node
+
+	#Returns the half_edge with the smalles node number
+	def get_min_node_nr(self):
+		edge_list = self.list_half_edges([])
+		min_node = 0
+		min_edge = None
+		for x in edge_list:
+			if x.node_nr < min_node:
+				min_node = x.node_nr
+				min_edge = x
+		return min_edge
+
+	#Returns the highest index in a graph
+	def get_max_half_edge_index(self):
+		return self.get_max_half_edge().index
+
+	#Returns the smallest index in a graph
+	def get_min_half_edge_index(self):
+		return self.get_min_half_edge().index
+
+	#Returns the number of nodes in the graph
+	def get_number_of_nodes(self):
+		edge_list = self.list_half_edges([])
+		nodes = []
+		for edge in edge_list:
+			if edge.node_nr not in nodes:
+				nodes.append(edge.node_nr)
+		return len(nodes)
+
+	
+	#Returns the number of edges (NOT half-edges!) in the graph
+	def get_number_of_edges(self):
+		edge_list = self.list_half_edges([])
+		num_edges = 0
+		for edge in edge_list:
+			if edge.opposite is not None:
+				num_edges += 1
+				edge_list.remove(edge.opposite)
+		return num_edges
+
+
+	
+	#Retunrs a dictonary of nodes. The key is node number and the value is a list of
+	#half-edges belonging to the node number
+	def get_node_list(self):
+		edge_list = self.list_half_edges([])
+		node_list = {}	
+		for edge in edge_list:
+			if edge.node_nr in node_list:
+				half_edges = node_list[edge.node_nr]
+				half_edges.append(edge)
+				node_list[edge.node_nr] = half_edges
+			else:
+				node_list[edge.node_nr] = [edge]
+		return node_list
+
+
+	#Adds two new half_edges, one on the side of the current half-edge (left half-edge)
+	#and the other on the side of the right half-edge. The right half-edge is
+	#needed to get the correct node nubers, colosr, etc. for the new opposite
+	#half-edge
+	#:param rigth_half_edge: next half-edge to the new half-e
+	def add_new_edge(self, rigth_half_edge):
+		new_half_edge_1 = HalfEdge()
+		new_half_edge_2 = HalfEdge()
+		index = self.get_max_half_edge().index + 1
+
+		new_half_edge_1.opposite = new_half_edge_2
+		new_half_edge_2.opposite = new_half_edge_1
+
+		#Setup the first new half edge
+		new_half_edge_1.color = self.color
+		new_half_edge_1.node_nr = self.node_nr
+		new_half_edge_1.index = index
+		new_half_edge_1.next = self.next
+		new_half_edge_1.prior = self
+		self.next.prior = new_half_edge_1
+		self.next = new_half_edge_1
+
+		#Setup the second new half edge
+		new_half_edge_2.color = rigth_half_edge.color
+		new_half_edge_2.node_nr = rigth_half_edge.node_nr
+		new_half_edge_2.index = index
+		new_half_edge_2.next = rigth_half_edge.next
+		new_half_edge_2.prior = rigth_half_edge
+		rigth_half_edge.next.prior = new_half_edge_2
+		rigth_half_edge.next = new_half_edge_2
+
+
+
+
