@@ -3,11 +3,13 @@ from framework.samplers import ZeroAtomSampler, LAtomSampler, UAtomSampler
 from framework.samplers import SetSampler, BijectionSampler, RejectionSampler, TransformationSampler
 from framework.samplers import LSubsSampler, USubsSampler, LDerFromUDerSampler, UDerFromLDerSampler
 from framework.combinatorial_classes.generic_classes import DummyClass
-from framework.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000, planar_graph_evals_n1000_mu2
+from framework.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000, \
+    planar_graph_evals_n1000_mu2
 from framework.evaluation_oracle import EvaluationOracle
 from framework.utils import bern
 
 from timeit import default_timer as timer
+
 # All references in comments in this file refer to:
 # "E. Fusy: Uniform Random Sampling of Planar Graphs in Linear Time"
 
@@ -24,6 +26,7 @@ Trans = TransformationSampler
 DxFromDy = LDerFromUDerSampler
 DyFromDx = UDerFromLDerSampler
 
+
 # identity function
 def id(x):
     return x
@@ -32,6 +35,7 @@ def id(x):
 ### binary trees ###
 
 K_dy = AliasSampler('K_dy')
+K_dx = AliasSampler('K_dx')
 R_b_as = AliasSampler('R_b_as')
 R_w_as = AliasSampler('R_w_as')
 R_b_head = AliasSampler('R_b_head')
@@ -43,23 +47,20 @@ K = AliasSampler('K')
 binary_tree_rules = {
     'K': Bij(
         Rej(K_dy, lambda gamma: bern(2 / (gamma.get_u_size() + 1))),
-        lambda gamma: DummyClass(gamma.get_l_size(), gamma.get_u_size() + 1)    # u size increases by 1 due to underive
+        lambda gamma: DummyClass(gamma.get_l_size(), gamma.get_u_size() + 1)  # u size increases by 1 due to underive
     ),
     'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),
     'K_dy': R_b_as + R_w_as,
     'R_b_as': (R_w * L * U) + (U * L * R_w) + (R_w * L * R_w),
-    'R_w_as': (R_b_head * U) + (U * R_b_head) + (R_b * R_b),
+    'R_w_as': (R_b_head * U) + (U * R_b_head) + R_b ** 2,
     'R_b_head': (R_w_head * L * U * U) + (U * U * L * R_w_head) + (R_w_head * L * R_w_head),
-    # 'R_b_head': 2*(R_w_head * L * U**2) + (L * R_w_head**2),
-    'R_w_head': U + (R_b * U) + (U * R_b) + (R_b * R_b),
+    'R_w_head': U + (R_b * U) + (U * R_b) + R_b ** 2,
     'R_b': (U + R_w) * L * (U + R_w),
     'R_w': (U + R_b) * (U + R_b)
 }
 
 ### dissections ###
 
-K = AliasSampler('K')
-K_dx = AliasSampler('K_dx')
 I = AliasSampler('I')
 I_dx = AliasSampler('I_dx')
 J = AliasSampler('J')
@@ -67,16 +68,18 @@ J_dx = AliasSampler('J_dx')
 J_a = AliasSampler('J_a')
 J_a_dx = AliasSampler('J_a_dx')
 
+
 def admissible_approx(dissection):
     # a dissection with 5 or less inner faces (tree with <=5 leaves) can't be admissible
     # because there is an internal path with 3 edges from any outer black node to its opposite white node
     return dissection.get_u_size() > 5
 
+
 irreducible_dissection_rules = {
     'I': K,
     'I_dx': K_dx,
-    'J': (L + L + L) * U * I, # 1 of the 3 outer black nodes count and the outer face counts
-    'J_dx': ((U + U + U) * I) + ((L + L + L) * U * I_dx),
+    'J': 3 * L * U * I,  # 1 of the 3 outer black nodes count and the outer face counts
+    'J_dx': (3 * U * I) + (3 * L * U * I_dx),
     'J_a': Rej(J, admissible_approx),
     'J_a_dx': Trans(J_dx, admissible_approx),
 }
@@ -90,7 +93,7 @@ M_3_arrow = AliasSampler('M_3_arrow')
 M_3_arrow_dx = AliasSampler('M_3_arrow_dx')
 
 three_connected_rules = {
-    'M_3_arrow': J_a,   # add root edge + primal map (preserves all sizes)
+    'M_3_arrow': J_a,  # add root edge + primal map (preserves all sizes)
     'M_3_arrow_dx': J_a_dx,
     'G_3_arrow': Trans(M_3_arrow, id,  # identity transformation
                        eval_transform=lambda evl, x, y: 0.5 * evl),  # see 4.1.9.
@@ -137,22 +140,18 @@ G_2_dx_dy = AliasSampler('G_2_dx_dy')
 F = AliasSampler('F')
 F_dx = AliasSampler('F_dx')
 
-def foo(evl, x, y):
-    evl / (1 + BoltzmannSampler.oracle.get(y))
-
 two_connected_rules = {
-    'G_2_arrow': Trans(Z + D, id, # I think maybe sometimes the u-size can decrese by one
-                                  # if there is already the root edge present.
+    'G_2_arrow': Trans(Z + D, id,  # I think maybe sometimes the u-size can decrese by one
+                       # if there is already the root edge present.
                        eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),  # see 5.5
-    'F': L * L * G_2_arrow,
+    'F': L ** 2 * G_2_arrow,
     'G_2_dy': Trans(F, id,
                     eval_transform=lambda evl, x, y: 0.5 * evl),
     'G_2_dx': DxFromDy(G_2_dy, alpha_l_u=2.0),  # see p. 26
 
     'G_2_arrow_dx': Trans(D_dx, id,
                           eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),
-                          #eval_transform=foo),
-    'F_dx': L * L * G_2_arrow_dx + (L + L) * G_2_arrow,  # notice that 2 * L = L + L
+    'F_dx': L ** 2 * G_2_arrow_dx + 2 * L * G_2_arrow,  # notice that 2 * L = L + L
     'G_2_dy_dx': Trans(F_dx, id,
                        eval_transform=lambda evl, x, y: 0.5 * evl),
     'G_2_dx_dy': G_2_dy_dx,
@@ -192,7 +191,7 @@ if __name__ == "__main__":
     grammar.add_rules(two_connected_rules)
     grammar.add_rules(connected_rules)
     grammar.add_rules(planar_graphs_rules)
-    grammar.init()
+    grammar.init('G_dx_dx')
 
     oracles = {
         '100': {'oracle': planar_graph_evals_n100, 'size': 100},
@@ -203,23 +202,22 @@ if __name__ == "__main__":
     BoltzmannSampler.oracle = EvaluationOracle(oracles[oracle]['oracle'])
     end_main = timer()
 
-
-    #symbolic_x = 'x*G_1_dx(x,y)'
-    #symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    # symbolic_x = 'x*G_1_dx(x,y)'
+    # symbolic_y = 'D(x*G_1_dx(x,y),y)'
     symbolic_x = 'x'
     symbolic_y = 'y'
 
     sampled_class = 'G_dx_dx'
 
     # print("Recursive rules:")
-    # [print(rule) for rule in sorted(grammar.get_recursive_rules())]
+    # [print(rule) for rule in grammar.get_recursive_rules()]
     # print()
 
-    print("Needed oracle queries:")
-    [print(query) for query in sorted(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))]
-    print()
+    # print("Needed oracle queries:")
+    # [print(query) for query in sorted(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))]
+    # print()
 
-    samples = 1
+    samples = 100000
 
     sampled_objects = []
     first_hit = None
@@ -237,21 +235,23 @@ if __name__ == "__main__":
             recErrorCounter += 1
             pass
         wanted_size = oracles[oracle]['size']
-        if(dummy.get_l_size() is wanted_size):
+        if (dummy.get_l_size() is wanted_size):
             if first_hit is None:
                 first_hit = i
                 first_hit_time = timer()
             hits += 1
             print("exact after {0}".format(i))
             print("exact after {0}s".format(timer() - start_sample))
-        if( dummy.get_l_size() >= wanted_size - (0.1 * wanted_size) and dummy.get_l_size() <= wanted_size + (0.1 * wanted_size)):
+        if (dummy.get_l_size() >= wanted_size - (0.1 * wanted_size) and dummy.get_l_size() <= wanted_size + (
+                0.1 * wanted_size)):
             if first_near_hit is None:
                 first_near_hit = i
                 first_near_hit_time = timer()
             near_hits += 1
             print("size +-10% after {0}".format(i))
             print("size +-10% after {0}s".format(timer() - start_sample))
-        if( dummy.get_l_size() >= wanted_size - (0.05 * wanted_size) and dummy.get_l_size() <= wanted_size + (0.05 * wanted_size)):
+        if (dummy.get_l_size() >= wanted_size - (0.05 * wanted_size) and dummy.get_l_size() <= wanted_size + (
+                0.05 * wanted_size)):
             if first_near_hit is None:
                 first_near_near_hit = i
                 first_near_near_hit_time = timer()
