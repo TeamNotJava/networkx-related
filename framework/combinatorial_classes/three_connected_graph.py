@@ -1,5 +1,4 @@
-from .generic_classes import CombinatorialClass, UAtomClass
-from ..bijections.networks import u_atom_to_network
+from .generic_classes import CombinatorialClass
 from ..bijections.network_substitution import EdgeByNetworkSubstitution
 
 
