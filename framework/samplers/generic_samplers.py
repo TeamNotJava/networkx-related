@@ -32,7 +32,7 @@ class BoltzmannSampler:
         raise NotImplementedError
 
     def sample_dummy(self, x, y):
-        """Samples a dummy object that just records l-size and u-size
+        """Samples a dummy object that just records l-size and u-size.
 
         :param x:
         :param y:
@@ -119,6 +119,8 @@ class BoltzmannSampler:
     def __pow__(self, power, modulo=None):
         if power == 2:
             return self * self
+        if power == 3:
+            return self * self * self
         else:
             raise NotImplementedError
 
@@ -259,7 +261,6 @@ class SumSampler(BinarySampler):
         return '(' + self.lhs.sampled_class() + '+' + self.rhs.sampled_class() + ')'
 
     def sample(self, x, y):
-        # todo this can be made more efficient (self.get_eval also evaluates self.lhs.get_eval)
         if bern(self.lhs.get_eval(x, y) / self.get_eval(x, y)):
             return self.lhs.sample(x, y)
         else:
@@ -377,7 +378,6 @@ class USubsSampler(BinarySampler):
     def get_eval(self, x, y):
         # todo not 100% sure about this yet
         return self.lhs.get_eval(x, self.rhs.oracle_query_string(x, y))
-        #return self.oracle.get(self.oracle_query_string(x, y))
 
     def oracle_query_string(self, x, y):
         # see 3.2: A(x,B(x,y)) where A = lhs and B = rhs

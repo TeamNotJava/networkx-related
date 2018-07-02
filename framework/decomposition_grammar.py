@@ -2,11 +2,14 @@ from .samplers.generic_samplers import *
 import sys
 
 
-# I have decided to put the Alias sampler here because it is so closely linked to the grammar
-# An alias sampler is a sampler defined by a rule in a decomposition grammar.
-# The rule can contain the same alias sampler itself.
-# This allows to implement recursive decompositions.
 class AliasSampler(BoltzmannSampler):
+    """
+    I have decided to put the Alias sampler here because it is so closely linked to the grammar
+    An alias sampler is a sampler defined by a rule in a decomposition grammar.
+    The rule can contain the same alias sampler itself.
+    This allows to implement recursive decompositions.
+    """
+
     grammar_not_initialized_error_msg = ": you have to set the grammar this Alias sampler belongs to before using it"
 
     def __init__(self, alias, grammar=None):
@@ -42,14 +45,6 @@ class AliasSampler(BoltzmannSampler):
         else:
             return self.grammar.get_rule(self.alias).oracle_query_string(x, y)
 
-    def get_all_oracle_queries(self, x, y):
-        if self.grammar is None:
-            sys.exit(self.alias + self.grammar_not_initialized_error_msg)
-        if self.is_recursive():
-            return [self.oracle_query_string(x, y)]
-        else:
-            return self.grammar.get_rule(self.alias).get_all_oracle_queries(x, y)
-
     def get_eval(self, x, y):
         if self.grammar is None:
             sys.exit(self.alias + self.grammar_not_initialized_error_msg)
@@ -70,15 +65,72 @@ class AliasSampler(BoltzmannSampler):
 
 
 class DecompositionGrammar:
+    """
+    Represents a decomposition grammar as a collection of several rules.
+    """
+
     def __init__(self, rules={}):
         self.rules = rules
         self.recursive_rules = None
+        self.top_rule = None
+
+    def init(self, top_rule):
+        """
+        Initializes the grammar. May take some seconds.
+        :param top_rule: The root rule of the gramamr.
+        :return:
+        """
+        if top_rule is None:
+            sys.exit("Call init(top_rule) after adding all your rules.")
+        self.top_rule = top_rule
+        # Initialize the alias samplers (set their referenced grammar to this grammar).
+        self.set_active_grammar()
+        # Find out which rules are recursive.
+        self.find_recursive_rules()
+        # Automatically set target class labels of transformation samplers where possible.
+        self.infer_target_class_labels()
+        # Rrecompute evals.
+        # todo
+
+    def set_active_grammar(self):
+        def apply_to_each(sampler):
+            if isinstance(sampler, AliasSampler):
+                sampler.grammar = self
+
+        v = self.DFSVisitor(apply_to_each)
+        self.rules[self.top_rule].accept(v)
+
+    def find_recursive_rules(self):
+        recursive_rules = []
+        for alias in self.rules:
+            sampler = self.rules[alias]
+
+            def apply_to_each(sampler):
+                if isinstance(sampler, AliasSampler) and sampler.sampled_class() == alias:
+                    return alias
+
+            v = self.DFSVisitor(apply_to_each)
+            sampler.accept(v)
+            if v.get_result():
+                recursive_rules += v.get_result()
+        # Duplicates might occur, so return a set.
+        self.recursive_rules = set(recursive_rules)
+
+    def infer_target_class_labels(self):
+        # Just looks if the top sampler of a rule is a transformation sampler and this case
+        # automatically sets the label of the target class.
+        for alias in self.rules:
+            sampler = self.rules[alias]
+            while isinstance(sampler, BijectionSampler):
+                sampler = sampler.get_children()[0]
+            if isinstance(sampler, TransformationSampler):
+                sampler.set_target_class_label(alias)
 
     def add_rule(self, alias, sampler):
         self.rules[alias] = sampler
 
     def add_rules(self, rules):
-        # merges the dictionaries, second has higher priority
+        # Merges the dictionaries, second has higher priority.
         self.rules = {**self.rules, **rules}
 
     def get_rules(self):
@@ -89,12 +141,12 @@ class DecompositionGrammar:
 
     def get_recursive_rules(self):
         if self.recursive_rules is None:
-            sys.exit("You have to initialize the grammar first. Call init() after adding all your rules.")
+            sys.exit("You have to initialize the grammar first. Call init(top_rule) after adding all your rules.")
         return self.recursive_rules
 
     def is_recursive_rule(self, key):
         if self.recursive_rules is None:
-            sys.exit("You have to initialize the grammar first. Call init() after adding all your rules.")
+            sys.exit("You have to initialize the grammar first. Call init(top_rule) after adding all your rules.")
         return key in self.recursive_rules
 
     def collect_oracle_queries(self, alias, x, y):
@@ -104,100 +156,77 @@ class DecompositionGrammar:
         self.rules[alias].accept(visitor)
         return visitor.result
 
-    def infer_target_class_labels(self):
-        # just looks if the top sampler of a rule is a transformation sampler and this case
-        # automatically sets the label of the target class
-        for alias in self.rules:
-            sampler = self.rules[alias]
-            while isinstance(sampler, BijectionSampler):
-                sampler = sampler.get_children()[0]
-            if isinstance(sampler, TransformationSampler):
-                sampler.set_target_class_label(alias)
-
-    # samples from the rule identified by the key "alias"
     def sample(self, alias, x, y):
+        """
+        Samples from the rule identified by the key 'alias'.
+        :param alias:
+        :param x:
+        :param y:
+        :return:
+        """
         if alias not in self.rules:
             sys.exit(alias + ": is not a rule in the grammar")
         return self.rules[alias].sample(x, y)
 
-    # samples from the rule identified by the key "alias"
     def sample_dummy(self, alias, x, y):
+        """
+        Samples a dummy from the rule identified by the key 'alias'.
+        :param alias:
+        :param x:
+        :param y:
+        :return:
+        """
         if alias not in self.rules:
             sys.exit(alias + ": is not a rule in the grammar")
         return self.rules[alias].sample_dummy(x, y)
 
-    def init(self):
-        # initialize the alias samplers (set their referenced grammar to this grammar)
-        visitor = self.SetActiveGrammarVisitor(self)
-        for alias in self.rules:
-            # print(alias)
-            self.rules[alias].accept(visitor)
-        # find out which rules are recursive
-        self.recursive_rules = set()
-        for alias in self.rules:
-            visitor = self.FindRecursiveRulesVisitor()
-            self.rules[alias].accept(visitor)
-            self.recursive_rules |= set(visitor.get_result())
-        # automatically set target class labels of transformation sampler where possible
-        self.infer_target_class_labels()
-        # precompute evals
-        # todo
+    # Visitors
 
-    ### visitors ###
+    class DFSVisitor:
+        """
+        Traverses the given sampler hierarchy with a DFS.
+        """
 
-    # sets the grammar in all Alias samplers participating in the given grammar
-    class SetActiveGrammarVisitor:
-        def __init__(self, grammar):
-            self.grammar = grammar
-
-        def visit(self, sampler):
-            if isinstance(sampler, AliasSampler):
-                sampler.grammar = self.grammar
-                visitor_wants_to_go_on = False
-                return visitor_wants_to_go_on
-
-    # todo
-    class PrecomputeEvaluationsVisitor:
-        def __init__(self):
-            pass
-
-        def visit(self, sampler):
-            pass
-
-    # determines which rules are recursive
-    class FindRecursiveRulesVisitor:
-        def __init__(self):
-            self.seen_alias_samplers = []
+        def __init__(self, f):
+            self.f = f
             self.result = []
-            self.stack = []
+            self.seen_alias_samplers = []
+
+        def visit(self, sampler):
+            # Apply the function to the current sampler.
+            r = self.f(sampler)
+            # Append the return value to the result list if any.
+            if r is not None:
+                self.result.append(r)
+            if isinstance(sampler, AliasSampler):
+                if sampler.alias in self.seen_alias_samplers:
+                    # Don't recurse into the alias sampler because we have already seen it.
+                    return False
+                else:
+                    self.seen_alias_samplers.append(sampler.alias)
+                    # Recurse further down.
+                    return True
 
         def get_result(self):
             return self.result
 
-        def visit(self, sampler):
-            if self.stack and self.stack[-1][0] == sampler:
-                _, old_state = self.stack.pop()
-                self.seen_alias_samplers = old_state
-            # at binary samplers the path branches
-            if isinstance(sampler, BinarySampler):
-                # the visitor goes into the left child first
-                # so when we get to the right child later we can now and restore state
-                # here the list has to be copied
-                self.stack.append((sampler.rhs, list(self.seen_alias_samplers)))
-            if isinstance(sampler, AliasSampler):
-                if sampler.alias in self.seen_alias_samplers:
-                    # if we see it for the second time then we know it's recursive
-                    self.result.append(sampler.alias)
-                    # return False in order to not recurse down forever
-                    visitor_wants_to_go_on = False
-                    return visitor_wants_to_go_on
-                else:
-                    self.seen_alias_samplers.append(sampler.alias)
-                    visitor_wants_to_go_on = True
-                    return visitor_wants_to_go_on
+    class PrecomputeEvaluationsVisitor:
+        """
+        Precomputes evaluations for the sampler in the given hierarchy.
+        """
 
-    # predicts which oracle queries will be made when sampling from the grammar
+        def __init__(self):
+            pass
+
+        def visit(self, sampler):
+            pass
+
     class CollectOracleQueriesVisitor:
+        """
+        Predicts which oracle queries will be needed when sampling from the grammar.
+        This might still be a bit buggy but its not crucial for the correctness of the samplers.
+        """
+
         def __init__(self, x_0, y_0):
             self.seen_alias_samplers = []
             self.result = set()
