@@ -23,6 +23,8 @@ import os
 from ..bijections.halfedge import HalfEdge
 from ..combinatorial_classes import BinaryTree
 
+test_mode = True
+
 class Closure:
 
     #Converts a binary tree into a planar map
@@ -84,7 +86,7 @@ class Closure:
     #Performs bicolored partial closure on a binary tree. When possible build
     #new edges in order to get faces of degree 4.
     def ___bicolored_partial_closure(self, init_half_edge):
-        print("PARTIAL CLOSURE")
+        global test_mode
         stack = []
         stack.append(init_half_edge)
         break_edge = init_half_edge
@@ -109,7 +111,6 @@ class Closure:
 
                     if top_half_edge.number_proximate_inner_edges == 3:
                         new_half_edge = HalfEdge()
-                        #new_half_edge.index = self.___get_max_half_edge_index(init_half_edge) + 1
                         new_half_edge.index = init_half_edge.get_max_half_edge_index() + 1
                         new_half_edge.node_nr = current_half_edge.node_nr
                         new_half_edge.color = current_half_edge.color
@@ -129,17 +130,17 @@ class Closure:
                     else:
                         stack.append(top_half_edge)
 
-        print("Partial closure list:")
-        #list_closure = self.list_half_edges(init_half_edge, [])
-        list_closure = init_half_edge.list_half_edges([])
-        for i in list_closure:
-            print(i)
-        #return_edge = self.___return_smallest_half_edge(init_half_edge)
         return_edge = init_half_edge.get_min_half_edge()
-        print("Partial closure returns the edge: {}".format(return_edge.index))
 
-        #Check partial closure
-        self.___test_partial_closure(return_edge)
+        if test_mode:
+            print("Partial closure list:")
+            list_closure = init_half_edge.list_half_edges([])
+            for i in list_closure:
+                print(i)
+                print("Partial closure returns the edge: {}".format(return_edge.index))
+            #Check partial closure
+            self.___test_partial_closure(return_edge)
+
         return return_edge
 
 
@@ -149,7 +150,6 @@ class Closure:
     #input: init_half_edge is the half-edge that we get when we convert a binary tree into
     #a planar map
     def ___bicolored_complete_closure(self, init_half_edge):
-        print("BICOLORED COMPLETE CLOSURE")
         hexagon_nodes_visited = 0
         starting_half_edge = self.___bicolored_partial_closure(init_half_edge)
 
@@ -229,12 +229,14 @@ class Closure:
                 current_half_edge = current_half_edge.opposite
                 distance += 1
 
-        print("Complete closure list:")
-        #list_closure = self.list_half_edges(hexagon[0], [])
-        list_closure = hexagon[0].list_half_edges([])
-        for i in list_closure:
-            print(i)
-        print("Complete closure returns the edge: {}".format(hexagon[0].index))
+        if test_mode:
+            print("Complete closure list:")
+            #list_closure = self.list_half_edges(hexagon[0], [])
+            list_closure = hexagon[0].list_half_edges([])
+            for i in list_closure:
+                print(i)
+            print("Complete closure returns the edge: {}".format(hexagon[0].index))
+
         return hexagon[0]
 
                 
@@ -253,33 +255,17 @@ class Closure:
         new_half_edge.next = next_half_edge
         next_half_edge.prior = new_half_edge
         print("new half-edge: {}".format(new_half_edge))
-        
-
-
-    # #Returns the smalles half-edge in the graph
-    # def ___return_smallest_half_edge(self, init_half_edge):
-    #     half_edge_list = self.list_half_edges(init_half_edge, [])
-    #     min_half_edge = None 
-
-    #     for edge in half_edge_list:
-    #         if min_half_edge is None and edge.opposite is None:
-    #             min_half_edge = edge
-    #         elif min_half_edge is not None and edge.opposite is None and edge.index < min_half_edge.index:
-    #             min_half_edge = edge 
-
-    #     return min_half_edge
-
 
 
     #Constructs a hexagon from a list of half_edges. 
     def ___construct_hexagon(self, hexagon_half_edges, partial_closure_edge, index):
+        global test_mode
         inv_color = None
         color = partial_closure_edge.color
         if color is 'white':
             inv_color = 'black'
         else:
             inv_color = 'white'
-
 
         #Indicate that they belong to the hexagon
         for i in range(12):
@@ -341,15 +327,15 @@ class Closure:
             if current_half_edge is hexagon_half_edges[0]:
                 break
 
-        print("Hexagon list:")
-        #list_closure = self.list_half_edges(hexagon_half_edges[0], [])
-        list_closure = hexagon_half_edges[0].list_half_edges([])
-        for i in list_closure:
-            print(i)
+        if test_mode:
+            print("Hexagon list:")
+            #list_closure = self.list_half_edges(hexagon_half_edges[0], [])
+            list_closure = hexagon_half_edges[0].list_half_edges([])
+            for i in list_closure:
+                print(i)
+            #Return the starting half-edge
+            print("Hexagon returns the edge: {}".format(hexagon_half_edges[0].index))
 
-
-        #Return the starting half-edge
-        print("Hexagon returns the edge: {}".format(hexagon_half_edges[0].index))
         return hexagon_half_edges[0]
 
 
@@ -401,7 +387,6 @@ class Closure:
 
     #Quadrangulates inner faces
     def ___quadrangulate_inner_faces(self, init_half_edge):
-        print("QUADRANGULATE INNER FACES")
         #Look for faces with degree higher than 4
         edge_list = self.list_half_edges(init_half_edge, [])
 
@@ -457,98 +442,15 @@ class Closure:
                         edges_to_remove.append(current_half_edge)      
                         
 
-    # def ___add_new_edge(self, left_half_edge, right_half_edge):
-    #     new_half_edge_1 = HalfEdge()
-    #     new_half_edge_2 = HalfEdge()
-    #     index = self.___get_max_half_edge_index(left_half_edge) + 1
-
-    #     new_half_edge_1.opposite = new_half_edge_2
-    #     new_half_edge_2.opposite = new_half_edge_1
-
-    #     #Setup the first new half edge
-    #     new_half_edge_1.color = left_half_edge.color
-    #     new_half_edge_1.node_nr = left_half_edge.node_nr
-    #     new_half_edge_1.index = index
-    #     new_half_edge_1.next = left_half_edge.next
-    #     new_half_edge_1.prior = left_half_edge
-    #     left_half_edge.next.prior = new_half_edge_1
-    #     left_half_edge.next = new_half_edge_1
-
-    #     #Setup the second new half edge
-    #     new_half_edge_2.color = right_half_edge.color
-    #     new_half_edge_2.node_nr = right_half_edge.node_nr
-    #     new_half_edge_2.index = index
-    #     new_half_edge_2.next = right_half_edge.next
-    #     new_half_edge_2.prior = right_half_edge
-    #     right_half_edge.next.prior = new_half_edge_2
-    #     right_half_edge.next = new_half_edge_2
-
-
-    # #Returns a list with half-edges
-    # def list_half_edges(self, init_half_edge, edge_list):       
-    #     edge_list.append(init_half_edge)
-    #     current_half_edge = init_half_edge
-    #     assert (current_half_edge is not None)
-    #     while True:
-    #         if current_half_edge.next is not None:
-    #             current_half_edge = current_half_edge.next
-    #             if current_half_edge is not init_half_edge and current_half_edge not in edge_list:
-    #                 edge_list.append(current_half_edge)
-    #                 if current_half_edge.opposite is not None:
-    #                     if current_half_edge.opposite not in edge_list:
-    #                         self.list_half_edges(current_half_edge.opposite, edge_list)
-    #             else:
-    #                 break
-    #         else:
-    #             break
-    #     return edge_list
-
-
-
-    # #Transforms a list of planar map half-edged into a networkx graph
-    # def half_edges_to_graph(self, init_half_edge):
-    #     half_edge_list = self.list_half_edges(init_half_edge, [])
-
-    #     #Remove all unpaired half-edges
-    #     half_edge_list = [x for x in half_edge_list if not x.opposite is None]
-    #     G = nx.Graph()
-    #     while len(half_edge_list) > 0:
-    #         half_edge = half_edge_list.pop()
-    #         G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
-    #         G.nodes[half_edge.node_nr]['color'] = half_edge.color
-    #         half_edge_list.remove(half_edge.opposite)
-    #     return G
 
     def closure_node_number(self, init_half_edge):
-        #G = self.half_edges_to_graph(init_half_edge)
         G = init_half_edge.to_networkx_graph()
         closure_nodes = len(list(G.nodes))
         return closure_nodes
         
 
-
-    # #Returns the highest index of the current graph
-    # def ___get_max_half_edge_index(self, init_half_edge):    
-    #     assert (init_half_edge is not None)    
-    #     edge_list = self.list_half_edges(init_half_edge, [])
-    #     max_index = 0
-    #     for x in edge_list:
-    #         if x.index > max_index:
-    #             max_index = x.index
-    #     return max_index
-
-
-    # #Returns the highest node number of the current graph
-    # def ___get_max_node_nr(self, init_half_edge):
-    #     edge_list = self.list_half_edges(init_half_edge, [])
-    #     max_node = 0
-    #     for x in edge_list:
-    #         if x.node_nr > max_node:
-    #             max_node = x.node_nr
-    #     return max_node
-
     # Checks if the planar map is correct.
-    def check_planar_map(self, init_half_edge, current_half_edge):
+    def test_planar_map(self, init_half_edge, current_half_edge):
         edge_list = self.list_half_edges(init_half_edge, [])
 
         #Check if each edge is listed exactly once
@@ -583,7 +485,6 @@ class Closure:
 
     # Checks if there is any stem that has three full edges as successors
     def ___test_partial_closure(self, init_half_edge):
-        #edge_list = self.list_half_edges(init_half_edge, [])
         edge_list = init_half_edge.list_half_edges([])
         stem_list = []
 
@@ -604,7 +505,7 @@ class Closure:
                     print("current: ",format(current_half_edge))
                     count = count + 1            
                     if count > 2:
-                        print("ERROR: partial closure failed at: ", format(stem))
+                        raise Exception("partial closure failed")
                     assert(count < 3)
                 else:
                     break
@@ -669,12 +570,20 @@ class Closure:
         The last step is to make the outer face of the graph to a four-edge
         face (quadrangulation of the hexagon).
         """
-        self.blockPrint()
+        global test_mode
+        test_mode = False
+
+        if not test_mode:
+            self.blockPrint()
+
         init_half_edge = self.___btree_to_planar_map(binary_tree)
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
         init_half_edge = self.___quadrangulate(init_half_edge)
         self.___test_connections_between_half_edges(init_half_edge)
         self.___test_planarity_of_embedding(init_half_edge)
         self.___test_quadrangulation(init_half_edge)
-        self.enablePrint()
+
+        if not test_mode:
+            self.enablePrint()
+
         return init_half_edge
