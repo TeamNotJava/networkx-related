@@ -191,7 +191,7 @@ if __name__ == "__main__":
     grammar.add_rules(two_connected_rules)
     grammar.add_rules(connected_rules)
     grammar.add_rules(planar_graphs_rules)
-    grammar.init('G_dx_dx')
+    grammar.init()
 
     oracles = {
         '100': {'oracle': planar_graph_evals_n100, 'size': 100},
