@@ -520,7 +520,8 @@ class Closure:
     #     return G
 
     def closure_node_number(self, init_half_edge):
-        G = self.half_edges_to_graph(init_half_edge)
+        #G = self.half_edges_to_graph(init_half_edge)
+        G = init_half_edge.to_networkx_graph()
         closure_nodes = len(list(G.nodes))
         return closure_nodes
         

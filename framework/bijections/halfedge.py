@@ -110,19 +110,19 @@ class HalfEdge:
                 break
         return edge_list
 
-    # Transforms a list of planar map half-edged into a networkx graph
-    def half_edges_to_graph(self):
-        half_edge_list = self.list_half_edges([])
+    # # Transforms a list of planar map half-edged into a networkx graph
+    # def half_edges_to_graph(self):
+    #     half_edge_list = self.list_half_edges([])
 
-        # Remove all unpaired half-edges
-        half_edge_list = [x for x in half_edge_list if not x.opposite is None]
-        G = nx.Graph()
-        while len(half_edge_list) > 0:
-            half_edge = half_edge_list.pop()
-            G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
-            G.nodes[half_edge.node_nr]['color'] = half_edge.color
-            half_edge_list.remove(half_edge.opposite)
-        return G
+    #     # Remove all unpaired half-edges
+    #     half_edge_list = [x for x in half_edge_list if not x.opposite is None]
+    #     G = nx.Graph()
+    #     while len(half_edge_list) > 0:
+    #         half_edge = half_edge_list.pop()
+    #         G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
+    #         G.nodes[half_edge.node_nr]['color'] = half_edge.color
+    #         half_edge_list.remove(half_edge.opposite)
+    #     return G
 
     # Returns the half_edge with the highest index in the graph
     def get_max_half_edge(self):
@@ -241,3 +241,18 @@ class HalfEdge:
         new_half_edge_2.prior = rigth_half_edge
         rigth_half_edge.next.prior = new_half_edge_2
         rigth_half_edge.next = new_half_edge_2
+
+
+#Transforms a list of planar map half-edged into a networkx graph
+    def to_networkx_graph(self):
+        half_edge_list = self.list_half_edges([])
+
+        #Remove all unpaired half-edges
+        half_edge_list = [x for x in half_edge_list if not x.opposite is None]
+        G = nx.Graph()
+        while len(half_edge_list) > 0:
+            half_edge = half_edge_list.pop()
+            G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
+            G.nodes[half_edge.node_nr]['color'] = half_edge.color
+            half_edge_list.remove(half_edge.opposite)
+        return G

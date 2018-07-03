@@ -169,7 +169,7 @@ def plot_closure(closure, tree, init_half_edge, graphviz=False):
     import networkx as nx
     import matplotlib.pyplot as plt
     
-    G = closure.half_edges_to_graph(init_half_edge)
+    G = init_half_edge.to_networkx_graph()
     colors = []
     for x in nx.get_node_attributes(G, 'color').values():
         if x is 'black':
@@ -184,7 +184,7 @@ def plot_closure(closure, tree, init_half_edge, graphviz=False):
 
 def save_closure(closure, tree, init_half_edge, path):
     import networkx as nx
-    G = closure.half_edges_to_graph(init_half_edge)
+    G = init_half_edge.to_networkx_graph()
     # nx.nx_agraph.write_dot(G, path)
     nx.readwrite.gexf.write_gexf(G, path)
     
