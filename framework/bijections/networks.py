@@ -43,10 +43,10 @@ def u_atom_to_network(u_atom):
 def s_decomp_to_network(decomp):
     # decomp has this structure: ((first_network, l_atom), second_network)
     network = decomp.first.first
-    netwrok_for_plugging = decomp.second
+    network_for_plugging = decomp.second
 
     # Use the serial merge bijection to merge the networks
-    result = NetworkMergeInSeries().merge_networks_in_series(network, netwrok_for_plugging)
+    result = NetworkMergeInSeries().merge_networks_in_series(network, network_for_plugging)
 
     # Check the properties
     assert (decomp.get_u_size() == result.get_u_size())

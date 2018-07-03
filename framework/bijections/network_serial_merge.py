@@ -23,7 +23,7 @@ class NetworkMergeInSeries:
         network is identified with the 0-pole from network_for_plugging.
 
         :param network: first network which will result in merged networks
-        :param network_for_plugging: second network which will be plugged in in the first one
+        :param network_for_plugging: second network which will be plugged in the first one
         '''
 
         # Extract the poles from both networks
