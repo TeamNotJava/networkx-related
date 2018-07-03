@@ -72,24 +72,20 @@ class DecompositionGrammar:
     def __init__(self, rules={}):
         self.rules = rules
         self.recursive_rules = None
-        self.top_rule = None
 
-    def init(self, top_rule):
+    def init(self):
         """
         Initializes the grammar. May take some seconds.
-        :param top_rule: The root rule of the gramamr.
         :return:
         """
-        if top_rule is None:
-            sys.exit("Call init(top_rule) after adding all your rules.")
-        self.top_rule = top_rule
+
         # Initialize the alias samplers (set their referenced grammar to this grammar).
         self.set_active_grammar()
         # Find out which rules are recursive.
         self.find_recursive_rules()
         # Automatically set target class labels of transformation samplers where possible.
         self.infer_target_class_labels()
-        # Rrecompute evals.
+        # Precompute evals.
         # todo
 
     def set_active_grammar(self):
@@ -97,8 +93,9 @@ class DecompositionGrammar:
             if isinstance(sampler, AliasSampler):
                 sampler.grammar = self
 
-        v = self.DFSVisitor(apply_to_each)
-        self.rules[self.top_rule].accept(v)
+        for alias in self.rules:
+            v = self.DFSVisitor(apply_to_each)
+            self.rules[alias].accept(v)
 
     def find_recursive_rules(self):
         recursive_rules = []
