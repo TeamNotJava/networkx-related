@@ -72,3 +72,9 @@ class BinaryTree(CombinatorialClass):
             self.left.pretty(next_indent, direction='down')
         else:
             print('{0}{1}{2}└-'.format(indent, ' ' if 'down' in direction else '│', ' ' * len(label)))
+
+
+
+class Leaf(CombinatorialClass):
+    def __init__(self):
+        super()
