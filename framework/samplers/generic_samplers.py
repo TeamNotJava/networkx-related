@@ -1,3 +1,4 @@
+from ..combinatorial_classes.class_builder import DefaultCombinatorialClassBuilder
 from ..combinatorial_classes.generic_classes import *
 from ..utils import *
 from ..combinatorial_classes import CombinatorialClass
@@ -14,6 +15,10 @@ class BoltzmannSampler:
     """
 
     oracle = None
+
+    def __init__(self):
+        # Samplers are always initialized with the default builder.
+        self.builder = DefaultCombinatorialClassBuilder()
 
     def sampled_class(self):
         """Returns a string representation of the sampled class.
@@ -58,7 +63,6 @@ class BoltzmannSampler:
         """
         self.precomputed_eval = self.get_eval(x, y)
 
-    # todo maybe find a better name for this
     def oracle_query_string(self, x, y):
         """String used as key in oracle.
 
@@ -69,6 +73,16 @@ class BoltzmannSampler:
         :rtype: str
         """
         raise NotImplementedError
+
+    def set_builder(self, builder):
+        """Registers a builder for the output class.
+
+        Output will be in generic format if not set.
+
+        :param builder: A builder for the output class.
+        :return:
+        """
+        self.builder = builder
 
     def get_children(self):
         """Gets the samplers this sampler depends on (if any).
@@ -108,7 +122,11 @@ class BoltzmannSampler:
         return ProdSampler(self, other)
 
     def __rmul__(self, other):
-        # other must be int
+        """Adding a sampler to itself several times.
+
+        :param other: Only integers 2 and 3 supported.
+        :return:
+        """
         if other == 2:
             return self + self
         if other == 3:
@@ -117,6 +135,12 @@ class BoltzmannSampler:
             raise NotImplementedError
 
     def __pow__(self, power, modulo=None):
+        """Multiplies a sampler with itself.
+
+        :param power: Only integers 2 and 3 supported.
+        :param modulo: Don't use.
+        :return:
+        """
         if power == 2:
             return self * self
         if power == 3:
@@ -131,6 +155,9 @@ class AtomSampler(BoltzmannSampler):
     """Abstract base class for atom samplers.
 
     """
+
+    def __init__(self):
+        super(AtomSampler, self).__init__()
 
     def sampled_class(self):
         raise NotImplementedError
@@ -158,11 +185,14 @@ class ZeroAtomSampler(AtomSampler):
 
     """
 
+    def __init__(self):
+        super(ZeroAtomSampler, self).__init__()
+
     def sampled_class(self):
         return '1'
 
     def sample(self, x, y):
-        return ZeroAtomClass()
+        return self.builder.zero_atom()
 
     def sample_dummy(self, x, y):
         return DummyClass()
@@ -181,11 +211,14 @@ class LAtomSampler(AtomSampler):
 
     """
 
+    def __init__(self):
+        super(LAtomSampler, self).__init__()
+
     def sampled_class(self):
         return 'L'
 
     def sample(self, x, y):
-        return LAtomClass()
+        return self.builder.l_atom()
 
     def sample_dummy(self, x, y):
         return DummyClass(l_size=1)
@@ -200,11 +233,14 @@ class UAtomSampler(AtomSampler):
 
     """
 
+    def __init__(self):
+        super(UAtomSampler, self).__init__()
+
     def sampled_class(self):
         return 'U'
 
     def sample(self, x, y):
-        return UAtomClass()
+        return self.builder.u_atom()
 
     def sample_dummy(self, x, y):
         return DummyClass(u_size=1)
@@ -227,6 +263,8 @@ class BinarySampler(BoltzmannSampler):
         :param lhs: The first sampler.
         :param rhs: The second sampler.
         """
+
+        super(BinarySampler, self).__init__()
         self.lhs = lhs
         self.rhs = rhs
 
@@ -292,7 +330,7 @@ class ProdSampler(BinarySampler):
         return '(' + self.lhs.sampled_class() + '*' + self.rhs.sampled_class() + ')'
 
     def sample(self, x, y):
-        return ProdClass(self.lhs.sample(x, y), self.rhs.sample(x, y))
+        return self.builder.product(self.lhs.sample(x,y), self.rhs.sample(x,y))
 
     def sample_dummy(self, x, y):
         dummy_lhs = self.lhs.sample_dummy(x, y)
@@ -396,6 +434,7 @@ class UnarySampler(BoltzmannSampler):
 
         :param sampler: A sampler of the underlying class.
         """
+        super(UnarySampler, self).__init__()
         self.sampler = sampler
 
     def sampled_class(self):
@@ -436,7 +475,7 @@ class SetSampler(UnarySampler):
 
     def sample(self, x, y):
         k = pois(self.d, self.sampler.get_eval(x, y))
-        return SetClass([self.sampler.sample(x, y) for _ in range(k)])
+        return self.builder.set([self.sampler.sample(x, y) for _ in range(k)])
 
     def sample_dummy(self, x, y):
         k = pois(self.d, self.sampler.get_eval(x, y))
