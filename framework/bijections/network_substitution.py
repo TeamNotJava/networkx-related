@@ -45,7 +45,7 @@ class EdgeByNetworkSubstitution:
             half_edge_for_sub_next = half_edge_for_sub.next
 
             half_edge_for_sub.next = net_root_half_edge_next.next
-            net_root_half_edge_next.prior = half_edge_for_sub
+            net_root_half_edge_next.next.prior = half_edge_for_sub
 
             half_edge_for_sub_next.prior = net_root_half_edge_prior
             net_root_half_edge_prior.next = half_edge_for_sub_next
@@ -58,8 +58,8 @@ class EdgeByNetworkSubstitution:
             # Switch the pointers so that the network_root_edge_opp and its next are not included
             half_edge_for_sub_opp_next = half_edge_for_sub_opp.next
 
-            half_edge_for_sub_opp.next = net_root_half_edge_opp_prior
-            net_root_half_edge_opp_prior.prior = half_edge_for_sub_opp
+            half_edge_for_sub_opp.next = net_root_half_edge_opp_next.next
+            net_root_half_edge_opp_next.next.prior = half_edge_for_sub_opp
 
             half_edge_for_sub_opp_next.prior = net_root_half_edge_opp_prior
             net_root_half_edge_opp_prior.next = half_edge_for_sub_opp_next
