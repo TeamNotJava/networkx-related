@@ -15,8 +15,7 @@
 """Make a bijection between the irreducible quadrangulation to a 3-connected map.
 """
 
-from ..bijections.halfedge import HalfEdge
-import matplotlib.pyplot as plt
+from framework.bijections.halfedge import HalfEdge
 
 
 def primal_map(dissection):
@@ -43,16 +42,12 @@ class PrimalMap:
         self.__primal_map_bijection_rec(init_half_edge, associated_half_edge_in_3_map)
         return associated_half_edge_in_3_map[init_half_edge]
 
-
-
     # Recursively transforms the irreducible quandrigulation to the three conected map.
     # The next and prev pointers are kept as before, but the opposite pointer in the
     # half edge is pointing to the opposite half-edge in the face.
     def __primal_map_bijection_rec(self, init_half_edge, associated_half_edges_in_3_map):
         # Associate the initial half edge
-        #print(init_half_edge)
         initial_half_edge_association = HalfEdge()
-        initial_half_edge_association.index = init_half_edge.index
         initial_half_edge_association.node_nr = init_half_edge.node_nr
         associated_half_edges_in_3_map[init_half_edge] = initial_half_edge_association
 
@@ -60,12 +55,10 @@ class PrimalMap:
         walker_half_edge = init_half_edge.next
         while walker_half_edge is not init_half_edge:
             walker_association = HalfEdge()
-            walker_association.index = walker_half_edge.index
             walker_association.node_nr = walker_half_edge.node_nr
             associated_half_edges_in_3_map[walker_half_edge] = walker_association
 
             # Connect the association with the association of the prev half-edge
-            #print(walker_half_edge)
             walker_association.prior = associated_half_edges_in_3_map[walker_half_edge.prior]
             associated_half_edges_in_3_map[walker_half_edge.prior].next = walker_association
 
@@ -82,11 +75,13 @@ class PrimalMap:
         while walker_half_edge is not init_half_edge or skipFirst is True:
             skipFirst = False
             opposite_half_edge_in_face = walker_half_edge.opposite.next.opposite.next
-            #print(walker_half_edge.__str__()+ "    " +opposite_half_edge_in_face.__str__())
+            # print(walker_half_edge.__str__()+ "    " +opposite_half_edge_in_face.__str__())
 
             # Check for already processed half edges
             if opposite_half_edge_in_face not in associated_half_edges_in_3_map:
-                self.__primal_map_bijection_rec(opposite_half_edge_in_face, associated_half_edges_in_3_map)
+                # Process the opposite half edge
+                self.__primal_map_bijection_rec(
+                    opposite_half_edge_in_face, associated_half_edges_in_3_map)
 
             # Make the actual opposite connection between the associations
             associated_half_edges_in_3_map[opposite_half_edge_in_face].opposite = associated_half_edges_in_3_map[
@@ -97,42 +92,34 @@ class PrimalMap:
             # Continue with the next edges
             walker_half_edge = walker_half_edge.next
 
-
-
     def test_primal_map(self):
         # print("Start test...")
         half_edges = self.create_sample_closure_output()
 
-
         primal_map = PrimalMap()
         three_map = primal_map.primal_map_bijection(half_edges[1])
 
-
         # Check the opposites - third output
-        print(three_map) # 9
-        print(three_map.opposite) # 1
-        print(three_map.next) # 35
-        print(three_map.next.opposite) # 2
-        print(three_map.next.next) # 22
-        print(three_map.next.next.opposite) # 3
-        print(three_map.prior) # 16
-        print(three_map.prior.opposite) # 4
+        print(three_map)  # 9
+        print(three_map.opposite)  # 1
+        print(three_map.next)  # 35
+        print(three_map.next.opposite)  # 2
+        print(three_map.next.next)  # 22
+        print(three_map.next.next.opposite)  # 3
+        print(three_map.prior)  # 16
+        print(three_map.prior.opposite)  # 4
 
         print()
-        print(three_map.next.opposite.next) # 8
-        print(three_map.next.opposite.next.opposite) # 36
+        print(three_map.next.opposite.next)  # 8
+        print(three_map.next.opposite.next.opposite)  # 36
 
         print()
-        print(three_map.opposite.next) # 31
-        print(three_map.opposite.next.opposite) # 10
-
-
+        print(three_map.opposite.next)  # 31
+        print(three_map.opposite.next.opposite)  # 10
 
     def create_sample_closure_output(self):
         half_edges = [HalfEdge() for i in range(65)]
-        # Set indices
-        for i in range(65):
-            half_edges[i].index = i
+
         # Set node_nrs
         for i in range(1, 5): half_edges[i].node_nr = 1
         for i in range(5, 8): half_edges[i].node_nr = 6
@@ -297,7 +284,3 @@ class PrimalMap:
         half_edges[1].is_hexagonal = True
 
         return half_edges
-
-
-if __name__ == "__main__":
-    PrimalMap().test_primal_map()
