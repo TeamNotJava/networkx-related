@@ -66,18 +66,14 @@ class BlockDecomposition:
         # Change node number, color and index of the root-vertex (keep the parameters of the unmarked node)
         unmakred_node_nr = unmakred_first_half_edge.node_nr
         unmarked_node_color = unmakred_first_half_edge.color
-        unmarked_max_index = unmakred_first_half_edge.get_max_half_edge_index()
         change_color = False
         change_node_nr = False
-        index = unmarked_max_index + 1
         if one_connected_first_half_edge.color is not unmarked_node_color:
             change_color = True
         if one_connected_first_half_edge.node_nr is not unmakred_node_nr:
             change_node_nr = True
 
         for half_edge in one_connected_marked_node:
-            half_edge.index = index
-            index += 1
             half_edge.marked_vertex = False
             if change_node_nr:
                 half_edge.node_nr = unmakred_node_nr
@@ -85,8 +81,6 @@ class BlockDecomposition:
                 half_edge.color = unmarked_node_color
 
 
-        
-         
 
 
 
