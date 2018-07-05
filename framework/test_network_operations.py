@@ -10,73 +10,11 @@ def test_edge_by_netwrok_substitution():
     Tests the edge by network substitution operation.
     :return:
     '''
-
-    graph_vertices_list = []
-    graph_edges_list = []
-
-    graph_root_edge = HalfEdge()
-
-    graph_root_edge_opposite = HalfEdge
-
-    graph_root_edge.opposite = graph_root_edge_opposite
-    graph_root_edge_opposite.opposite = graph_root_edge
-
-    third = HalfEdge()
-    graph_root_edge.next = third
-    graph_root_edge.prior = third
-    third.prior = graph_root_edge
-    third.next = graph_root_edge
-    graph_edges_list.append(third)
-
-    fourth = HalfEdge()
-    fourth.node_nr = 3
-    third.opposite = fourth
-    fourth.opposite = third
-    graph_vertices_list.append(fourth)
-
-    fifth = HalfEdge()
-    fifth.node_nr = 3
-    fifth.prior = fourth
-    fourth.next = fifth
-    graph_edges_list.append(fifth)
-
-    sixth = HalfEdge()
-    sixth.node_nr = 3
-    sixth.next = fourth
-    fourth.prior = sixth
-    sixth.prior = fifth
-    fifth.next = sixth
-    graph_edges_list.append(sixth)
-
-    seventh = HalfEdge()
-    seventh.node_nr = 4
-    seventh.opposite = fifth
-    fifth.opposite = seventh
-    graph_vertices_list.append(seventh)
-
-    eighth = HalfEdge()
-    eighth.node_nr = 4
-    eighth.next = seventh
-    eighth.prior = seventh
-    seventh.next = eighth
-    seventh.prior = eighth
-    graph_edges_list.append(eighth)
-
-    ninth = HalfEdge()
-    ninth.opposite = eighth
-    eighth.opposite = ninth
-    ninth.next = graph_root_edge_opposite
-    graph_root_edge_opposite.prior = ninth
-
-    tenth = HalfEdge()
-    tenth.opposite = sixth
-    sixth.opposite = tenth
-    tenth.next = ninth
-    ninth.prior = tenth
-    tenth.prior = graph_root_edge_opposite
-    graph_root_edge_opposite.next = tenth
-
-    three_connected_graph = EdgeRootedThreeConnectedPlanarGraph(graph_vertices_list, graph_edges_list, graph_root_edge)
+    three_connected_graph = create_three_connected_graph()
+    fifth = three_connected_graph.root_half_edge.next.opposite.next
+    sixth = fifth.next
+    seventh = fifth.opposite
+    eighth = seventh.next
 
     network_edges_list = []
     network_vertices_list = []
@@ -181,11 +119,12 @@ def test_edge_by_netwrok_substitution():
         half_edge_walker = half_edge_walker.next
 
 
-def create_sample_network():
+def create_three_connected_graph():
     first_net_vertices_list = []
     first_net_edges_list = []
 
     first_net_root_edge = HalfEdge()
+    first_net_root_edge.node_nr = 1
 
     first_net_root_edge_opposite = HalfEdge()
     first_net_root_edge_opposite.node_nr = 2
@@ -193,6 +132,7 @@ def create_sample_network():
     first_net_root_edge_opposite.opposite = first_net_root_edge
 
     third = HalfEdge()
+    third.node_nr = 1
     first_net_root_edge.next = third
     first_net_root_edge.prior = third
     third.prior = first_net_root_edge
@@ -200,16 +140,19 @@ def create_sample_network():
     first_net_edges_list.append(third)
 
     fourth = HalfEdge()
+    fourth.node_nr = 3
     third.opposite = fourth
     fourth.opposite = third
     first_net_vertices_list.append(fourth)
 
     fifth = HalfEdge()
+    fifth.node_nr = 3
     fifth.prior = fourth
     fourth.next = fifth
     first_net_edges_list.append(fifth)
 
     sixth = HalfEdge()
+    sixth.node_nr = 3
     sixth.next = fourth
     fourth.prior = sixth
     sixth.prior = fifth
@@ -217,11 +160,13 @@ def create_sample_network():
     first_net_edges_list.append(sixth)
 
     seventh = HalfEdge()
+    seventh.node_nr = 4
     seventh.opposite = fifth
     fifth.opposite = seventh
     first_net_vertices_list.append(seventh)
 
     eighth = HalfEdge()
+    eighth.node_nr = 4
     eighth.next = seventh
     eighth.prior = seventh
     seventh.next = eighth
@@ -244,7 +189,12 @@ def create_sample_network():
     tenth.prior = first_net_root_edge_opposite
     first_net_root_edge_opposite.next = tenth
 
-    return NetworkClass(first_net_vertices_list, first_net_edges_list, first_net_root_edge)
+    return EdgeRootedThreeConnectedPlanarGraph(first_net_vertices_list, first_net_edges_list, first_net_root_edge)
+
+
+def create_sample_network():
+    graph = create_three_connected_graph()
+    return NetworkClass(graph.vertices_list, graph.edges_list, graph.root_half_edge)
 
 
 def test_series_merge_of_networks():
@@ -289,7 +239,53 @@ def test_parallel_merge_of_networks():
     Tests the merging of two networks in parallel.
     :return:
     '''
-    pass
+    first_network = create_sample_network()
+    first_net_zero_pole = first_network.root_half_edge
+    first_net_zero_pole_prior_old = first_net_zero_pole.prior
+    first_net_inf_pole = first_net_zero_pole.opposite
+    first_net_inf_pole_next_old = first_net_inf_pole.next
+
+    second_network = create_sample_network()
+    second_net_zero_pole = second_network.root_half_edge
+    second_net_inf_pole = second_net_zero_pole.opposite
+    # Change the node numbers for testing
+    second_net_zero_pole.node_nr = -1
+    second_net_zero_pole.next.node_nr = -1
+    second_net_inf_pole.node_nr = -1
+    second_net_inf_pole.next.node_nr = -1
+    second_net_inf_pole.next.next.node_nr = -1
+
+    result = NetworkMergeInParallel().merge_networks_in_parallel(first_network, second_network)
+
+    # Check the sizes of the resulted network
+    assert len(result.vertices_list) == 4
+    assert len(result.edges_list) == 8
+
+    # Check the pointers updates in the zero pole
+    assert first_net_zero_pole.prior == second_net_zero_pole.prior
+    assert second_net_zero_pole.prior.next == first_net_zero_pole
+    assert first_net_zero_pole_prior_old.next == second_net_zero_pole.next
+    assert second_net_zero_pole.next.prior == first_net_zero_pole_prior_old
+
+    # Check the pointers updates in the inf pole
+    assert first_net_inf_pole.next == second_net_inf_pole.next
+    assert second_net_inf_pole.next.prior == first_net_inf_pole
+    assert first_net_inf_pole_next_old.prior == second_net_inf_pole.prior
+    assert second_net_inf_pole.prior.next == first_net_inf_pole_next_old
+
+    # Check the node numbers update
+    assert first_net_zero_pole.node_nr == 1
+    half_edge_walker = first_net_zero_pole.next
+    while half_edge_walker != first_net_zero_pole:
+        assert half_edge_walker.node_nr == first_net_zero_pole.node_nr
+        half_edge_walker = half_edge_walker.next
+
+    assert first_net_inf_pole.node_nr == 2
+    half_edge_walker = first_net_inf_pole.next
+    while half_edge_walker != first_net_inf_pole:
+        assert half_edge_walker.node_nr == first_net_inf_pole.node_nr
+        half_edge_walker = half_edge_walker.next
+
 
 
 if __name__ == "__main__":
