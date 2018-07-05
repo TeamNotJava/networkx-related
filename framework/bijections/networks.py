@@ -5,7 +5,7 @@ from networkx.algorithms.minors import contracted_nodes
 from framework.combinatorial_classes.network import NetworkClass
 from framework.combinatorial_classes.generic_classes import UAtomClass
 from framework.bijections.halfedge import HalfEdge
-from framework.bijections.network_serial_merge import NetworkMergeInSeries
+from framework.bijections.network_merge_in_series import NetworkMergeInSeries
 from framework.bijections.network_paralel_merge import NetworkMergeInParallel
 
 

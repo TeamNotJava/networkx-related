@@ -2,6 +2,10 @@ from .decomposition_grammar import AliasSampler
 from .three_connected_graph_decomposition import three_connected_graph_grammar
 from .samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
+from .combinatorial_classes.network import NetworkClass
+from .bijections.halfedge import HalfEdge
+from .bijections.network_merge_in_series import NetworkMergeInSeries
+from .bijections.network_paralel_merge import NetworkMergeInParallel
 from .utils import bern
 from .bijections.closure import Closure
 from random import choice
@@ -32,21 +36,77 @@ Bij = BijectionSampler
 DyFromDx = UDerFromLDerSampler
 Trans = TransformationSampler
 
+def _create_root_network_edge():
+    # Create the zero-pole of the network
+    root_half_edge = HalfEdge()
+    root_half_edge.next = root_half_edge
+    root_half_edge.prior = root_half_edge
+
+    # Creates the inf-pole
+    root_half_edge_opposite = HalfEdge
+    root_half_edge_opposite.next = root_half_edge_opposite
+    root_half_edge_opposite.prior = root_half_edge_opposite
+
+    # Link the poles
+    root_half_edge.opposite = root_half_edge_opposite
+    root_half_edge_opposite.opposite = root_half_edge
+
+    return root_half_edge
 
 def bij_u_atom_to_network(decomp):
-    raise NotImplementedError
+    vertices_list = []
+    edges_list = []
+    root_half_edge = _create_root_network_edge()
+    result = NetworkClass(vertices_list, edges_list, root_half_edge)
+    assert (decomp.get_u_size() == result.get_u_size())
+    assert (decomp.get_l_size() == result.get_l_size())
+    return result
 
 def bij_s_decomp_to_network(decomp):
-    raise NotImplementedError
+    # decomp has this structure: ((first_network, l_atom), second_network)
+    network = decomp.first.first
+    network_for_plugging = decomp.second
+
+    # Use the serial merge bijection to merge the networks
+    result = NetworkMergeInSeries().merge_networks_in_series(network, network_for_plugging)
+
+    # Check the properties
+    assert (decomp.get_u_size() == result.get_u_size())
+    assert (decomp.get_l_size() == result.get_l_size())
+    return result
 
 def bij_p_decomp1_to_network(decomp):
-    raise NotImplementedError
+    # decomp has the structure: (link_graph, [set of networks])
+    # get the parallel composition of the networks
+    result = bij_p_decomp2_to_network(decomp.second)
+    # add link between the poles
+    result.edges_list.append(result.root_half_edge)
+    assert (decomp.get_u_size() == result.get_u_size())
+    assert (decomp.get_l_size() == result.get_l_size())
+    return result
 
 def bij_p_decomp2_to_network(decomp):
-    raise NotImplementedError
+    # decomp has the structure: [set of networks]
+    networks = decomp
+
+    # Merge the netwowrks in parallel
+    result = networks[0]
+    for i in range(1, len(networks)):
+        result = NetworkMergeInParallel().merge_networks_in_parallel(result, networks[i])
+
+    # Check the properties
+    assert (decomp.get_u_size() == result.get_u_size())
+    assert (decomp.get_l_size() == result.get_l_size())
+    return result
 
 def bij_g_3_arrow_to_network(decomp):
-    raise NotImplementedError
+    three_connected_rooted_planar_graph = decomp.first
+    # Extract the components from the three connected rooted planar graph
+    vertices_list = list(three_connected_rooted_planar_graph.vertices_list)
+    edges_list = list(three_connected_rooted_planar_graph.edges_list)
+    root_half_edge = three_connected_rooted_planar_graph.root_half_edge
+    # Create and return the network.
+    return NetworkClass(vertices_list, edges_list, root_half_edge)
 
 def add_root_edge(decomp):
     raise NotImplementedError
