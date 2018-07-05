@@ -13,6 +13,7 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 import networkx as nx
+import sys
 
 
 class HalfEdge:
@@ -153,7 +154,7 @@ class HalfEdge:
     # Returns the half_edge with the highest index in the graph
     def get_max_half_edge(self):
         edge_list = self.list_half_edges([])
-        max_id = 0
+        max_id = -1
         max_half_edge = None
         for x in edge_list:
             if id(x) > max_id:
@@ -175,7 +176,7 @@ class HalfEdge:
     # Returns the highest node number of the graph
     def get_max_node_nr(self):
         edge_list = self.list_half_edges([])
-        max_node = 0
+        max_node = -1
         max_edge = None
         for x in edge_list:
             if x.node_nr > max_node:
@@ -186,7 +187,7 @@ class HalfEdge:
     # Returns the half_edge with the smallest node number
     def get_min_node_nr(self):
         edge_list = self.list_half_edges([])
-        min_node = 0
+        min_node = sys.maxint
         min_edge = None
         for x in edge_list:
             if x.node_nr < min_node:

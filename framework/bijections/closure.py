@@ -16,7 +16,7 @@
 into a Boltzmann sampler for 3-connected planar graphs.
 """
 
-import networkx as nx
+
 import matplotlib.pyplot as plt
 import sys
 import os
@@ -27,52 +27,6 @@ test_mode = True
 
 class Closure:
 
-    # Converts a binary tree into a planar map
-    def ___btree_to_planar_map(self, btree):
-        global test_mode
-        init_half_edge = HalfEdge()
-        self.___construct_planar_map(btree, init_half_edge)
-        # Destroy the initial half-edge as it is only needed to construct its opposite
-        init_half_edge.opposite.opposite = None
-
-        return init_half_edge.opposite
-
-    # Constructs planar map of the binary tree
-    def ___construct_planar_map(self, btree, init_half_edge):
-        half_edge_1 = HalfEdge()
-        half_edge_2 = HalfEdge()
-        half_edge_3 = HalfEdge()
-
-        half_edge_1.opposite = init_half_edge
-        init_half_edge.opposite = half_edge_1
-
-        # Next edge is the one in ccw order around the incident vertex
-        half_edge_1.next = half_edge_2
-        half_edge_2.next = half_edge_3
-        half_edge_3.next = half_edge_1
-       
-        # Prior edge is the one in cw order around the incident vertex
-        half_edge_1.prior = half_edge_3
-        half_edge_3.prior = half_edge_2
-        half_edge_2.prior = half_edge_1
-
-        # Set the colors of the half-edges
-        color = btree.get_attribute('color')
-        half_edge_1.color = color
-        half_edge_2.color = color
-        half_edge_3.color = color
-
-        #Set the number of node the edges asre assigned to
-        half_edge_1.node_nr = btree._id
-        half_edge_2.node_nr = btree._id
-        half_edge_3.node_nr = btree._id
-
-        # Construct the planar map on the children
-        if btree.left is not None:
-            self.___construct_planar_map(btree.left, half_edge_2)
-        if btree.right is not None:
-            self.___construct_planar_map(btree.right, half_edge_3)
-        return
 
     # Performs bicolored partial closure on a binary tree. When possible build
     # new edges in order to get faces of degree 4.
@@ -353,10 +307,6 @@ class Closure:
         edge_list = init_half_edge.list_half_edges( [])
         node_list = init_half_edge.get_node_list()
 
-        print("List node dictonary")
-        for node in node_list:
-            print(node,end=" ")
-            print(node_list[node])
 
         # Node list should has the same number of nodes as the
         # binary tree
@@ -382,21 +332,7 @@ class Closure:
     def enablePrint(self):
         sys.stdout = sys.__stdout__
 
-    # Checks if every half-edge occurs exactly once in the list
-    def ___test_planar_map(self, init_half_edge):
-        liste = self.list_half_edges(init_half_edge.opposite, [])
-
-        for l in liste:
-            count = 0
-            for i in liste:
-                if id(l) == id(i):
-                    count += 1
-                    if count > 1:
-                        print(l)
-                    assert (count < 2) 
-
-        
-
+ 
     # Checks if there is any stem that has three full edges as successors
     def ___test_partial_closure(self, init_half_edge):
         edge_list = init_half_edge.list_half_edges([])
@@ -485,7 +421,7 @@ class Closure:
         """
         global test_mode
         # Here you can switch to test mode
-        test_mode = False
+        test_mode = True
 
         if not test_mode:
             self.blockPrint()

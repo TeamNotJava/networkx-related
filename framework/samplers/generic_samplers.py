@@ -657,7 +657,7 @@ class LDerFromUDerSampler(TransformationSampler):
         self.alpha_l_u = alpha_l_u
 
     def sample(self, x, y):
-        while True:
+        while True:   
             gamma = self.sampler.sample(x, y)
             p = (1 / self.alpha_l_u) * (gamma.get_l_size() / (gamma.get_u_size() + 1))
             if bern(p):
