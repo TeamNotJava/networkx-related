@@ -65,6 +65,6 @@ class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
 
     def __str__(self):
         repr = 'Root Edge : %s \n' % self.root_half_edge.__repr__()
-        repr += 'Vertices : %s' % self.vertices_list.__repr__()
+        repr += 'Vertices : %s\n' % self.vertices_list.__repr__()
         repr += 'Edges : %s' % self.edges_list.__repr__()
         return repr
