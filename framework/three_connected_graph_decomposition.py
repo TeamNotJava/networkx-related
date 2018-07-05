@@ -33,7 +33,7 @@ def bij_whitney_dx(decomp):
     return whitney(decomp)
 
 three_connected_graph_grammar = DecompositionGrammar()
-three_connected_graph_grammar.add_rules(irreducible_dissection_grammar.get_rules())
+three_connected_graph_grammar.add_rules(irreducible_dissection_grammar().get_rules())
 three_connected_graph_grammar.add_rules({
     'M_3_arrow': Bij(J_a, bij_primal),
     'M_3_arrow_dx': Bij(J_a_dx, bij_primal_dx),
