@@ -4,6 +4,7 @@ from .samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
 from .utils import bern
 from .bijections.closure import Closure
+from .combinatorial_classes import UDerivedClass
 from random import choice
 import logging
 
@@ -34,25 +35,28 @@ Trans = TransformationSampler
 
 
 def bij_u_atom_to_network(decomp):
-    raise NotImplementedError
-
+    return decomp
+    
 def bij_s_decomp_to_network(decomp):
-    raise NotImplementedError
+    return decomp
 
 def bij_p_decomp1_to_network(decomp):
-    raise NotImplementedError
+    return decomp
 
 def bij_p_decomp2_to_network(decomp):
-    raise NotImplementedError
+    return decomp
 
 def bij_g_3_arrow_to_network(decomp):
-    raise NotImplementedError
+    return decomp
 
 def add_root_edge(decomp):
-    raise NotImplementedError
+    #return decomp.second
+    if isinstance(decomp, ZeroAtomClass):
+        return UAtomClass()
+    return decomp
 
 def forget_direction_of_root_edge(decomp):
-    raise NotImplementedError
+    return UDerivedClass(decomp, None)
 
 two_connected_graph_grammar = DecompositionGrammar()
 two_connected_graph_grammar.add_rules(three_connected_graph_grammar.get_rules())
