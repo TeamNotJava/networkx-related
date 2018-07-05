@@ -47,3 +47,24 @@ def pois(d, l):
         p *= l / k
 
 
+def singleton(class_):
+    instances = {}
+    def getinstance(*args, **kwargs):
+        if class_ not in instances:
+            instances[class_] = class_(*args, **kwargs)
+        return instances[class_]
+    return getinstance
+
+
+@singleton
+class Counter(object):
+    def __init__(self):
+        self.count = 0
+    def __iter__(self):
+        return self
+    def __next__(self):
+        count = self.count
+        self.count += 1
+        return count
+
+

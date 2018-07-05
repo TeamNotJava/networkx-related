@@ -6,6 +6,7 @@ from framework.bijections.closure import Closure
 from framework.bijections.primal_map import PrimalMap
 from framework.bijections.whitney_3map_to_3graph import WhitneyBijection
 from framework.binary_tree_decomposition import binary_tree_grammar
+from framework.two_connected_graph_decomposition import two_connected_graph_grammar
 from framework.decomposition_grammar import *
 from framework.evaluation_oracle import EvaluationOracle
 from framework.evaluations_planar_graph import planar_graph_evals_n100
@@ -253,6 +254,30 @@ def whiney_bijection_test():
     WhitneyBijection().test_whitney_bijection()
 
 
+def network_test():
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    grammar = two_connected_graph_grammar
+    grammar.init()
+
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'y'
+
+    [print(query) for query in sorted(grammar.collect_oracle_queries('D', symbolic_x, symbolic_y))]
+    network = grammar.sample('D', symbolic_x, symbolic_y)
+
+    print(network.vertices_list)
+    print(network.edges_list)
+    print(network.root_half_edge)
+    return network
+
+def network_plot(network):
+    import networkx as nx
+    import matplotlib.pyplot as plt
+
+    G = network.root_half_edge.to_networkx_graph()
+    nx.draw(G, with_labels=True)
+    plt.show()
+
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
     argparser.add_argument('-d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
@@ -268,6 +293,7 @@ def main():
 
     argparser.add_argument('--primal_map', action='store_true', help='Run the primal_map_test function')
     argparser.add_argument('--whitney_bijection', action='store_true', help='Run the whitney_bijection_test function')
+    argparser.add_argument('--network', action='store_true', help='Run the network_test function')
 
     args = argparser.parse_args()
 
@@ -313,6 +339,10 @@ def main():
     if args.one_connected:
         one_connected_test()
 
+    if args.network:
+        network = network_test()
+        if args.plot:
+            network_plot(network)
+
 if __name__ == '__main__':
     main()
-

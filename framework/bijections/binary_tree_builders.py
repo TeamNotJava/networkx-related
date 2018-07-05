@@ -1,8 +1,8 @@
 from framework import BinaryTree
 from framework.combinatorial_classes.binary_tree import Leaf
 from framework.combinatorial_classes.class_builder import CombinatorialClassBuilder
-
-
+from framework.utils import Counter
+counter = Counter()
 class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     """
     Builds white-rooted binary trees (rules 'R_w', 'R_w_head', 'R_w_as').
@@ -10,7 +10,7 @@ class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
 
     def __init__(self):
         # White rooted trees get odd node numbers.
-        self.node_nr = 1
+        self.node_nr = next(counter)
 
     def u_atom(self):
         return Leaf()
@@ -18,7 +18,7 @@ class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     def product(self, lhs, rhs):
         res = BinaryTree('white')
         res.set_root_node_nr(self.node_nr)
-        self.node_nr += 2
+        self.node_nr += next(counter)
         res.add_left_child(lhs)
         res.add_right_child(rhs)
         return res
@@ -31,12 +31,12 @@ class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
 
     def __init__(self):
         # Black rooted trees get even node numbers.
-        self.node_nr = 0
+        self.node_nr = next(counter)
 
     def l_atom(self):
         res = BinaryTree('black')
         res.set_root_node_nr(self.node_nr)
-        self.node_nr += 2
+        self.node_nr += next(counter)
         return res
 
     def u_atom(self):

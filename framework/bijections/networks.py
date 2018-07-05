@@ -7,18 +7,21 @@ from framework.combinatorial_classes.generic_classes import UAtomClass
 from framework.bijections.halfedge import HalfEdge
 from framework.bijections.network_merge_in_series import NetworkMergeInSeries
 from framework.bijections.network_paralel_merge import NetworkMergeInParallel
-
+from framework.utils import Counter
+counter = Counter()
 
 def _create_root_network_edge():
     # Create the zero-pole of the network
     root_half_edge = HalfEdge()
     root_half_edge.next = root_half_edge
     root_half_edge.prior = root_half_edge
+    root_half_edge.node_nr = next(counter)
 
     # Creates the inf-pole
-    root_half_edge_opposite = HalfEdge
+    root_half_edge_opposite = HalfEdge()
     root_half_edge_opposite.next = root_half_edge_opposite
     root_half_edge_opposite.prior = root_half_edge_opposite
+    root_half_edge_opposite.node_nr = next(counter)
 
     # Link the poles
     root_half_edge.opposite = root_half_edge_opposite

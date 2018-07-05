@@ -22,6 +22,8 @@ import sys
 import os
 from ..bijections.halfedge import HalfEdge
 from ..combinatorial_classes import BinaryTree
+from framework.utils import Counter
+counter = Counter()
 
 test_mode = True
 
@@ -259,13 +261,12 @@ class Closure:
             iter += 2
 
         # Set node number.
-        node_num = partial_closure_edge.get_max_node_nr().node_nr + 1
         current_half_edge = hexagon_half_edges[11]
         while True:
+            node_num = next(counter)
             current_half_edge.node_nr = node_num
             current_half_edge.next.node_nr = node_num
             current_half_edge = current_half_edge.next.opposite
-            node_num += 1
             if current_half_edge is hexagon_half_edges[11]:
                 break
 
