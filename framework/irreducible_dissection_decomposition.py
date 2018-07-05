@@ -2,13 +2,14 @@ import logging
 from random import choice
 
 from .bijections.closure import Closure
-from .binary_tree_decomposition import binary_tree_grammar, BinaryTree
+from .binary_tree_decomposition import binary_tree_grammar
 from .decomposition_grammar import AliasSampler
 from .rejections.admissibility_check import check_admissibility
 from .samplers.generic_samplers import *
 from .decomposition_grammar import DecompositionGrammar
 from .evaluation_oracle import EvaluationOracle
 from .evaluations_planar_graph import planar_graph_evals_n100
+from.bijections.halfedge import HalfEdge
 
 
 class RootedIrreducibleDissection(CombinatorialClass):
@@ -30,7 +31,7 @@ def closure(binary_tree):
     if isinstance(binary_tree, LDerivedClass):
         return c.closure(binary_tree.get_base_class_object())
     else:
-        assert isinstance(binary_tree, BinaryTree)
+        assert isinstance(binary_tree, HalfEdge)
         return c.closure(binary_tree)
 
 
@@ -110,7 +111,7 @@ Bij = BijectionSampler
 Rej = RejectionSampler
 
 irreducible_dissection_grammar = DecompositionGrammar()
-irreducible_dissection_grammar.add_rules(binary_tree_grammar.get_rules())
+irreducible_dissection_grammar.add_rules(binary_tree_grammar().get_rules())
 irreducible_dissection_grammar.add_rules({
     'I': Bij(K, closure),
     'I_dx': Bij(K_dx, closure),
