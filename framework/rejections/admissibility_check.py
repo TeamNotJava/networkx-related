@@ -17,7 +17,7 @@ Check the dissection if ti is irreducible, which means there is no path of lengt
 the opposite outer vertex.
 """
 
-from ..bijections.primal_map import PrimalMap
+from framework.bijections.primal_map import PrimalMap
 
 
 def check_admissibility(dissection):
@@ -88,11 +88,11 @@ class AdmissibilityChecker:
         # A path has not been found, therefore the dissection is irreducible and we return True.
         return True
 
-
     def test_admissibility_check(self):
         half_edges_list = PrimalMap().create_sample_closure_output()
 
         is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[2])
+        assert False == is_admissible
         print(is_admissible)  # False
 
         # Test with removing edges
@@ -103,6 +103,7 @@ class AdmissibilityChecker:
         half_edges_list[44].prior = half_edges_list[42]
 
         is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[2])
+        assert True == is_admissible
         print(is_admissible)  # True
 
         # Extend the test with adding edges
@@ -129,9 +130,9 @@ class AdmissibilityChecker:
         half_edges_list[42].next = half_edges_list[43]
         half_edges_list[44].prior = half_edges_list[43]
 
-        for i in range(49, 52):half_edges_list[i].node_nr = 14
-        for i in range(52, 55):half_edges_list[i].node_nr = 16
-        for i in range(56, 59):half_edges_list[i].node_nr = 15
+        for i in range(49, 52): half_edges_list[i].node_nr = 14
+        for i in range(52, 55): half_edges_list[i].node_nr = 16
+        for i in range(56, 59): half_edges_list[i].node_nr = 15
 
         # Reassign opposites
         half_edges_list[28].opposite = half_edges_list[54]
@@ -150,4 +151,5 @@ class AdmissibilityChecker:
         half_edges_list[53].opposite = half_edges_list[55]
 
         is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[2])
+        assert True == is_admissible
         print(is_admissible)  # True

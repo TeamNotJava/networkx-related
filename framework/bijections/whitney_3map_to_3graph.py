@@ -16,9 +16,8 @@
 """
 
 import networkx as nx
-import matplotlib.pyplot as plt
-from ..bijections.primal_map import  PrimalMap
-from ..combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
+from framework.bijections.primal_map import  PrimalMap
+from framework.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 
 def whitney(map):
@@ -50,27 +49,20 @@ class WhitneyBijection:
         edges_list = set()
         self.__extract_3_graph_components_rec(root_half_edge, root_half_edge, set(), vertices_list, edges_list)
 
-        # We create a tuple of the root edge node numbers.
-        root_edge = (root_half_edge.node_nr, root_half_edge.opposite.node_nr)
-
-        # We transform the extracted components to the nx.Graph structure
-        #nx_graph = self.__create_graph_from_components(root_edge, vertices_list, edges_list)
-
-        return EdgeRootedThreeConnectedPlanarGraph(vertices_list, edges_list, root_edge)
-
+        return EdgeRootedThreeConnectedPlanarGraph(vertices_list, edges_list, root_half_edge)
 
 
     def __extract_3_graph_components_rec(
             self, first_half_edge, root_half_edge, visited_half_edges, vertices_list, edges_list):
         # Check if the half edge has been already processed
-        if first_half_edge.index in visited_half_edges:
+        if id(first_half_edge) in visited_half_edges:
             return
 
         # Mark the first half edge and the ones with which it shares a vertex to visited.
-        visited_half_edges.add(first_half_edge.index)
+        visited_half_edges.add(id(first_half_edge))
         walker_half_edge = first_half_edge.next
         while walker_half_edge != first_half_edge:
-            visited_half_edges.add(first_half_edge.index)
+            visited_half_edges.add(id(walker_half_edge))
             walker_half_edge = walker_half_edge.next
 
         # Check if the first half edge is different from the root and root.opposite. If this is true,
@@ -78,16 +70,14 @@ class WhitneyBijection:
         walker_half_edge = first_half_edge
         if walker_half_edge.node_nr != root_half_edge.node_nr and walker_half_edge.node_nr != root_half_edge.opposite.node_nr:
             #print(walker_half_edge)
-            vertices_list.add(walker_half_edge.node_nr)
+            vertices_list.add(walker_half_edge)
 
         # Insert half edges to the edges list.
         walker_half_edge = walker_half_edge.next
         while walker_half_edge != first_half_edge:
             # The condition that one half edge should fullfill for inserting.
-            if walker_half_edge != root_half_edge and walker_half_edge.opposite.index not in visited_half_edges:
-                from_vertex = min(walker_half_edge.node_nr, walker_half_edge.opposite.node_nr)
-                to_vertex = max(walker_half_edge.node_nr, walker_half_edge.opposite.node_nr)
-                edges_list.add((from_vertex, to_vertex))
+            if walker_half_edge != root_half_edge and id(walker_half_edge.opposite) not in visited_half_edges:
+                edges_list.add(walker_half_edge)
             walker_half_edge = walker_half_edge.next
 
         # Call the function recursively for the opposite half edges.
@@ -97,31 +87,6 @@ class WhitneyBijection:
                 walker_half_edge.opposite, root_half_edge, visited_half_edges, vertices_list, edges_list)
             walker_half_edge = walker_half_edge.next
 
-
-
-    def __create_graph_from_components(self, root_edge, vertices_list, edges_list):
-
-        G = nx.Graph()
-
-        # By the Whitney bijection, the root edge vertices should not be part of the graph, but since we have other
-        # edges that are connected with this vertices and from this point we are using nx.Graph structure,
-        # they have to be added. In order to give the correct number of L-vertices in EdgeRootedThreeConnectedPlanarGraph
-        # we always have to substract 2 from the number of nodes.
-        G.add_node(root_edge[0])
-        G.add_node(root_edge[1])
-
-        # print('Vertices list: ' + vertices_list.__repr__())
-        # print('Vertices list: ' + edges_list.__repr__())
-
-        # We add all other vertices from the vertices list.
-        for vertex_number in vertices_list:
-            G.add_node(vertex_number)
-
-        # We add the adges in the nx graph structure.
-        for edge in edges_list:
-            G.add_edge(edge[0], edge[1])
-
-        return G
 
     def test_whitney_bijection(self):
         # print("Start test...")
@@ -138,6 +103,22 @@ class WhitneyBijection:
 
         # Chech the properties
         print(edge_rooted_three_connected_graph)
+        # Check the root edge
+        assert edge_rooted_three_connected_graph.root_half_edge.node_nr == 1
+        assert edge_rooted_three_connected_graph.root_half_edge.opposite.node_nr == 13
 
-        nx.draw(edge_rooted_three_connected_graph.graph)
-        plt.show()
+        # Check the vertices list
+        vertices_node_numbers = [3, 5, 8, 10]
+        for vertex_half_edge in edge_rooted_three_connected_graph.vertices_list:
+            assert vertex_half_edge.node_nr in vertices_node_numbers
+            vertices_node_numbers.remove(vertex_half_edge.node_nr)
+        assert len(vertices_node_numbers) == 0
+
+        # Check the edges list
+        edges_node_numbers = [(1, 3), (5, 10), (10, 13), (3, 10), (5, 13), (8, 10), (3, 8), (1, 5), (1, 8), (5, 10)]
+        for half_edge in edge_rooted_three_connected_graph.edges_list:
+            from_vertex = min(half_edge.node_nr, half_edge.opposite.node_nr)
+            to_vertex = max(half_edge.node_nr, half_edge.opposite.node_nr)
+            assert (from_vertex, to_vertex) in edges_node_numbers
+            edges_node_numbers.remove((from_vertex, to_vertex))
+        assert len(edges_node_numbers) == 0
