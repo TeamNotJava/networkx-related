@@ -206,6 +206,28 @@ def irreducible_dissection_test():
     # admissibe_dissection_dx = irreducible_dissection_grammar.sample('J_a_dx', symbolic_x, symbolic_y)
     # print(admissibe_dissection_dx)
 
+
+def one_connected_test():
+    from framework.two_connected_graph_decomposition import two_connected_graph_grammar
+    from framework.bijections.block_decomposition import BlockDecomposition
+    from framework.combinatorial_classes.two_connected_graph import EdgeRootedTwoConnectedPlanarGraph
+
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'y'
+
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    two_connected_graph_grammar.init()
+
+    # Create list of L-der two connected graphs
+    list_l_der_two_connected = []
+    for i in range(2):
+        two_connected = two_connected_graph_grammar.sample('G_2_dx', symbolic_x, symbolic_y)
+        list_l_der_two_connected.append(two_connected)
+
+    decomp_worker = BlockDecomposition()
+    decomp_worker.merge_set_of_l_der_two_connected_graphs(list_l_der_two_connected)
+
+
 def plot_dissection(dissection):
     import networkx as nx
     import matplotlib.pyplot as plt
@@ -237,6 +259,7 @@ def main():
     argparser.add_argument('--closure', action='store_true', help='Run the closure_test function')
     argparser.add_argument('--irdi', action='store_true', help='Run the irreducible_dissection_test function')
     argparser.add_argument('--graphviz', action='store_true', help='Use Graphviz layout')
+    argparser.add_argument('--one_connected', action='store_true',help='Run the one_connected_test_function')
 
     argparser.add_argument('--primal_map', action='store_true', help='Run the primal_map_test function')
     argparser.add_argument('--whitney_bijection', action='store_true', help='Run the whitney_bijection_test function')
@@ -281,6 +304,9 @@ def main():
 
     if args.whitney_bijection:
         whiney_bijection_test()
+
+    if args.one_connected:
+        one_connected_test()
 
 if __name__ == '__main__':
     main()
