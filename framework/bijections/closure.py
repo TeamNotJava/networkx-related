@@ -490,7 +490,8 @@ class Closure:
         if not test_mode:
             self.blockPrint()
 
-        init_half_edge = self.___btree_to_planar_map(binary_tree)
+        #init_half_edge = self.___btree_to_planar_map(binary_tree)
+        init_half_edge = binary_tree.get_root()
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
         init_half_edge = self.___quadrangulate(init_half_edge)
         self.___test_connections_between_half_edges(init_half_edge)

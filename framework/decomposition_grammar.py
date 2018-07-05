@@ -123,6 +123,11 @@ class DecompositionGrammar:
             if isinstance(sampler, TransformationSampler):
                 sampler.set_target_class_label(alias)
 
+    def set_builder(self, rules, builder):
+        v = self.SetBuilderVisitor(builder)
+        for alias in rules:
+            self.get_rule(alias).accept(v)
+
     def add_rule(self, alias, sampler):
         self.rules[alias] = sampler
 
@@ -166,6 +171,7 @@ class DecompositionGrammar:
         return self.rules[alias].sample(x, y)
 
     def sample_dummy(self, alias, x, y):
+        # TODO solve with builders
         """
         Samples a dummy from the rule identified by the key 'alias'.
         :param alias:
@@ -206,6 +212,23 @@ class DecompositionGrammar:
 
         def get_result(self):
             return self.result
+
+    class SetBuilderVisitor:
+        """
+        Sets builders until hitting an AliasSampler.
+        """
+
+        def __init__(self, builder):
+            self.builder = builder
+
+        def visit(self, sampler):
+
+            if isinstance(sampler, AliasSampler):
+                # Don't recurse into the alias samplers.
+                return False
+            else:
+                # Otherwise set the given builder.
+                sampler.set_builder(self.builder)
 
     class PrecomputeEvaluationsVisitor:
         """

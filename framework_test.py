@@ -67,25 +67,26 @@ def binary_tree_test():
         # 'R_w_head(x,y)': 0.9
     })
 
-    BoltzmannSampler.oracle = binary_tree_test_oracle
-    # BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    symbolic_x = 'x'
-    symbolic_y = 'y'
-    [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
-    tree = binary_tree_grammar.sample('K_dy', symbolic_x, symbolic_y)
-    print(tree)
-    print("Black Nodes: {}".format(tree.get_base_class_object().get_attribute('numblacknodes')))
-    print("White Nodes: {}".format(tree.get_base_class_object().get_attribute('numwhitenodes')))
-    print("Total Nodes: {}".format(tree.get_base_class_object().get_attribute('numtotal')))
+    #BoltzmannSampler.oracle = binary_tree_test_oracle
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    grammar = binary_tree_grammar()
+    grammar.init()
 
-    # [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dx', 'x', 'y'))]
-    # tree2 = binary_tree_grammar.sample('K_dx', 'x', 'y')
-    # print(tree2)
-    # print("Black Nodes: {}".format(tree2.get_base_class_object().get_attribute('numblacknodes')))
-    # print("White Nodes: {}".format(tree2.get_base_class_object().get_attribute('numwhitenodes')))
-    # print("Total Nodes: {}".format(tree2.get_base_class_object().get_attribute('numtotal')))
+    #symbolic_x = 'x'
+    symbolic_x = 'x*G_1_dx(x,y)'
+    #symbolic_y = 'y'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    return tree.get_base_class_object()
+    print("Needed oracle entries:")
+    [print(query) for query in sorted(grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
+    tree = grammar.sample('R_b', symbolic_x, symbolic_y)
+
+    print("Black nodes: {}".format(tree.black_nodes_count))
+    print("White nodes: {}".format(tree.white_nodes_count))
+    print("Total nodes: {}".format(tree.black_nodes_count + tree.white_nodes_count))
+    print("Total leaves: {}".format(tree.leaves_count))
+
+    return tree
 
 
 def pretty_print_tree(tree):
@@ -160,8 +161,10 @@ def binary_tree_test_V2():
 
 def closure_test():
     c = Closure()
-    tree = binary_tree_test_V2()
-    init_half_edge = c.closure(tree)
+    tree = binary_tree_test()
+    # Do a deep copy of the tree as we want to plot it later in its original state.
+    import copy
+    init_half_edge = c.closure(copy.deepcopy(tree))
     return c, tree, init_half_edge
 
 
@@ -176,6 +179,8 @@ def plot_closure(closure, tree, init_half_edge, graphviz=False):
             colors.append('#333333')
         elif x is 'white':
             colors.append('#999999')
+        else:
+            assert False
     if graphviz:
         # nx.nx_agraph.write_dot(G, "C:\\Users\\Valkum\\py.dot")
         nx.draw(G, nx.nx_agraph.graphviz_layout(G, prog='neato', args='-Gstart=self -Gepsilon=.0000001'), with_labels=True, node_color=colors)
@@ -251,7 +256,7 @@ def main():
             pretty_print_tree(tree)
         if args.plot:
             import matplotlib.pyplot as plt
-            plot_binary_tree(tree)
+            tree.plot()
             plt.show()
 
     if args.other:
@@ -264,7 +269,7 @@ def main():
                 save_closure(i, tree, j, args.gephi)
             import matplotlib.pyplot as plt
             plt.figure(1)
-            plot_binary_tree(tree)
+            tree.plot()
             plt.figure(2)
             plot_closure(i, tree, j, graphviz=args.graphviz)
             plt.show()
@@ -284,3 +289,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
