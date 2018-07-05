@@ -8,6 +8,7 @@ from .bijections.network_merge_in_series import NetworkMergeInSeries
 from .bijections.network_paralel_merge import NetworkMergeInParallel
 from .utils import bern
 from .bijections.closure import Closure
+from .combinatorial_classes import UDerivedClass
 from random import choice
 import logging
 
@@ -109,10 +110,13 @@ def bij_g_3_arrow_to_network(decomp):
     return NetworkClass(vertices_list, edges_list, root_half_edge)
 
 def add_root_edge(decomp):
-    raise NotImplementedError
+    #return decomp.second
+    if isinstance(decomp, ZeroAtomClass):
+        return UAtomClass()
+    return decomp
 
 def forget_direction_of_root_edge(decomp):
-    raise NotImplementedError
+    return UDerivedClass(decomp, None)
 
 two_connected_graph_grammar = DecompositionGrammar()
 two_connected_graph_grammar.add_rules(three_connected_graph_grammar.get_rules())
