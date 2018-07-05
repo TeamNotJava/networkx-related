@@ -32,15 +32,17 @@ def bij_whitney(decomp):
 def bij_whitney_dx(decomp):
     return whitney(decomp)
 
-three_connected_graph_grammar = DecompositionGrammar()
-three_connected_graph_grammar.add_rules(irreducible_dissection_grammar().get_rules())
-three_connected_graph_grammar.add_rules({
-    'M_3_arrow': Bij(J_a, bij_primal),
-    'M_3_arrow_dx': Bij(J_a_dx, bij_primal_dx),
-    'G_3_arrow': Trans(M_3_arrow, bij_whitney,
-                       eval_transform=lambda evl, x, y: 0.5 * evl),  # see 4.1.9.
-    'G_3_arrow_dx': Trans(M_3_arrow_dx, bij_whitney_dx,
-                          eval_transform=lambda evl, x, y: 0.5 * evl),
-    'G_3_arrow_dy': DyFromDx(G_3_arrow_dx, alpha_u_l=3)  # alpha_u_l = 3, see 5.3.3.
-})
-three_connected_graph_grammar.init()
+def three_connected_graph_grammar():
+    grammar = DecompositionGrammar()
+    grammar.add_rules(irreducible_dissection_grammar().get_rules())
+    grammar.add_rules({
+        'M_3_arrow': Bij(J_a, bij_primal),
+        'M_3_arrow_dx': Bij(J_a_dx, bij_primal_dx),
+        'G_3_arrow': Trans(M_3_arrow, bij_whitney,
+                        eval_transform=lambda evl, x, y: 0.5 * evl),  # see 4.1.9.
+        'G_3_arrow_dx': Trans(M_3_arrow_dx, bij_whitney_dx,
+                            eval_transform=lambda evl, x, y: 0.5 * evl),
+        'G_3_arrow_dy': DyFromDx(G_3_arrow_dx, alpha_u_l=3)  # alpha_u_l = 3, see 5.3.3.
+    })
+
+    return grammar
