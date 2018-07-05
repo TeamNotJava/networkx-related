@@ -150,11 +150,13 @@ def binary_tree_test_V2():
 
     BoltzmannSampler.oracle = binary_tree_test_oracle
     # BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    grammar = binary_tree_grammar()
+    grammar.init()
     symbolic_x = 'x'
     symbolic_y = 'y'
-   # [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
-    tree = binary_tree_grammar.sample('K_dy', symbolic_x, symbolic_y)
-   # print(tree)
+    # [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
+    tree = grammar.sample('K_dy', symbolic_x, symbolic_y)
+    # print(tree)
     print(tree.get_base_class_object().get_attribute('numblacknodes'),end="\t")
     print(tree.get_base_class_object().get_attribute('numwhitenodes'),end="\t")
     print(tree.get_base_class_object().get_attribute('numtotal'),end="\t")
@@ -203,9 +205,10 @@ def irreducible_dissection_test():
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    irreducible_dissection_grammar.init()
+    grammar = irreducible_dissection_grammar()
+    grammar.init()
 
-    dissection = irreducible_dissection_grammar.sample('J', symbolic_x, symbolic_y)
+    dissection = grammar.sample('J', symbolic_x, symbolic_y)
     print(dissection)
     return dissection
 
@@ -222,12 +225,13 @@ def one_connected_test():
     symbolic_y = 'y'
 
     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    two_connected_graph_grammar.init()
+    grammar = two_connected_graph_grammar()
+    grammar.init()
 
     # Create list of L-der two connected graphs
     list_l_der_two_connected = []
     for i in range(2):
-        two_connected = two_connected_graph_grammar.sample('G_2_dx', symbolic_x, symbolic_y)
+        two_connected = grammar.sample('G_2_dx', symbolic_x, symbolic_y)
         list_l_der_two_connected.append(two_connected)
 
     decomp_worker = BlockDecomposition()
@@ -238,7 +242,7 @@ def plot_dissection(dissection):
     import networkx as nx
     import matplotlib.pyplot as plt
 
-    G = Closure().half_edges_to_graph(dissection)
+    G = dissection.to_networkx_graph()
     nx.draw(G)
     plt.show()
 
@@ -256,7 +260,7 @@ def whiney_bijection_test():
 
 def network_test():
     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    grammar = two_connected_graph_grammar
+    grammar = two_connected_graph_grammar()
     grammar.init()
 
     symbolic_x = 'x*G_1_dx(x,y)'
