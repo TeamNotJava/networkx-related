@@ -661,9 +661,10 @@ class LDerFromUDerSampler(TransformationSampler):
             gamma = self.sampler.sample(x, y)
             p = (1 / self.alpha_l_u) * (gamma.get_l_size() / (gamma.get_u_size() + 1))
             if bern(p):
-                gamma = gamma.get_base_class_object()
-                rand_l_atom = gamma.random_l_atom()
-                return LDerivedClass(gamma, rand_l_atom)
+                #gamma = gamma.get_base_class_object()
+                #rand_l_atom = gamma.random_l_atom()
+                #return LDerivedClass(gamma, rand_l_atom)
+                return gamma
 
     def sample_dummy(self, x, y):
         while True:

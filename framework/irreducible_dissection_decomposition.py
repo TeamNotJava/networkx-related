@@ -1,15 +1,14 @@
 import logging
 from random import choice
 
-from .bijections.closure import Closure
-from .binary_tree_decomposition import binary_tree_grammar
-from .decomposition_grammar import AliasSampler
-from .rejections.admissibility_check import check_admissibility
-from .samplers.generic_samplers import *
-from .decomposition_grammar import DecompositionGrammar
-from .evaluation_oracle import EvaluationOracle
-from .evaluations_planar_graph import planar_graph_evals_n100
-from.bijections.halfedge import HalfEdge
+from framework.bijections.closure import Closure
+from framework.binary_tree_decomposition import binary_tree_grammar
+from framework.decomposition_grammar import AliasSampler
+from framework.rejections.admissibility_check import check_admissibility
+from framework.samplers.generic_samplers import *
+from framework.decomposition_grammar import DecompositionGrammar
+from framework.evaluation_oracle import EvaluationOracle
+from framework.evaluations_planar_graph import planar_graph_evals_n100
 
 
 class RootedIrreducibleDissection(CombinatorialClass):
@@ -73,7 +72,8 @@ def add_random_root_edge(decomp):
     """
     dissection = decomp.second
     root_edge = random_rooted_edge(dissection)
-    return RootedIrreducibleDissection(dissection, root_edge)
+    return root_edge
+    #return RootedIrreducibleDissection(dissection, root_edge)
 
 
 def add_random_root_edge_dx(decomp):
@@ -83,11 +83,11 @@ def add_random_root_edge_dx(decomp):
     # todo I think we dont need it
 
 
-def rej_admiss(rooted_irred_dissection):
+def rej_admiss(root_edge):
     """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
     to avoid 4 cycles
     """
-    return check_admissibility(rooted_irred_dissection.root_edge)
+    return check_admissibility(root_edge)
 
 
 def rej_admiss_dx(decomp):
@@ -97,32 +97,49 @@ def rej_admiss_dx(decomp):
     return check_admissibility(decomp)
 
 
-L = LAtomSampler()
-U = UAtomSampler()
+def irreducible_dissection_grammar():
+    """
 
-K = AliasSampler('K')
-K_dx = AliasSampler('K_dx')
-I = AliasSampler('I')
-I_dx = AliasSampler('I_dx')
-J = AliasSampler('J')
-J_dx = AliasSampler('J_dx')
+    :return:
+    """
 
-Bij = BijectionSampler
-Rej = RejectionSampler
+    # Some shorthand to keep the grammar readable.
+    L = LAtomSampler
+    U = UAtomSampler
+    K = AliasSampler('K')
+    K_dx = AliasSampler('K_dx')
+    I = AliasSampler('I')
+    I_dx = AliasSampler('I_dx')
+    J = AliasSampler('J')
+    J_dx = AliasSampler('J_dx')
+    Bij = BijectionSampler
+    Rej = RejectionSampler
 
-irreducible_dissection_grammar = DecompositionGrammar()
-irreducible_dissection_grammar.add_rules(binary_tree_grammar().get_rules())
-irreducible_dissection_grammar.add_rules({
-    'I': Bij(K, closure),
-    'I_dx': Bij(K_dx, closure),
-    'J': Bij((L + L + L) * U * I, add_random_root_edge),
-    'J_dx': Bij(((U + U + U) * I) + ((L + L + L) * U * I_dx), add_random_root_edge),
-    'J_a': Rej(J, rej_admiss),
-    'J_a_dx': Rej(J_dx, rej_admiss_dx)
-})
+    grammar = DecompositionGrammar()
+    grammar.add_rules(binary_tree_grammar().get_rules())
+
+    grammar.add_rules({
+
+        'I': Bij(K, closure),
+
+        'I_dx': Bij(K_dx, closure),
+
+        'J': Bij( 3*L()*U()*I, add_random_root_edge),
+
+        'J_dx': Bij( 3*U()*I + 3*L()*U()*I_dx, add_random_root_edge),
+
+        'J_a': Rej(J, rej_admiss),
+
+        'J_a_dx': Rej(J_dx, rej_admiss_dx),
+
+    })
+    return grammar
+
 
 if __name__ == "__main__":
-    irreducible_dissection_grammar.init()
+    grammar = irreducible_dissection_grammar()
+    grammar.init()
+
     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
 
     symbolic_x = 'x*G_1_dx(x,y)'
@@ -130,5 +147,6 @@ if __name__ == "__main__":
 
     sampled_class = 'J_a'
 
-    irreducible_dissection_grammar.sample(sampled_class, symbolic_x, symbolic_y)
-    print("number of rejections in admissable: " + irreducible_dissection_grammar.get_rule('J_a').get_rejections_count())
+    diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+    #print(diss.get_l_size())
+
