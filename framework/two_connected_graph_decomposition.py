@@ -58,6 +58,8 @@ def bij_u_atom_to_network(decomp):
     vertices_list = []
     edges_list = []
     root_half_edge = _create_root_network_edge()
+    # The root edge is part from the edges list.
+    edges_list.append(root_half_edge)
     result = NetworkClass(vertices_list, edges_list, root_half_edge)
     assert (decomp.get_u_size() == result.get_u_size())
     assert (decomp.get_l_size() == result.get_l_size())

@@ -20,7 +20,7 @@ class NetworkClass(CombinatorialClass):
 
     def get_u_size(self):
         # number of edges + 1 because of the root edge
-        return len(self.edges_list) + 1
+        return len(self.edges_list)
 
     def get_l_size(self):
         # The poles are not part from the vertices list.
