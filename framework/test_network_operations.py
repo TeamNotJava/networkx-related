@@ -29,16 +29,19 @@ def test_edge_by_netwrok_substitution():
     graph_edges_list.append(third)
 
     fourth = HalfEdge()
+    fourth.node_nr = 3
     third.opposite = fourth
     fourth.opposite = third
     graph_vertices_list.append(fourth)
 
     fifth = HalfEdge()
+    fifth.node_nr = 3
     fifth.prior = fourth
     fourth.next = fifth
     graph_edges_list.append(fifth)
 
     sixth = HalfEdge()
+    sixth.node_nr = 3
     sixth.next = fourth
     fourth.prior = sixth
     sixth.prior = fifth
@@ -46,11 +49,13 @@ def test_edge_by_netwrok_substitution():
     graph_edges_list.append(sixth)
 
     seventh = HalfEdge()
+    seventh.node_nr = 4
     seventh.opposite = fifth
     fifth.opposite = seventh
     graph_vertices_list.append(seventh)
 
     eighth = HalfEdge()
+    eighth.node_nr = 4
     eighth.next = seventh
     eighth.prior = seventh
     seventh.next = eighth
@@ -162,6 +167,19 @@ def test_edge_by_netwrok_substitution():
     assert seventh.next == net_fifth
     assert net_fifth.prior == seventh
 
+    # Check the node numbers updates
+    half_edge_walker = edge_for_substitution.next
+    assert edge_for_substitution.node_nr == 3
+    while half_edge_walker != edge_for_substitution:
+        assert half_edge_walker.node_nr == edge_for_substitution.node_nr
+        half_edge_walker = half_edge_walker.next
+
+    half_edge_walker = seventh.next
+    assert seventh.node_nr == 4
+    while half_edge_walker != seventh:
+        assert half_edge_walker.node_nr == seventh.node_nr
+        half_edge_walker = half_edge_walker.next
+
 
 def create_sample_network():
     first_net_vertices_list = []
@@ -169,7 +187,8 @@ def create_sample_network():
 
     first_net_root_edge = HalfEdge()
 
-    first_net_root_edge_opposite = HalfEdge
+    first_net_root_edge_opposite = HalfEdge()
+    first_net_root_edge_opposite.node_nr = 2
     first_net_root_edge.opposite = first_net_root_edge_opposite
     first_net_root_edge_opposite.opposite = first_net_root_edge
 
@@ -210,12 +229,14 @@ def create_sample_network():
     first_net_edges_list.append(eighth)
 
     ninth = HalfEdge()
+    ninth.node_nr = 2
     ninth.opposite = eighth
     eighth.opposite = ninth
     ninth.next = first_net_root_edge_opposite
     first_net_root_edge_opposite.prior = ninth
 
     tenth = HalfEdge()
+    tenth.node_nr = 2
     tenth.opposite = sixth
     sixth.opposite = tenth
     tenth.next = ninth
@@ -251,6 +272,16 @@ def test_series_merge_of_networks():
     assert second_net_zero_pole.prior.next == first_net_inf_pole.next
     assert first_net_inf_pole.prior.next == second_net_zero_pole.next
     assert second_net_zero_pole.next.prior == first_net_inf_pole.prior
+
+    # Check the node numbers of the merged edge
+    expected_node_number = first_net_inf_pole.node_nr
+    assert expected_node_number == 2
+    half_edge_walker = first_net_inf_pole.prior.next
+    assert first_net_inf_pole.prior.node_nr == expected_node_number
+    while half_edge_walker != first_net_inf_pole.prior:
+        assert half_edge_walker.node_nr == expected_node_number
+        half_edge_walker = half_edge_walker.next
+
 
 
 def test_parallel_merge_of_networks():

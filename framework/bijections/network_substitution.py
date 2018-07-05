@@ -50,6 +50,12 @@ class EdgeByNetworkSubstitution:
             half_edge_for_sub_next.prior = net_root_half_edge_prior
             net_root_half_edge_prior.next = half_edge_for_sub_next
 
+            # Update the node numbers in the second network zero-pole half edges
+            half_edge_walker = half_edge_for_sub.next
+            while half_edge_walker != half_edge_for_sub:
+                half_edge_walker.node_nr = half_edge_for_sub.node_nr
+                half_edge_walker = half_edge_walker.next
+
 
         # Identify the inf pole with the the half_edge_for_sub_opp vertex.
         half_edge_for_sub_opp.opposite = net_root_half_edge_opp_next.opposite
@@ -63,6 +69,11 @@ class EdgeByNetworkSubstitution:
 
             half_edge_for_sub_opp_next.prior = net_root_half_edge_opp_prior
             net_root_half_edge_opp_prior.next = half_edge_for_sub_opp_next
+
+            half_edge_walker = half_edge_for_sub_opp.next
+            while half_edge_walker != half_edge_for_sub_opp:
+                half_edge_walker.node_nr = half_edge_for_sub_opp.node_nr
+                half_edge_walker = half_edge_walker.next
 
         # Add the vertices from the network to the tree connected graph vertex list
         # The poles are not part from the vertices list, therefore we don't have to exclude them.

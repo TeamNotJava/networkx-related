@@ -51,6 +51,12 @@ class NetworkMergeInSeries:
         first_net_inf_pole_prior.next = second_net_zero_pole_edge_next
         second_net_zero_pole_edge_next.prior = first_net_inf_pole_prior
 
+        # Update the node numbers in the second network zero-pole edges
+        half_edge_walker = second_net_zero_pole_edge_next
+        while half_edge_walker != first_net_inf_pole_prior:
+            half_edge_walker.node_nr = first_net_inf_pole_next.node_nr
+            half_edge_walker = half_edge_walker.next
+
         # Add the vertices list from the second network into the first one
         network.vertices_list += network_for_plugging.vertices_list
         # Add the previous inf-pole to the vertices list since now the inf-pole is taken from the second network
