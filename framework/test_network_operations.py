@@ -1,11 +1,13 @@
 from framework.bijections.network_substitution import EdgeByNetworkSubstitution
+from framework.bijections.network_merge_in_series import NetworkMergeInSeries
+from framework.bijections.network_paralel_merge import NetworkMergeInParallel
 from framework.bijections.halfedge import  HalfEdge
 from framework.combinatorial_classes.network import NetworkClass
 from framework.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 def test_edge_by_netwrok_substitution():
     '''
-    Tests the edgy by network substitution operation.
+    Tests the edge by network substitution operation.
     :return:
     '''
 
@@ -161,5 +163,105 @@ def test_edge_by_netwrok_substitution():
     assert net_fifth.prior == seventh
 
 
+def create_sample_network():
+    first_net_vertices_list = []
+    first_net_edges_list = []
+
+    first_net_root_edge = HalfEdge()
+
+    first_net_root_edge_opposite = HalfEdge
+    first_net_root_edge.opposite = first_net_root_edge_opposite
+    first_net_root_edge_opposite.opposite = first_net_root_edge
+
+    third = HalfEdge()
+    first_net_root_edge.next = third
+    first_net_root_edge.prior = third
+    third.prior = first_net_root_edge
+    third.next = first_net_root_edge
+    first_net_edges_list.append(third)
+
+    fourth = HalfEdge()
+    third.opposite = fourth
+    fourth.opposite = third
+    first_net_vertices_list.append(fourth)
+
+    fifth = HalfEdge()
+    fifth.prior = fourth
+    fourth.next = fifth
+    first_net_edges_list.append(fifth)
+
+    sixth = HalfEdge()
+    sixth.next = fourth
+    fourth.prior = sixth
+    sixth.prior = fifth
+    fifth.next = sixth
+    first_net_edges_list.append(sixth)
+
+    seventh = HalfEdge()
+    seventh.opposite = fifth
+    fifth.opposite = seventh
+    first_net_vertices_list.append(seventh)
+
+    eighth = HalfEdge()
+    eighth.next = seventh
+    eighth.prior = seventh
+    seventh.next = eighth
+    seventh.prior = eighth
+    first_net_edges_list.append(eighth)
+
+    ninth = HalfEdge()
+    ninth.opposite = eighth
+    eighth.opposite = ninth
+    ninth.next = first_net_root_edge_opposite
+    first_net_root_edge_opposite.prior = ninth
+
+    tenth = HalfEdge()
+    tenth.opposite = sixth
+    sixth.opposite = tenth
+    tenth.next = ninth
+    ninth.prior = tenth
+    tenth.prior = first_net_root_edge_opposite
+    first_net_root_edge_opposite.next = tenth
+
+    return NetworkClass(first_net_vertices_list, first_net_edges_list, first_net_root_edge)
+
+
+def test_series_merge_of_networks():
+    '''
+    Tests the merging of two networks in series.
+    :return:
+    '''
+    first_network = create_sample_network()
+    first_net_inf_pole = first_network.root_half_edge.opposite
+
+    second_network = create_sample_network()
+    second_net_zero_pole = second_network.root_half_edge
+
+    merged = NetworkMergeInSeries().merge_networks_in_series(first_network, second_network)
+    # Check the root edge
+    assert merged.root_half_edge == first_network.root_half_edge
+    assert merged.root_half_edge.opposite == second_network.root_half_edge.opposite
+
+    # Check the number of elements in vertices and edges list
+    assert len(merged.vertices_list) == 5
+    assert len(merged.edges_list) == 8
+
+    # Check the the pointers
+    assert first_net_inf_pole.next.prior == second_net_zero_pole.prior
+    assert second_net_zero_pole.prior.next == first_net_inf_pole.next
+    assert first_net_inf_pole.prior.next == second_net_zero_pole.next
+    assert second_net_zero_pole.next.prior == first_net_inf_pole.prior
+
+
+def test_parallel_merge_of_networks():
+    '''
+    Tests the merging of two networks in parallel.
+    :return:
+    '''
+    pass
+
+
 if __name__ == "__main__":
     test_edge_by_netwrok_substitution()
+    test_parallel_merge_of_networks()
+    test_series_merge_of_networks()

@@ -45,16 +45,16 @@ class NetworkMergeInSeries:
         second_net_zero_pole_edge_prior = second_net_zero_pole_edge.prior
 
         # Merge the both networks so that the inf-pole from the first network is identified with the zero-pole from the second one
-        first_net_inf_pole_next.prior = second_net_zero_pole_edge_next
-        second_net_zero_pole_edge_next.next = first_net_inf_pole_prior
+        first_net_inf_pole_next.prior = second_net_zero_pole_edge_prior
+        second_net_zero_pole_edge_prior.next = first_net_inf_pole_next
 
-        first_net_inf_pole_prior.next = second_net_zero_pole_edge_prior
-        second_net_zero_pole_edge_prior.prior = first_net_inf_pole_prior
+        first_net_inf_pole_prior.next = second_net_zero_pole_edge_next
+        second_net_zero_pole_edge_next.prior = first_net_inf_pole_prior
 
         # Add the vertices list from the second network into the first one
         network.vertices_list += network_for_plugging.vertices_list
         # Add the previous inf-pole to the vertices list since now the inf-pole is taken from the second network
-        network.vertices_list += first_net_inf_pole_edge
+        network.vertices_list.append(first_net_inf_pole_edge)
 
         # Add the edges from the second network into the first one
         network.edges_list += network_for_plugging.edges_list
