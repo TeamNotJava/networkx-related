@@ -14,8 +14,8 @@ class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     def __init__(self):
         # TODO Using the counter, the result sometimes is not a tree, at least when converted to a nx graph,
         # TODO the nx method 'is_tree' says so.
-        #self.node_nr = next(counter)
-        self.node_nr = 1
+        self.node_nr = next(counter)
+        # self.node_nr = 1
 
     def u_atom(self):
         return Leaf()
@@ -23,8 +23,8 @@ class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     def product(self, lhs, rhs):
         res = BinaryTree('white')
         res.set_root_node_nr(self.node_nr)
-        # self.node_nr += next(counter)
-        self.node_nr += 2
+        self.node_nr = next(counter)
+        # self.node_nr += 2
         res.add_left_child(lhs)
         res.add_right_child(rhs)
         return res
@@ -36,14 +36,14 @@ class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     """
 
     def __init__(self):
-        #self.node_nr = next(counter)
-        self.node_nr = 0
+        self.node_nr = next(counter)
+        # self.node_nr = 0
 
     def l_atom(self):
         res = BinaryTree('black')
         res.set_root_node_nr(self.node_nr)
-        #self.node_nr += next(counter)
-        self.node_nr += 2
+        self.node_nr = next(counter)
+        # self.node_nr += 2
         return res
 
     def u_atom(self):
