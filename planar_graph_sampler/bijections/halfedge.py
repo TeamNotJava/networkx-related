@@ -89,9 +89,6 @@ class HalfEdge:
         repr = repr + str(id(self))
         repr = repr + ", \t"
 
-        repr = repr + str(id(self))
-        repr = repr + ", \t"
-
         repr = repr + str(self.node_nr)
         repr = repr + ", \t"
 
