@@ -186,7 +186,7 @@ class HalfEdge:
     # Returns the half_edge with the smallest node number
     def get_min_node_nr(self):
         edge_list = self.list_half_edges([])
-        min_node = sys.maxint
+        min_node = float('inf')
         min_edge = None
         for x in edge_list:
             if x.node_nr < min_node:
