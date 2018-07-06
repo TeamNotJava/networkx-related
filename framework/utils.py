@@ -74,6 +74,9 @@ def singleton(class_):
 
 @singleton
 class Counter(object):
+    """This Singleton Counter creates unique labels for combinatorial classes.
+    This way we don't need to relabel the sampled elements for the product of two classes.
+    """
     def __init__(self):
         self.count = 0
 
