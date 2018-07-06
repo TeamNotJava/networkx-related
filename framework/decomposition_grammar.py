@@ -1,4 +1,4 @@
-from .samplers.generic_samplers import *
+from framework.generic_samplers import *
 import sys
 
 
@@ -13,6 +13,7 @@ class AliasSampler(BoltzmannSampler):
     grammar_not_initialized_error_msg = ": you have to set the grammar this Alias sampler belongs to before using it"
 
     def __init__(self, alias, grammar=None):
+        super().__init__()
         self.alias = alias
         self.grammar = grammar
 
@@ -69,7 +70,9 @@ class DecompositionGrammar:
     Represents a decomposition grammar as a collection of several rules.
     """
 
-    def __init__(self, rules={}):
+    def __init__(self, rules=None):
+        if rules is None:
+            rules = {}
         self.rules = rules
         self.recursive_rules = None
 
