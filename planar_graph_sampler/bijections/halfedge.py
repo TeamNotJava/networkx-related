@@ -85,46 +85,47 @@ class HalfEdge:
 
     # Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)
     def __repr__(self):
-        repr = '('
-        repr = repr + str(id(self))
-        repr = repr + ", \t"
+        repr = "(edge_id: {0}\tnode_nr: {1}\topposite_id: {2}\tnext: {3}\tprior: {4}\tcolor: {5}\tinner_edges: {6}\thex: {7}\tadded by clsr: {8})".format(id(self), self.node_nr, id(self.opposite), id(self.next), id(self.prior), self.color, self.number_proximate_inner_edges, self.is_hexagonal, self.added_by_comp_clsr)
+        # repr = '('
+        # repr = repr + "" str(id(self))
+        # repr = repr + ", \t"
 
-        repr = repr + str(self.node_nr)
-        repr = repr + ", \t"
+        # repr = repr + str(self.node_nr)
+        # repr = repr + ", \t"
 
-        if self.opposite is None:
-            repr = repr + "None"
-        else:
-            repr = repr + str(id(self.opposite))
-        repr = repr + ", \t"
+        # if self.opposite is None:
+        #     repr = repr + "None"
+        # else:
+        #     repr = repr + str(id(self.opposite))
+        # repr = repr + ", \t"
 
-        if self.next is None:
-            repr = repr + "None"
-        else:
-            repr = repr + str(id(self.next))
-        repr = repr + ", \t"
+        # if self.next is None:
+        #     repr = repr + "None"
+        # else:
+        #     repr = repr + str(id(self.next))
+        # repr = repr + ", \t"
 
-        if self.prior is None:
-            repr = repr + "None"
-        else:
-            repr = repr + str(id(self.prior))
-        if self.color is None:
-            repr = repr + ", \tNone"
-        else:
-            repr = repr + ", \t" + self.color
-        repr = repr + ", "
-        repr = repr + str(self.number_proximate_inner_edges)
-        if not self.is_hexagonal:
-            repr = repr + ", \tNOT hexagonal"
-        else:
-            repr = repr + ", \thexagonal"
+        # if self.prior is None:
+        #     repr = repr + "None"
+        # else:
+        #     repr = repr + str(id(self.prior))
+        # if self.color is None:
+        #     repr = repr + ", \tNone"
+        # else:
+        #     repr = repr + ", \t" + self.color
+        # repr = repr + ", "
+        # repr = repr + str(self.number_proximate_inner_edges)
+        # if not self.is_hexagonal:
+        #     repr = repr + ", \tNOT hexagonal"
+        # else:
+        #     repr = repr + ", \thexagonal"
 
-        if not self.added_by_comp_clsr:
-            repr = repr + ", \tNOT added by clsr"
-        else:
-            repr = repr + ", \tadded by clsr"
+        # if not self.added_by_comp_clsr:
+        #     repr = repr + ", \tNOT added by clsr"
+        # else:
+        #     repr = repr + ", \tadded by clsr"
 
-        repr = repr + ')'
+        # repr = repr + ')'
 
         return repr
 
