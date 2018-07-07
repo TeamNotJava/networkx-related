@@ -37,9 +37,9 @@ class AdmissibilityChecker:
         '''
 
         # Will be used for checking in the bfs.
-        # TODO check which Marta again just to be sure
-        outer_vertex_half_edge = init_half_edge.opposite
-
+        outer_vertex_half_edge = init_half_edge.opposite.next.opposite.next.opposite.next
+        #print ('%s    %s' % (init_half_edge.node_nr, outer_vertex_half_edge.node_nr))
+        
         # Creates the queue for the BFS.
         queue = list()
         # Put the init half edge into the queue.
