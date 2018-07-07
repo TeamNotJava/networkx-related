@@ -8,8 +8,6 @@ from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.combinatorial_classes.binary_tree import Leaf
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
-# TODO Using the counter, the result sometimes is not a tree, at least when converted to a nx graph,
-# TODO the nx method 'is_tree' says so.
 counter = Counter()
 
 
@@ -19,18 +17,12 @@ class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     The builder is in the same file as the gramamr it belongs to because it is quite closely connected.
     """
 
-    def __init__(self):
-        # self.node_nr = next(counter)
-        self.node_nr = 1
-
     def u_atom(self):
         return Leaf()
 
     def product(self, lhs, rhs):
         res = BinaryTree('white')
-        res.set_root_node_nr(self.node_nr)
-        # self.node_nr += next(counter)
-        self.node_nr += 2
+        res.set_root_node_nr(next(counter))
         res.add_left_child(lhs)
         res.add_right_child(rhs)
         return res
@@ -42,15 +34,9 @@ class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     The builder is in the same file as the gramamr it belongs to because it is quite closely connected.
     """
 
-    def __init__(self):
-        # self.node_nr = next(counter)
-        self.node_nr = 0
-
     def l_atom(self):
         res = BinaryTree('black')
-        res.set_root_node_nr(self.node_nr)
-        # self.node_nr += next(counter)
-        self.node_nr += 2
+        res.set_root_node_nr(next(counter))
         return res
 
     def u_atom(self):
@@ -72,9 +58,8 @@ class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
             res = rhs
         elif rhs.is_white_rooted() and lhs.is_black_rooted():
             res = self.product(rhs, lhs).flip()
-
-        if res is None:
-            print()
+        # Notice that these are the only possible cases.
+        # This is because of the way in which the grammar is written down.
         assert res is not None
         assert res.get_root_color() is 'black'
         return res
@@ -147,9 +132,11 @@ if __name__ == '__main__':
 
     tree = grammar.sample('K_dy', symbolic_x, symbolic_y)
 
+    assert tree.is_tree()
+
     print("Black nodes: {}".format(tree.get_l_size()))
     print("Total leaves: {}".format(tree.get_u_size()))
-    print("Root Node {}".format(tree.get_root()))
+    print("Root Node {}".format(tree))
 
     import matplotlib.pyplot as plt
 

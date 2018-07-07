@@ -15,7 +15,7 @@
 """Make a bijection between the irreducible quadrangulation to a 3-connected map.
 """
 
-from planar_graph_sampler.bijections.halfedge import HalfEdge
+from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 
 
 def primal_map(dissection):

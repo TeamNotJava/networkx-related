@@ -18,13 +18,12 @@ into a Boltzmann sampler for 3-connected planar graphs.
 
 import sys
 import os
-from planar_graph_sampler.bijections.halfedge import HalfEdge
-from planar_graph_sampler.combinatorial_classes import CombinatorialClass
+from planar_graph_sampler.combinatorial_classes.halfedge import ClosureHalfEdge
+from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
 from framework.utils import Counter
 counter = Counter()
 
-
-test_mode = True
+test_mode = False
 
 
 class Closure:
@@ -56,7 +55,7 @@ class Closure:
                     top_half_edge.number_proximate_inner_edges += 1
 
                     if top_half_edge.number_proximate_inner_edges == 3:
-                        new_half_edge = HalfEdge()
+                        new_half_edge = ClosureHalfEdge()
                         new_half_edge.node_nr = current_half_edge.node_nr
                         new_half_edge.color = current_half_edge.color
 
@@ -96,11 +95,11 @@ class Closure:
         starting_half_edge = self.___bicolored_partial_closure(init_half_edge)
 
         # Construct hexagon
-        hexagon = [HalfEdge() for i in range(12)]
+        hexagon = [ClosureHalfEdge() for i in range(12)]
         hexagon_start_half_edge = self.___construct_hexagon(hexagon, starting_half_edge)
 
         # Connect the starting half-edge of our planar map with the first node of the hexagon
-        new_half_edge = HalfEdge()
+        new_half_edge = ClosureHalfEdge()
         self.___add_new_half_edge(hexagon_start_half_edge, hexagon[11], starting_half_edge, new_half_edge, True)
 
         connecting_half_edge = new_half_edge
@@ -124,7 +123,7 @@ class Closure:
 
             # If the opposite is None then we have to assign it to one of the hexagon nodes
             if current_half_edge.opposite is None:
-                fresh_half_edge = HalfEdge()
+                fresh_half_edge = ClosureHalfEdge()
                 fresh_half_edge.opposite = current_half_edge
                 current_half_edge.opposite = fresh_half_edge
 
@@ -254,7 +253,7 @@ class Closure:
     # Look for faces with degree larger than 4 and quadrangulate them
     def ___quadrangulate(self, init_half_edge):
         # Add the outer edge
-        new_half_edge = HalfEdge()
+        new_half_edge = ClosureHalfEdge()
         new_half_edge.next = init_half_edge
         new_half_edge.prior = init_half_edge.prior
         init_half_edge.prior.next = new_half_edge
@@ -273,7 +272,7 @@ class Closure:
             if count == 3:
                 break
 
-        fresh_half_edge = HalfEdge()
+        fresh_half_edge = ClosureHalfEdge()
         fresh_half_edge.opposite = new_half_edge
         new_half_edge.opposite = fresh_half_edge
 
@@ -424,21 +423,23 @@ class Closure:
         binary tree (every face in the binary tree has now four edges).
         Afterwards, the complete closure is performed, where the partialy
         closed binary tree is integrated into a hexagon (dissection of hexagon).
+
+        # todo not here
         The last step is to make the outer face of the graph to a four-edge
         face (quadrangulation of the hexagon).
         """
         global test_mode
         # Here you can switch to test mode
-        test_mode = True
+        test_mode = False
 
         if not test_mode:
             self.blockPrint()
 
         # init_half_edge = self.___btree_to_planar_map(binary_tree)
-        init_half_edge = binary_tree.get_root()
+        init_half_edge = binary_tree
         # This edge is hexagonal and points in ccw direction
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
-        IrreducibleDissection(init_half_edge)
+        #IrreducibleDissection(init_half_edge)
         # TODO ___quadrangulate must go directly before primal map (in the paper it is inside primal map)
         # init_half_edge = self.___quadrangulate(init_half_edge)
         self.___test_connections_between_half_edges(init_half_edge)
@@ -448,46 +449,4 @@ class Closure:
         if not test_mode:
             self.enablePrint()
 
-        return init_half_edge
-
-
-class IrreducibleDissection(CombinatorialClass):
-
-    def __init__(self, init_half_edge):
-        assert init_half_edge.is_hexagonal
-        if init_half_edge.color is not 'black':
-            # wrong wrong wrong
-            init_half_edge = init_half_edge.next
-        assert init_half_edge.color is 'black'
-        self.init_half_edge = init_half_edge
-        assert self.is_root_in_ccw_direction()
-
-    def is_root_in_ccw_direction(self):
-        # Just to make sure.
-        curr = self.init_half_edge
-        while curr.degree() < 3:
-            assert curr.degree() == 2
-            # wrong wrong wrong
-            curr = curr.next
-        return curr.prior.is_hexagonal
-
-    def get_u_size(self):
-        pass
-
-    def get_l_size(self):
-        pass
-
-    def u_atoms(self):
-        pass
-
-    def l_atoms(self):
-        pass
-
-    def replace_u_atoms(self, sampler, x, y):
-        pass
-
-    def replace_l_atoms(self, sampler, x, y):
-        pass
-
-    def __str__(self):
-        pass
+        return IrreducibleDissection(init_half_edge)
