@@ -39,7 +39,8 @@ class PrimalMap:
         :return:
         '''
         associated_half_edge_in_3_map = {}
-        self.__primal_map_bijection_rec(init_half_edge, associated_half_edge_in_3_map)
+        quad_half_edge = self.___quadrangulate(init_half_edge)
+        self.__primal_map_bijection_rec(quad_half_edge, associated_half_edge_in_3_map)
         return associated_half_edge_in_3_map[init_half_edge]
 
     # Recursively transforms the irreducible quandrigulation to the three conected map.
@@ -91,6 +92,71 @@ class PrimalMap:
 
             # Continue with the next edges
             walker_half_edge = walker_half_edge.next
+
+    # Makes the outer face of the irreducible dissection quadrangular by adding a new edge
+    # between two opposite nodes of the hexagon
+    def ___quadrangulate(self, init_half_edge):
+        # Add the outer edge
+        new_half_edge = HalfEdge()
+        new_half_edge.next = init_half_edge
+        new_half_edge.prior = init_half_edge.prior
+        init_half_edge.prior.next = new_half_edge
+        init_half_edge.prior = new_half_edge
+
+        new_half_edge.node_nr = init_half_edge.node_nr
+        #new_half_edge.color = init_half_edge.color
+        return_edge = new_half_edge
+
+        # Iterate to the opposite node of the hexagon node
+        count = 0
+        current_half_edge = new_half_edge
+        while True:
+            current_half_edge = current_half_edge.prior.opposite
+            count += 1
+            if count == 3:
+                break
+
+        fresh_half_edge = HalfEdge()
+        fresh_half_edge.opposite = new_half_edge
+        new_half_edge.opposite = fresh_half_edge
+
+        fresh_half_edge.prior = current_half_edge.prior
+        fresh_half_edge.next = current_half_edge
+        current_half_edge.prior.next = fresh_half_edge
+        current_half_edge.prior = fresh_half_edge
+
+        fresh_half_edge.node_nr = current_half_edge.node_nr
+        # fresh_half_edge.color = current_half_edge.color
+
+        # if return_edge.color is not 'black':
+        #     return_edge = fresh_half_edge
+
+        #assert (return_edge.color is 'black')
+        return return_edge
+
+    # Checks if quadrangulation is correct
+    def ___test_quadrangulation(self, init_half_edge):
+        # Check if every cycle is of degree 4
+        edge_list = init_half_edge.list_half_edges([])
+
+        for half_edge in edge_list:
+            current_half_edge = half_edge
+            print("Check: ", format(current_half_edge))
+            cycle_degree = 0
+            while True:
+                current_half_edge = current_half_edge.next
+                print(current_half_edge)
+                cycle_degree += 1
+                print("Cycle degree: ", format(cycle_degree))
+                assert (current_half_edge.opposite is not None)
+                if current_half_edge is half_edge:
+                    break
+                assert (cycle_degree < 5)
+                current_half_edge = current_half_edge.opposite
+                if current_half_edge is half_edge:
+                    break
+                print(current_half_edge)
+        print("Quadrangulation is okay")
 
     def test_primal_map(self):
         # print("Start test...")

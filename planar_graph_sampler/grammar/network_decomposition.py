@@ -4,7 +4,7 @@ from framework.utils import Counter
 
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 from planar_graph_sampler.combinatorial_classes.network import NetworkClass
-from planar_graph_sampler.bijections.halfedge import HalfEdge
+from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.bijections.network_merge_in_series import NetworkMergeInSeries
 from planar_graph_sampler.bijections.network_paralel_merge import NetworkMergeInParallel
 

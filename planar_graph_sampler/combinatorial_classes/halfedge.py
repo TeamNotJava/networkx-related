@@ -225,21 +225,7 @@ class ClosureHalfEdge(HalfEdge):
         self.is_hexagonal = False
         # Indicates if the half-edge is an edge added by the complete closure
         self.added_by_comp_clsr = False
-
-    def get_min_half_edge(self):
-        """
-        TODO find out if still needed.
-        :return:
-        """
-        half_edge_list = self.list_half_edges([])
-        min_half_edge = None
-        for edge in half_edge_list:
-            if min_half_edge is None and edge.opposite is None:
-                min_half_edge = edge
-            elif min_half_edge is not None and edge.opposite is None and id(edge) < id(min_half_edge):
-                min_half_edge = edge
-        return min_half_edge
-
+    
     def __repr__(self):
         """
         Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)
@@ -281,3 +267,15 @@ class ClosureHalfEdge(HalfEdge):
             if x is 'white':
                 colors.append('#999999')
         nx.draw(G, with_labels=True, node_color=colors)
+    
+    # Adds the fresh half edge to the closure between the prior and the next half-edge
+    def add_to_closure(self, prior_half_edge, next_half_edge, opposite_half_edge):
+        self.opposite = opposite_half_edge
+        opposite_half_edge.opposite = self
+        self.color = prior_half_edge.color
+        self.node_nr = prior_half_edge.node_nr
+        self.added_by_comp_clsr = True
+        self.prior = prior_half_edge
+        prior_half_edge.next = self
+        self.next = next_half_edge
+        next_half_edge.prior = self

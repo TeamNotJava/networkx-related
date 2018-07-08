@@ -23,22 +23,17 @@ from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDis
 from framework.utils import Counter
 counter = Counter()
 
-test_mode = False
-
-
 class Closure:
 
-    # Performs bicolored partial closure on a binary tree. When possible build
-    # new edges in order to get faces of degree 4.
+    # Performs bicolored partial closure on a binary tree. When possible add a
+    # new edge in order to get faces of degree four.
     def ___bicolored_partial_closure(self, init_half_edge):
-        global test_mode
         stack = []
         stack.append(init_half_edge)
         break_edge = init_half_edge
         current_half_edge = init_half_edge
 
         while True:
-            print(current_half_edge)
             current_half_edge = current_half_edge.next
 
             if current_half_edge.opposite is None:
@@ -51,7 +46,6 @@ class Closure:
                 current_half_edge = current_half_edge.opposite
                 if len(stack) > 0:
                     top_half_edge = stack.pop()
-                    print("Pop edge: ", format(top_half_edge))
                     top_half_edge.number_proximate_inner_edges += 1
 
                     if top_half_edge.number_proximate_inner_edges == 3:
@@ -68,27 +62,20 @@ class Closure:
                         current_half_edge.next = new_half_edge
 
                         current_half_edge = top_half_edge.prior
-                        print("New half edge: {}", format(new_half_edge))
-                        print("Look next at: {}", format(current_half_edge))
-
                     else:
                         stack.append(top_half_edge)
 
-        return_edge = init_half_edge.get_min_half_edge()
-
-        if test_mode:
-            print("Partial closure list:")
-            list_closure = init_half_edge.list_half_edges([])
-            for i in list_closure:
-                print(i)
-                print("Partial closure returns the edge: {}".format(id(return_edge)))
-            # Check partial closure
-            self.___test_partial_closure(return_edge)
-
-        return return_edge
+        if init_half_edge.opposite is not None:
+            # Iterate to first stem
+            half_edge_list = init_half_edge.list_half_edges([])
+            for edge in half_edge_list:
+                if edge.opposite is None:
+                    return edge
+        else:
+            return init_half_edge
 
     # Performs bicolored complete closure on a planar map of a binary tree in order to obtain
-    # a dissection of the hexagon with quadrangular faces
+    # a irreducible dissection of the hexagon with quadrangular inner faces
     # input: init_half_edge is the half-edge that we get when we convert a binary tree into
     # a planar map
     def ___bicolored_complete_closure(self, init_half_edge):
@@ -100,18 +87,15 @@ class Closure:
 
         # Connect the starting half-edge of our planar map with the first node of the hexagon
         new_half_edge = ClosureHalfEdge()
-        self.___add_new_half_edge(hexagon_start_half_edge, hexagon[11], starting_half_edge, new_half_edge, True)
+        new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge)
 
         connecting_half_edge = new_half_edge
-
-        print("Connecting hexagon and partal with: {}".format(new_half_edge))
 
         # Now traverse the planar map. Depending on the distance between a new inner edge and
         # the next half-edge one can assign the new half edge to a certain hexagon node
         distance = 0
         hexagon_iter = hexagon_start_half_edge
         current_half_edge = starting_half_edge
-        hexagon_first_node = hexagon[0].node_nr
         hexagon_iter_index = 0
         # This variable is needed in order to check if we already visited more than one node of the hexagon
         visited_more = False
@@ -146,44 +130,22 @@ class Closure:
 
                 if visited_more and id(hexagon_iter) == id(hexagon[0]):
                     last_added_edge = connecting_half_edge.next
-                    self.___add_new_half_edge(connecting_half_edge, last_added_edge, current_half_edge, fresh_half_edge,
-                                              True)
+                    fresh_half_edge.add_to_closure(connecting_half_edge, last_added_edge, current_half_edge)
                 else:
                     last_added_edge = hexagon_iter.next
-                    self.___add_new_half_edge(hexagon_iter, last_added_edge, current_half_edge, fresh_half_edge, True)
+                    fresh_half_edge.add_to_closure(hexagon_iter, last_added_edge, current_half_edge)
 
                 distance = 0
             else:
                 current_half_edge = current_half_edge.opposite
                 distance += 1
 
-        if test_mode:
-            print("Complete closure list:")
-            list_closure = hexagon[0].list_half_edges([])
-            for i in list_closure:
-                print(i)
-            print("Complete closure returns the edge: {}".format(id(hexagon[0])))
-
         return hexagon[0]
 
-    # Adds the fresh half edge to the closure between the prior and the next half-edge
-    def ___add_new_half_edge(self, prior_half_edge, next_half_edge, opposite_half_edge, new_half_edge, closure_edge):
-        new_half_edge.opposite = opposite_half_edge
-        opposite_half_edge.opposite = new_half_edge
-        new_half_edge.color = prior_half_edge.color
-        new_half_edge.node_nr = prior_half_edge.node_nr
-        if closure_edge:
-            new_half_edge.added_by_comp_clsr = True
 
-        new_half_edge.prior = prior_half_edge
-        prior_half_edge.next = new_half_edge
-        new_half_edge.next = next_half_edge
-        next_half_edge.prior = new_half_edge
-        print("new half-edge: {}".format(new_half_edge))
 
     # Constructs a hexagon from a list of half_edges. 
     def ___construct_hexagon(self, hexagon_half_edges, partial_closure_edge):
-        global test_mode
         inv_color = None
         color = partial_closure_edge.color
         if color is 'white':
@@ -238,110 +200,7 @@ class Closure:
             else:
                 hexagon_half_edges[i].color = odd_color
 
-        if test_mode:
-            print("Hexagon list:")
-            list_closure = hexagon_half_edges[0].list_half_edges([])
-            for i in list_closure:
-                print(i)
-            # Return the starting half-edge
-            print("Hexagon returns the edge: {}".format(id(hexagon_half_edges[0])))
-
         return hexagon_half_edges[0]
-
-    # Makes the outer face of the irreducible dissection quadrangular by adding a new edge
-    # between two opposite nodes of the hexagon
-    # Look for faces with degree larger than 4 and quadrangulate them
-    def ___quadrangulate(self, init_half_edge):
-        # Add the outer edge
-        new_half_edge = ClosureHalfEdge()
-        new_half_edge.next = init_half_edge
-        new_half_edge.prior = init_half_edge.prior
-        init_half_edge.prior.next = new_half_edge
-        init_half_edge.prior = new_half_edge
-
-        new_half_edge.node_nr = init_half_edge.node_nr
-        new_half_edge.color = init_half_edge.color
-        return_edge = new_half_edge
-
-        # Iterate to the opposite node of the hexagon node
-        count = 0
-        current_half_edge = new_half_edge
-        while True:
-            current_half_edge = current_half_edge.prior.opposite
-            count += 1
-            if count == 3:
-                break
-
-        fresh_half_edge = ClosureHalfEdge()
-        fresh_half_edge.opposite = new_half_edge
-        new_half_edge.opposite = fresh_half_edge
-
-        fresh_half_edge.prior = current_half_edge.prior
-        fresh_half_edge.next = current_half_edge
-        current_half_edge.prior.next = fresh_half_edge
-        current_half_edge.prior = fresh_half_edge
-
-        fresh_half_edge.node_nr = current_half_edge.node_nr
-        fresh_half_edge.color = current_half_edge.color
-
-        if return_edge.color is not 'black':
-            return_edge = fresh_half_edge
-        print("Quadrangulation returns the edge: {}".format(return_edge))
-        return return_edge
-
-    def closure_node_number(self, init_half_edge):
-        G = init_half_edge.to_networkx_graph()
-        closure_nodes = len(list(G.nodes))
-        return closure_nodes
-
-    # Checks if the planar map is correct.
-    def test_planar_map(self, init_half_edge):
-        edge_list = init_half_edge.list_half_edges([])
-        node_list = init_half_edge.get_node_list()
-
-        print("List node dictonary")
-        for node in node_list:
-            print(node, end=" ")
-            print(node_list[node])
-
-        # Node list should has the same number of nodes as the
-        # binary tree
-
-        # Check if each edge is listed exactly once
-        counter = 0
-        for edge in edge_list:
-            for ref in edge_list:
-                if id(edge) == id(ref):
-                    counter += 1
-                    assert (counter == 1)
-
-        # Check if every node has exactly three half-edges    
-        for node in node_list:
-            num_half_edges = len(node_list[node])
-            assert (num_half_edges == 3)
-
-    # Disable print
-    def blockPrint(self):
-        sys.stdout = open(os.devnull, 'w')
-
-    # Enable print again
-    def enablePrint(self):
-        sys.stdout = sys.__stdout__
-
-    # Checks if every half-edge occurs exactly once in the list
-    def ___test_planar_map(self, init_half_edge):
-        liste = self.list_half_edges(init_half_edge.opposite, [])
-
-        for l in liste:
-            count = 0
-            for i in liste:
-                if id(l) == id(i):
-                    count += 1
-                    if count > 1:
-                        print(l)
-                    assert (count < 2)
-
-                    # Checks if there is any stem that has three full edges as successors
 
     def ___test_partial_closure(self, init_half_edge):
         edge_list = init_half_edge.list_half_edges([])
@@ -371,30 +230,6 @@ class Closure:
 
         print("Partial closure is okay.")
 
-    # Checks if quadrangulation is correct
-    def ___test_quadrangulation(self, init_half_edge):
-        # Check if every cycle is of degree 4
-        edge_list = init_half_edge.list_half_edges([])
-
-        for half_edge in edge_list:
-            current_half_edge = half_edge
-            print("Check: ", format(current_half_edge))
-            cycle_degree = 0
-            while True:
-                current_half_edge = current_half_edge.next
-                print(current_half_edge)
-                cycle_degree += 1
-                print("Cycle degree: ", format(cycle_degree))
-                assert (current_half_edge.opposite is not None)
-                if current_half_edge is half_edge:
-                    break
-                assert (cycle_degree < 5)
-                current_half_edge = current_half_edge.opposite
-                if current_half_edge is half_edge:
-                    break
-                print(current_half_edge)
-        print("Quadrangulation is okay")
-
     # Check if the connections between the edges are correct
     def ___test_connections_between_half_edges(self, init_half_edge):
         # edge_list = self.list_half_edges(init_half_edge, [])
@@ -417,36 +252,32 @@ class Closure:
                     raise Exception("There are two different edges with the samp prior/next.")
 
     def closure(self, binary_tree):
-        """This function implements the bijection between the binary trees
-        and the irreducible dissections. It first perfomrs the
-        partial closure by adding a new edge to three inner edges of the
-        binary tree (every face in the binary tree has now four edges).
-        Afterwards, the complete closure is performed, where the partialy
-        closed binary tree is integrated into a hexagon (dissection of hexagon).
+        """Implements the bijection between the binary trees and the irreducible
+        dissections of hexagon. 
 
-        # todo not here
-        The last step is to make the outer face of the graph to a four-edge
-        face (quadrangulation of the hexagon).
+        Parameters
+        ----------
+        binary_tree: BinaryTree
+
+        Returns
+        -------
+        IrreducibleDissection(init_half_edge): IrreducibleDissection
+            Irreducible dissection of hexagon
+
+        Notes
+        -----
+        The partial closure takes a binary tree as input and closes the tree, such that
+        every face in the resulting graph has degree four. Afterwards, the complete
+        closure is performed, where the partialy closed binary tree is intergrated into
+        a hexagon (irreducible dissection of hexagon) [1].
+
+        References
+        ----------
+        .. [1] Eric Fusy:
+            Uniform random sampling of planar graphs in linear time
         """
-        global test_mode
-        # Here you can switch to test mode
-        test_mode = False
 
-        if not test_mode:
-            self.blockPrint()
-
-        # init_half_edge = self.___btree_to_planar_map(binary_tree)
         init_half_edge = binary_tree
         # This edge is hexagonal and points in ccw direction
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
-        #IrreducibleDissection(init_half_edge)
-        # TODO ___quadrangulate must go directly before primal map (in the paper it is inside primal map)
-        # init_half_edge = self.___quadrangulate(init_half_edge)
-        self.___test_connections_between_half_edges(init_half_edge)
-        self.___test_planarity_of_embedding(init_half_edge)
-        # self.___test_quadrangulation(init_half_edge)
-
-        if not test_mode:
-            self.enablePrint()
-
         return IrreducibleDissection(init_half_edge)
