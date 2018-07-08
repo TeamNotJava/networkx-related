@@ -10,18 +10,32 @@ def create_sample_closure_output():
 
     # Set node_nrs
     for i in range(1, 5): half_edges[i].node_nr = 1
+    for i in range(1, 5): half_edges[i].color = 'black'
     for i in range(5, 8): half_edges[i].node_nr = 6
+    for i in range(5, 8): half_edges[i].color = 'white'
     for i in range(8, 11): half_edges[i].node_nr = 13
+    for i in range(8, 11): half_edges[i].color = 'black'
     for i in range(11, 15): half_edges[i].node_nr = 7
+    for i in range(11, 15): half_edges[i].color = 'white'
     for i in range(15, 18): half_edges[i].node_nr = 8
+    for i in range(15, 18): half_edges[i].color = 'black'
     for i in range(18, 21): half_edges[i].node_nr = 2
+    for i in range(18, 21): half_edges[i].color = 'white'
     for i in range(21, 24): half_edges[i].node_nr = 3
+    for i in range(21, 24): half_edges[i].color = 'black'
     for i in range(24, 27): half_edges[i].node_nr = 9
+    for i in range(24, 27): half_edges[i].color = 'white'
     for i in range(27, 32): half_edges[i].node_nr = 10
+    for i in range(27, 32): half_edges[i].color = 'black'
     for i in range(32, 35): half_edges[i].node_nr = 12
+    for i in range(32, 35): half_edges[i].color = 'white'
     for i in range(35, 39): half_edges[i].node_nr = 5
+    for i in range(35, 39): half_edges[i].color = 'black'
     for i in range(39, 41): half_edges[i].node_nr = 11
+    for i in range(39, 41): half_edges[i].color = 'white'
     for i in range(41, 45): half_edges[i].node_nr = 4
+    for i in range(41, 45): half_edges[i].color = 'white'
+
     # Set opposite half-edges
     half_edges[1].opposite = half_edges[5]
     half_edges[5].opposite = half_edges[1]

@@ -1,5 +1,6 @@
-from planar_graph_sampler.bijections.primal_map import PrimalMap
-from planar_graph_sampler.bijections.whitney_3map_to_3graph import WhitneyBijection
+from planar_graph_sampler.bijections.primal_map import primal_map
+from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
+from planar_graph_sampler.bijections.whitney_3map_to_3graph import whitney
 from planar_graph_sampler.rejections.admissibility_check import AdmissibilityChecker
 from planar_graph_sampler.test.mock_objects_creator import create_sample_closure_output
 
@@ -78,8 +79,7 @@ def test_primal_map():
     # print("Start test...")
     half_edges = create_sample_closure_output()
 
-    primal_map = PrimalMap()
-    three_map = primal_map.primal_map_bijection(half_edges[1])
+    three_map = primal_map(IrreducibleDissection(half_edges[1]))
 
     # Check the opposites - third output
     assert three_map.opposite.node_nr == 5
@@ -106,16 +106,13 @@ def test_whitney_bijection():
     :return:
     '''
     # print("Start test...")
-    primal_map = PrimalMap()
     half_edges = create_sample_closure_output()
 
     # Make the primal map bijection
-    primal_map = primal_map
-    three_map = primal_map.primal_map_bijection(half_edges[1])
+    three_map = primal_map(IrreducibleDissection(half_edges[1]))
 
     # Make the Whiney bijection
-    whiney_bijection = WhitneyBijection()
-    edge_rooted_three_connected_graph = whiney_bijection.whitney_bijection(three_map)
+    edge_rooted_three_connected_graph = whitney(three_map)
 
     # Chech the properties
     print(edge_rooted_three_connected_graph)

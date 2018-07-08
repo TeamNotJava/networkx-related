@@ -69,3 +69,6 @@ class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
         repr += 'Vertices : %s\n' % self.vertices_list.__repr__()
         repr += 'Edges : %s' % self.edges_list.__repr__()
         return repr
+
+    def plot(self):
+        return self.root_half_edge.plot()

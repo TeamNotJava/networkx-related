@@ -25,7 +25,7 @@ def primal_map(dissection):
     """
     # todo what else needs to be done here?
     # petrov: As I have understood the bijection, I think we have implemented everything.
-    return PrimalMap().primal_map_bijection(dissection)
+    return PrimalMap().primal_map_bijection(dissection.get_root())
 
 
 class PrimalMap:
