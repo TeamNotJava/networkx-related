@@ -38,8 +38,8 @@ class AdmissibilityChecker:
 
         # Will be used for checking in the bfs.
         outer_vertex_half_edge = init_half_edge.opposite.next.opposite.next.opposite.next
-        #print ('%s    %s' % (init_half_edge.node_nr, outer_vertex_half_edge.node_nr))
-        
+        print ('%s    %s' % (init_half_edge.node_nr, outer_vertex_half_edge.node_nr))
+
         # Creates the queue for the BFS.
         queue = list()
         # Put the init half edge into the queue.
@@ -87,69 +87,3 @@ class AdmissibilityChecker:
 
         # A path has not been found, therefore the dissection is irreducible and we return True.
         return True
-
-    def test_admissibility_check(self):
-        half_edges_list = PrimalMap().create_sample_closure_output()
-
-        is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[2])
-        assert False == is_admissible
-        print(is_admissible)  # False
-
-        # Test with removing edges
-        half_edges_list[27].next = half_edges_list[29]
-        half_edges_list[29].prior = half_edges_list[27]
-
-        half_edges_list[42].next = half_edges_list[44]
-        half_edges_list[44].prior = half_edges_list[42]
-
-        is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[2])
-        assert True == is_admissible
-        print(is_admissible)  # True
-
-        # Extend the test with adding edges
-        half_edges_list[60].node_nr = 3
-        half_edges_list[22].next = half_edges_list[60]
-        half_edges_list[60].prior = half_edges_list[22]
-        half_edges_list[60].next = half_edges_list[23]
-        half_edges_list[23].prior = half_edges_list[60]
-
-        half_edges_list[55].node_nr = 5
-        half_edges_list[37].next = half_edges_list[55]
-        half_edges_list[55].prior = half_edges_list[37]
-        half_edges_list[55].next = half_edges_list[38]
-        half_edges_list[38].prior = half_edges_list[55]
-
-        half_edges_list[59].node_nr = 10
-        half_edges_list[27].next = half_edges_list[59]
-        half_edges_list[59].prior = half_edges_list[27]
-        half_edges_list[59].next = half_edges_list[28]
-        half_edges_list[28].prior = half_edges_list[59]
-        half_edges_list[28].next = half_edges_list[29]
-        half_edges_list[29].prior = half_edges_list[28]
-
-        half_edges_list[42].next = half_edges_list[43]
-        half_edges_list[44].prior = half_edges_list[43]
-
-        for i in range(49, 52): half_edges_list[i].node_nr = 14
-        for i in range(52, 55): half_edges_list[i].node_nr = 16
-        for i in range(56, 59): half_edges_list[i].node_nr = 15
-
-        # Reassign opposites
-        half_edges_list[28].opposite = half_edges_list[54]
-        half_edges_list[54].opposite = half_edges_list[28]
-        half_edges_list[60].opposite = half_edges_list[56]
-        half_edges_list[56].opposite = half_edges_list[60]
-        half_edges_list[59].opposite = half_edges_list[58]
-        half_edges_list[58].opposite = half_edges_list[59]
-        half_edges_list[50].opposite = half_edges_list[57]
-        half_edges_list[57].opposite = half_edges_list[50]
-        half_edges_list[43].opposite = half_edges_list[51]
-        half_edges_list[51].opposite = half_edges_list[43]
-        half_edges_list[49].opposite = half_edges_list[52]
-        half_edges_list[52].opposite = half_edges_list[49]
-        half_edges_list[55].opposite = half_edges_list[53]
-        half_edges_list[53].opposite = half_edges_list[55]
-
-        is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[2])
-        assert True == is_admissible
-        print(is_admissible)  # True

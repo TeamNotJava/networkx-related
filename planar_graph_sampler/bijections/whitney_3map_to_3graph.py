@@ -25,8 +25,6 @@ def whitney(map):
     :param map:
     :return:
     """
-    # todo what else needs to be done here?
-    # petrov: As I have understood the bijection, I think we have implemented everything.
     return WhitneyBijection().whitney_bijection(map)
 
 
@@ -85,38 +83,3 @@ class WhitneyBijection:
             self.__extract_3_graph_components_rec(
                 walker_half_edge.opposite, root_half_edge, visited_half_edges, vertices_list, edges_list)
             walker_half_edge = walker_half_edge.next
-
-    def test_whitney_bijection(self):
-        # print("Start test...")
-        primal_map = PrimalMap()
-        half_edges = primal_map.create_sample_closure_output()
-
-        # Make the primal map bijection
-        primal_map = primal_map
-        three_map = primal_map.primal_map_bijection(half_edges[1])
-
-        # Make the Whiney bijection
-        whiney_bijection = WhitneyBijection()
-        edge_rooted_three_connected_graph = whiney_bijection.whitney_bijection(three_map)
-
-        # Chech the properties
-        print(edge_rooted_three_connected_graph)
-        # Check the root edge
-        assert edge_rooted_three_connected_graph.root_half_edge.node_nr == 1
-        assert edge_rooted_three_connected_graph.root_half_edge.opposite.node_nr == 13
-
-        # Check the vertices list
-        vertices_node_numbers = [3, 5, 8, 10]
-        for vertex_half_edge in edge_rooted_three_connected_graph.vertices_list:
-            assert vertex_half_edge.node_nr in vertices_node_numbers
-            vertices_node_numbers.remove(vertex_half_edge.node_nr)
-        assert len(vertices_node_numbers) == 0
-
-        # Check the edges list
-        edges_node_numbers = [(1, 3), (5, 10), (10, 13), (3, 10), (5, 13), (8, 10), (3, 8), (1, 5), (1, 8), (5, 10)]
-        for half_edge in edge_rooted_three_connected_graph.edges_list:
-            from_vertex = min(half_edge.node_nr, half_edge.opposite.node_nr)
-            to_vertex = max(half_edge.node_nr, half_edge.opposite.node_nr)
-            assert (from_vertex, to_vertex) in edges_node_numbers
-            edges_node_numbers.remove((from_vertex, to_vertex))
-        assert len(edges_node_numbers) == 0
