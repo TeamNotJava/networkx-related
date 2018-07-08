@@ -4,12 +4,12 @@ from planar_graph_sampler.bijections.network_substitution import EdgeByNetworkSu
 
 
 class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
-    def __init__(self, vertices_list, edges_list, root_half_edge):
+    def __init__(self, vertices, edges, root_half_edge):
         # All of the vertices in the graph represented as half-edges.
         # Do not contain the vertices which are part from the root edge.
-        self.vertices_list = vertices_list
+        self.vertices_list = list(vertices)
         # the edges list not contain the root edge!
-        self.edges_list = edges_list
+        self.edges_list = list(edges)
         # Only one part from the root edge. The other can be accessed through the opposite pointer.
         self.root_half_edge = root_half_edge
 
@@ -46,7 +46,7 @@ class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
         # Substitute the edges with a newly sampled network one by one
         for edge_for_substitution in edges_for_subs:
             # Sample a network for plugging in
-            network = sampler.sample(x, y)
+            network = sampler(x, y)
             edge_by_network_subs.substitute_edge_by_network(self, edge_for_substitution, network)
 
         # this is a dummy

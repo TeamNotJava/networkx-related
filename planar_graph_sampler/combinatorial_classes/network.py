@@ -62,3 +62,6 @@ class NetworkClass(CombinatorialClass):
 
     def __str__(self):
         raise NotImplementedError
+
+    def plot(self):
+        return self.edges_list[0].plot()

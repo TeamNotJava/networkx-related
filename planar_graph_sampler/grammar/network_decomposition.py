@@ -1,6 +1,8 @@
 from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
+from framework.evaluation_oracle import EvaluationOracle
 from framework.utils import Counter
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 from planar_graph_sampler.combinatorial_classes.network import NetworkClass
@@ -52,6 +54,7 @@ def bij_s_decomp_to_network(decomp):
     result = NetworkMergeInSeries().merge_networks_in_series(network, network_for_plugging)
 
     # Check the properties
+    print("%s %s" % (decomp.get_u_size(), result.get_u_size()))
     assert (decomp.get_u_size() == result.get_u_size())
     assert (decomp.get_l_size() == result.get_l_size())
     return result
@@ -70,7 +73,7 @@ def bij_p_decomp1_to_network(decomp):
 
 def bij_p_decomp2_to_network(decomp):
     # decomp has the structure: [set of networks]
-    networks = decomp
+    networks = decomp.elems
 
     # Merge the netwowrks in parallel
     result = networks[0]
@@ -84,7 +87,7 @@ def bij_p_decomp2_to_network(decomp):
 
 
 def bij_g_3_arrow_to_network(decomp):
-    three_connected_rooted_planar_graph = decomp.first
+    three_connected_rooted_planar_graph = decomp
     # Extract the components from the three connected rooted planar graph
     vertices_list = list(three_connected_rooted_planar_graph.vertices_list)
     edges_list = list(three_connected_rooted_planar_graph.edges_list)
@@ -149,5 +152,18 @@ def network_grammar():
 
 
 if __name__ == '__main__':
-    pass
-    # TODO
+    grammar = network_grammar()
+    grammar.init()
+
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'y'
+
+    sampled_class = 'P'
+
+    g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+
+    import matplotlib.pyplot as plt
+    g.plot()
+    plt.show()

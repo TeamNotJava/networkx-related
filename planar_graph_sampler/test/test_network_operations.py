@@ -1,9 +1,9 @@
 from planar_graph_sampler.bijections.network_substitution import EdgeByNetworkSubstitution
 from planar_graph_sampler.bijections.network_merge_in_series import NetworkMergeInSeries
 from planar_graph_sampler.bijections.network_paralel_merge import NetworkMergeInParallel
-from planar_graph_sampler.bijections.halfedge import  HalfEdge
+from planar_graph_sampler.combinatorial_classes.halfedge import  HalfEdge
 from planar_graph_sampler.combinatorial_classes.network import NetworkClass
-from planar_graph_sampler.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
+from planar_graph_sampler.test.mock_objects_creator import create_three_connected_graph
 
 def test_edge_by_netwrok_substitution():
     '''
@@ -118,80 +118,6 @@ def test_edge_by_netwrok_substitution():
         assert half_edge_walker.node_nr == seventh.node_nr
         half_edge_walker = half_edge_walker.next
 
-
-def create_three_connected_graph():
-    first_net_vertices_list = []
-    first_net_edges_list = []
-
-    first_net_root_edge = HalfEdge()
-    first_net_root_edge.node_nr = 1
-
-    first_net_root_edge_opposite = HalfEdge()
-    first_net_root_edge_opposite.node_nr = 2
-    first_net_root_edge.opposite = first_net_root_edge_opposite
-    first_net_root_edge_opposite.opposite = first_net_root_edge
-
-    third = HalfEdge()
-    third.node_nr = 1
-    first_net_root_edge.next = third
-    first_net_root_edge.prior = third
-    third.prior = first_net_root_edge
-    third.next = first_net_root_edge
-    first_net_edges_list.append(third)
-
-    fourth = HalfEdge()
-    fourth.node_nr = 3
-    third.opposite = fourth
-    fourth.opposite = third
-    first_net_vertices_list.append(fourth)
-
-    fifth = HalfEdge()
-    fifth.node_nr = 3
-    fifth.prior = fourth
-    fourth.next = fifth
-    first_net_edges_list.append(fifth)
-
-    sixth = HalfEdge()
-    sixth.node_nr = 3
-    sixth.next = fourth
-    fourth.prior = sixth
-    sixth.prior = fifth
-    fifth.next = sixth
-    first_net_edges_list.append(sixth)
-
-    seventh = HalfEdge()
-    seventh.node_nr = 4
-    seventh.opposite = fifth
-    fifth.opposite = seventh
-    first_net_vertices_list.append(seventh)
-
-    eighth = HalfEdge()
-    eighth.node_nr = 4
-    eighth.next = seventh
-    eighth.prior = seventh
-    seventh.next = eighth
-    seventh.prior = eighth
-    first_net_edges_list.append(eighth)
-
-    ninth = HalfEdge()
-    ninth.node_nr = 2
-    ninth.opposite = eighth
-    eighth.opposite = ninth
-    ninth.next = first_net_root_edge_opposite
-    first_net_root_edge_opposite.prior = ninth
-
-    tenth = HalfEdge()
-    tenth.node_nr = 2
-    tenth.opposite = sixth
-    sixth.opposite = tenth
-    tenth.next = ninth
-    ninth.prior = tenth
-    tenth.prior = first_net_root_edge_opposite
-    first_net_root_edge_opposite.next = tenth
-
-    return EdgeRootedThreeConnectedPlanarGraph(first_net_vertices_list, first_net_edges_list, first_net_root_edge)
-
-
 def create_sample_network():
     graph = create_three_connected_graph()
     return NetworkClass(graph.vertices_list, graph.edges_list, graph.root_half_edge)
@@ -285,7 +211,6 @@ def test_parallel_merge_of_networks():
     while half_edge_walker != first_net_inf_pole:
         assert half_edge_walker.node_nr == first_net_inf_pole.node_nr
         half_edge_walker = half_edge_walker.next
-
 
 
 if __name__ == "__main__":
