@@ -148,32 +148,27 @@ def test_series_merge_of_networks():
     '''
     first_network = create_sample_network(0)
     first_net_inf_pole = first_network.root_half_edge.opposite
+    first_net_inf_pole_prior_initial = first_net_inf_pole.prior
 
     second_network = create_sample_network(10)
     second_net_zero_pole = second_network.root_half_edge
+    second_net_zero_pole_edge_prior_initial = second_net_zero_pole.prior
 
     merged = NetworkMergeInSeries().merge_networks_in_series(first_network, second_network)
-    '''
-    for i in range(2, 15):
-        nett = create_three_connected_graph(i * 10)
-        merged = NetworkMergeInSeries().merge_networks_in_series(merged, nett)
-    '''
-    merged.plot()
-    plt.show()
 
     # Check the root edge
     assert merged.root_half_edge == first_network.root_half_edge
-    assert merged.root_half_edge.opposite == second_network.root_half_edge.opposite
+    assert merged.root_half_edge.opposite == second_network.root_half_edge.opposite.next
 
     # Check the number of elements in vertices and edges list
     assert len(merged.vertices_list) == 5
     assert len(merged.edges_list) == 8
 
     # Check the the pointers
-    assert first_net_inf_pole.next.prior == second_net_zero_pole.prior
-    assert second_net_zero_pole.prior.next == first_net_inf_pole.next
-    assert first_net_inf_pole.prior.next == second_net_zero_pole.next
-    assert second_net_zero_pole.next.prior == first_net_inf_pole.prior
+    assert first_net_inf_pole.prior == second_net_zero_pole_edge_prior_initial
+    assert second_net_zero_pole_edge_prior_initial.next == first_net_inf_pole
+    assert first_net_inf_pole_prior_initial.next == second_net_zero_pole
+    assert second_net_zero_pole.prior == first_net_inf_pole_prior_initial
 
     # Check the node numbers of the merged edge
     expected_node_number = first_net_inf_pole.node_nr
@@ -192,9 +187,9 @@ def test_parallel_merge_of_networks():
     '''
     first_network = create_sample_network()
     first_net_zero_pole = first_network.root_half_edge
-    first_net_zero_pole_prior_old = first_net_zero_pole.prior
+    first_net_zero_pole_prior_initial = first_net_zero_pole.prior
     first_net_inf_pole = first_net_zero_pole.opposite
-    first_net_inf_pole_next_old = first_net_inf_pole.next
+    first_net_inf_pole_next_initial = first_net_inf_pole.next
 
     second_network = create_sample_network(10)
     second_net_zero_pole = second_network.root_half_edge
@@ -206,6 +201,9 @@ def test_parallel_merge_of_networks():
     second_net_inf_pole.next.node_nr = -1
     second_net_inf_pole.next.next.node_nr = -1
 
+    second_net_zero_pole_next_initial = second_net_zero_pole.next
+    second_net_inf_pole_prior_initial = second_net_inf_pole.prior
+
     result = NetworkMergeInParallel().merge_networks_in_parallel(first_network, second_network)
 
     # Check the sizes of the resulted network
@@ -213,16 +211,16 @@ def test_parallel_merge_of_networks():
     assert len(result.edges_list) == 8
 
     # Check the pointers updates in the zero pole
-    assert first_net_zero_pole.prior == second_net_zero_pole.prior
-    assert second_net_zero_pole.prior.next == first_net_zero_pole
-    assert first_net_zero_pole_prior_old.next == second_net_zero_pole.next
-    assert second_net_zero_pole.next.prior == first_net_zero_pole_prior_old
+    assert first_net_zero_pole.prior == second_net_zero_pole
+    assert second_net_zero_pole.next == first_net_zero_pole
+    assert first_net_zero_pole_prior_initial.next == second_net_zero_pole_next_initial
+    assert second_net_zero_pole_next_initial.prior == first_net_zero_pole_prior_initial
 
     # Check the pointers updates in the inf pole
-    assert first_net_inf_pole.next == second_net_inf_pole.next
-    assert second_net_inf_pole.next.prior == first_net_inf_pole
-    assert first_net_inf_pole_next_old.prior == second_net_inf_pole.prior
-    assert second_net_inf_pole.prior.next == first_net_inf_pole_next_old
+    assert first_net_inf_pole.next == second_net_inf_pole
+    assert second_net_inf_pole.prior == first_net_inf_pole
+    assert first_net_inf_pole_next_initial.prior == second_net_inf_pole_prior_initial
+    assert second_net_inf_pole_prior_initial.next == first_net_inf_pole_next_initial
 
     # Check the node numbers update
     assert first_net_zero_pole.node_nr == 1
