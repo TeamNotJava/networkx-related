@@ -34,14 +34,21 @@ def _create_root_network_edge():
 
 
 def bij_u_atom_to_network(decomp):
+    decomp_u_size = decomp.get_u_size()
+    decomp_l_size = decomp.get_l_size()
+
     vertices_list = []
     edges_list = []
     root_half_edge = _create_root_network_edge()
     # The root edge is part from the edges list.
     edges_list.append(root_half_edge)
+    # The poles are part from the list of vertices.
+
     result = NetworkClass(vertices_list, edges_list, root_half_edge)
-    assert (decomp.get_u_size() == result.get_u_size())
-    assert (decomp.get_l_size() == result.get_l_size())
+    print("Link-graph : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
+    # Check the properties
+    assert (decomp_u_size == result.get_u_size())
+    assert (decomp_l_size == result.get_l_size())
     return result
 
 
@@ -50,24 +57,38 @@ def bij_s_decomp_to_network(decomp):
     network = decomp.first.first
     network_for_plugging = decomp.second
 
+    # It is important to check the size here because after in the merge the second network is merged in the first one
+    # without changing the objects
+    decomp_u_size = decomp.get_u_size()
+    decomp_l_size = decomp.get_l_size()
+
     # Use the serial merge bijection to merge the networks
     result = NetworkMergeInSeries().merge_networks_in_series(network, network_for_plugging)
 
+    print("S-network : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
     # Check the properties
-    print("%s %s" % (decomp.get_u_size(), result.get_u_size()))
-    assert (decomp.get_u_size() == result.get_u_size())
-    assert (decomp.get_l_size() == result.get_l_size())
+    assert (decomp_u_size == result.get_u_size())
+    assert (decomp_l_size == result.get_l_size())
     return result
 
 
 def bij_p_decomp1_to_network(decomp):
     # decomp has the structure: (link_graph, [set of networks])
+
+    # It is important to check the size here because after in the merge the second network is merged in the first one
+    # without changing the objects
+    decomp_u_size = decomp.get_u_size()
+    decomp_l_size = decomp.get_l_size()
+
     # get the parallel composition of the networks
     result = bij_p_decomp2_to_network(decomp.second)
     # add link between the poles
     result.edges_list.append(result.root_half_edge)
-    assert (decomp.get_u_size() == result.get_u_size())
-    assert (decomp.get_l_size() == result.get_l_size())
+
+    print("P1-network : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
+    # Check the properties
+    assert (decomp_u_size == result.get_u_size())
+    assert (decomp_l_size == result.get_l_size())
     return result
 
 
@@ -75,25 +96,38 @@ def bij_p_decomp2_to_network(decomp):
     # decomp has the structure: [set of networks]
     networks = decomp.elems
 
+    decomp_u_size = decomp.get_u_size()
+    decomp_l_size = decomp.get_l_size()
+
     # Merge the netwowrks in parallel
     result = networks[0]
     for i in range(1, len(networks)):
         result = NetworkMergeInParallel().merge_networks_in_parallel(result, networks[i])
 
+    print("P2-network : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
+
     # Check the properties
-    assert (decomp.get_u_size() == result.get_u_size())
-    assert (decomp.get_l_size() == result.get_l_size())
+    assert (decomp_u_size == result.get_u_size())
+    assert (decomp_l_size == result.get_l_size())
     return result
 
 
 def bij_g_3_arrow_to_network(decomp):
     three_connected_rooted_planar_graph = decomp
+    decomp_u_size = decomp.get_u_size()
+    decomp_l_size = decomp.get_l_size()
     # Extract the components from the three connected rooted planar graph
     vertices_list = list(three_connected_rooted_planar_graph.vertices_list)
     edges_list = list(three_connected_rooted_planar_graph.edges_list)
     root_half_edge = three_connected_rooted_planar_graph.root_half_edge
     # Create and return the network.
-    return NetworkClass(vertices_list, edges_list, root_half_edge)
+    result = NetworkClass(vertices_list, edges_list, root_half_edge)
+
+    print("H-network : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
+    # Check the properties
+    assert (decomp_u_size == result.get_u_size())
+    assert (decomp_l_size == result.get_l_size())
+    return result
 
 
 def network_grammar():
@@ -160,7 +194,7 @@ if __name__ == '__main__':
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
 
-    sampled_class = 'P'
+    sampled_class = 'H'
 
     g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
 

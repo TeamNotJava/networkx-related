@@ -38,14 +38,13 @@ class NetworkMergeInParallel:
         # Merge their 0-poles
         first_net_zero_pole_prior = first_net_zero_pole_edge.prior
         second_net_zero_pole_next = second_net_zero_pole_edge.next
-        second_net_zero_pole_prior = second_net_zero_pole_edge.prior
-        first_net_zero_pole_edge.prior = second_net_zero_pole_prior
-        second_net_zero_pole_prior.next = first_net_zero_pole_edge
+        first_net_zero_pole_edge.prior = second_net_zero_pole_edge
+        second_net_zero_pole_edge.next = first_net_zero_pole_edge
         first_net_zero_pole_prior.next = second_net_zero_pole_next
         second_net_zero_pole_next.prior = first_net_zero_pole_prior
 
         # Update the node numbers in the zero pole
-        half_edge_walker = second_net_zero_pole_edge.next
+        half_edge_walker = first_net_zero_pole_edge.next
         while half_edge_walker != first_net_zero_pole_edge:
             half_edge_walker.node_nr = first_net_zero_pole_edge.node_nr
             half_edge_walker = half_edge_walker.next
@@ -53,15 +52,14 @@ class NetworkMergeInParallel:
         # Merge their inf-poles
         first_net_inf_pole_next = first_net_inf_pole_edge.next
         second_net_inf_pole_prior = second_net_inf_pole_edge.prior
-        second_net_inf_pole_next = second_net_inf_pole_edge.next
-        first_net_inf_pole_edge.next = second_net_inf_pole_next
-        second_net_inf_pole_next.prior = first_net_inf_pole_edge
+        first_net_inf_pole_edge.next = second_net_inf_pole_edge
+        second_net_inf_pole_edge.prior = first_net_inf_pole_edge
         first_net_inf_pole_next.prior = second_net_inf_pole_prior
         second_net_inf_pole_prior.next = first_net_inf_pole_next
 
         # Update the node numbers in the inf pole
-        half_edge_walker = second_net_inf_pole_next
-        while half_edge_walker != first_net_inf_pole_next:
+        half_edge_walker = first_net_inf_pole_edge.next
+        while half_edge_walker != first_net_inf_pole_edge:
             half_edge_walker.node_nr = first_net_inf_pole_edge.node_nr
             half_edge_walker = half_edge_walker.next
 
