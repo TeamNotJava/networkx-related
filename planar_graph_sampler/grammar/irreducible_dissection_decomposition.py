@@ -19,8 +19,8 @@ def closure(binary_tree):
     :param binary_tree: The binary tree of l-derived binary tree to be closed
     :return: The closure/l-derived closure of the tree/l-derived tree
     """
-    half_edge = Closure().closure(binary_tree)
-    return half_edge
+    dissection = Closure().closure(binary_tree)
+    return dissection
 
 
 def add_random_root_edge(decomp):
@@ -29,13 +29,6 @@ def add_random_root_edge(decomp):
     dissection = decomp.second
     dissection.root_at_random_hexagonal_edge()
     return dissection
-
-
-def rej_admiss(dissection):
-    """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
-    to avoid 4 cycles
-    """
-    return check_admissibility(dissection.get_root())
 
 
 def irreducible_dissection_grammar():
@@ -71,9 +64,9 @@ def irreducible_dissection_grammar():
 
         'J_dx': Bij(3*U()*I + 3*L()*U()*I_dx, add_random_root_edge),
 
-        'J_a': Rej(J, rej_admiss),
+        'J_a': Rej(J, lambda d: d.is_admissible()),
 
-        'J_a_dx': Rej(J_dx, rej_admiss),
+        'J_a_dx': Rej(J_dx, lambda d: d.is_admissible()),
 
     })
     return grammar
@@ -88,17 +81,22 @@ if __name__ == "__main__":
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    sampled_class = 'J_a'
+    sampled_class = 'I'
 
     diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
 
     assert diss.half_edge.color is 'black'
     assert diss.half_edge.is_hexagonal
 
-    #print(diss.get_l_size())
-    #print(diss.get_u_size())
+    print()
     print(diss.half_edge.node_nr)
     print(diss.half_edge.opposite.node_nr)
+    print(diss.number_of_nodes())
+    print(diss.number_of_edges())
+
+    print(diss.number_of_half_edges())
+    print(len(diss.get_half_edge().get_all_half_edges(include_opp=False, include_unpaired=False)))
+
     [print(he) for he in diss.get_hexagonal_edges()]
 
     import matplotlib.pyplot as plt

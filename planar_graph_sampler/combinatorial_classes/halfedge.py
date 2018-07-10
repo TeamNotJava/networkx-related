@@ -101,6 +101,10 @@ class HalfEdge(CombinatorialClass):
             curr = curr.next
         return res
 
+    def set_node_nr(self, node_nr):
+        for he in self.incident_half_edges():
+            he.node_nr = node_nr
+
     # TODO hack hack
     def __str__(self):
         return self.__repr__()
@@ -114,15 +118,16 @@ class HalfEdge(CombinatorialClass):
             id(self), self.node_nr, id(self.opposite), id(self.next), id(self.prior))
         return repr
 
-    def list_half_edges(self, edge_list):
+    def list_half_edges(self, edge_list=None):
         """
         Returns a list with half-edges.
         :param edge_list:
         :return:
         """
+        if edge_list is None:
+            edge_list = []
         edge_list.append(self)
         current_half_edge = self
-        assert (current_half_edge is not None)
         while True:
             if current_half_edge.next is not None:
                 current_half_edge = current_half_edge.next
@@ -137,16 +142,36 @@ class HalfEdge(CombinatorialClass):
                 break
         return edge_list
 
-    def get_number_of_nodes(self):
+    def get_all_half_edges(self, edge_set=None, include_opp=True, include_unpaired=True):
         """
-        Returns the number of nodes in the graph
+
+        :param edge_set:
+        :param include_opp:
+        :param include_unpaired:
         :return:
         """
-        edge_list = self.list_half_edges([])
-        nodes = []
+        if edge_set is None:
+            edge_set = set()
+        for he in self.incident_half_edges():
+            if he not in edge_set:
+                if he.opposite is None and include_unpaired:
+                    edge_set.add(he)
+                elif include_opp or (he.opposite is not None and he.opposite not in edge_set):
+                    edge_set.add(he)
+                    if he.opposite is not None:
+                        he.opposite.get_all_half_edges(edge_set, include_opp, include_unpaired)
+        return edge_set
+
+    def get_number_of_nodes(self):
+        """
+        Returns the number of nodes in the graph.
+        :return:
+        """
+        edge_list = self.get_all_half_edges()
+        nodes = set()
         for edge in edge_list:
             if edge.node_nr not in nodes:
-                nodes.append(edge.node_nr)
+                nodes.add(edge.node_nr)
         return len(nodes)
 
     def get_number_of_edges(self):
@@ -154,13 +179,17 @@ class HalfEdge(CombinatorialClass):
         Returns the number of edges (NOT half-edges!) in the graph.
         :return:
         """
-        edge_list = self.list_half_edges([])
-        num_edges = 0
-        for edge in edge_list:
-            if edge.opposite is not None:
-                num_edges += 1
-                edge_list.remove(edge.opposite)
-        return num_edges
+        # TODO implement without altering the list while iteration
+        #edge_list = self.list_half_edges([])
+        #num_edges = 0
+        #for edge in edge_list:
+        #    # Check if half-edge is a 'real' edge.
+        #    if edge.opposite is not None:
+        #        num_edges += 1
+        #        # Don't count twice.
+        #        edge_list.remove(edge.opposite)
+        #return num_edges
+        return len(self.get_all_half_edges(include_opp=False, include_unpaired=False))
 
     def get_node_list(self):
         """
@@ -179,11 +208,7 @@ class HalfEdge(CombinatorialClass):
                 node_list[edge.node_nr] = [edge]
         return node_list
 
-    def is_tree(self):
-        return nx.is_tree(self.to_networkx_graph())
 
-    def is_planar(self):
-        return nx.check_planarity(self.to_networkx_graph())
 
     def to_networkx_graph(self):
         """

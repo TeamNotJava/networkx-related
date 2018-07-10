@@ -1,6 +1,6 @@
 from framework.utils import Counter
 
-from planar_graph_sampler.combinatorial_classes.network import NetworkClass
+from planar_graph_sampler.combinatorial_classes.network import Network
 from planar_graph_sampler.bijections.halfedge import HalfEdge
 from planar_graph_sampler.bijections.network_merge_in_series import NetworkMergeInSeries
 from planar_graph_sampler.bijections.network_paralel_merge import NetworkMergeInParallel
@@ -34,7 +34,7 @@ def u_atom_to_network(u_atom):
     vertices_list = []
     edges_list = []
     root_half_edge = _create_root_network_edge()
-    result = NetworkClass(vertices_list, edges_list, root_half_edge)
+    result = Network(vertices_list, edges_list, root_half_edge)
     assert (u_atom.get_u_size() == result.get_u_size())
     assert (u_atom.get_l_size() == result.get_l_size())
     return result
@@ -97,6 +97,6 @@ def g_3_arrow_to_network(three_connected_rooted_planar_graph):
     root_half_edge = three_connected_rooted_planar_graph.root_half_edge
 
     # Create and return the network.
-    return NetworkClass(vertices_list, edges_list, root_half_edge)
+    return Network(vertices_list, edges_list, root_half_edge)
 
 ## and all the derived networks stuff also goes here

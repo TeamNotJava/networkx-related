@@ -14,29 +14,31 @@
 """
     Merges two networks in a series.
 """
+from planar_graph_sampler.combinatorial_classes.network import Network
 
 
 class NetworkMergeInSeries:
 
     def merge_networks_in_series(self, network, network_for_plugging):
-        '''
+        """
         Merges the network for plugging into netwrok in a serial manner which means that the infinite pole from the
         network is identified with the 0-pole from network_for_plugging.
 
         :param network: first network which will result in merged networks
         :param network_for_plugging: second network which will be plugged in the first one
-        '''
+        """
 
         # Extract the poles from both networks
-        first_net_zero_pole_edge = network.root_half_edge
-        first_net_inf_pole_edge = first_net_zero_pole_edge.opposite
+        first_net_zero_pole_edge = network.get_zero_pole()
+        first_net_inf_pole_edge = network.get_inf_pole()
 
-        second_net_zero_pole_edge = network_for_plugging.root_half_edge
-        second_net_inf_pole_edge = second_net_zero_pole_edge.opposite
+        second_net_zero_pole_edge = network_for_plugging.get_zero_pole()
+        second_net_inf_pole_edge = network_for_plugging.get_inf_pole()
 
         # Change the poles in the result network so that now the inf-pole from the second network will be inf-pole in the result one
         first_net_zero_pole_edge.opposite = second_net_inf_pole_edge
         second_net_inf_pole_edge.opposite = first_net_zero_pole_edge
+
 
         # Get the half edges from both networks for merging
         first_net_inf_pole_next = first_net_inf_pole_edge.next
@@ -59,11 +61,12 @@ class NetworkMergeInSeries:
             half_edge_walker = half_edge_walker.next
 
         # Add the vertices list from the second network into the first one
-        network.vertices_list += network_for_plugging.vertices_list
+        #network.vertices_list += network_for_plugging.vertices_list
         # Add the previous inf-pole to the vertices list since now the inf-pole is taken from the second network
-        network.vertices_list.append(first_net_inf_pole_edge)
+        #network.vertices_list.append(first_net_inf_pole_edge)
 
         # Add the edges from the second network into the first one
-        network.edges_list += network_for_plugging.edges_list
+        #network.edges_list += network_for_plugging.edges_list
 
-        return network
+        # After a serial merge the poles are never linked.
+        return Network(first_net_zero_pole_edge, is_linked=False)

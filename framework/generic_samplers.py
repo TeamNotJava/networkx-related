@@ -500,7 +500,7 @@ class TransformationSampler(UnarySampler):
 
     """
 
-    def __init__(self, sampler, f, eval_transform=None, target_class_label=None):
+    def __init__(self, sampler, f=lambda x: x, eval_transform=None, target_class_label=None):
         """
 
         :param sampler: Sampler of the underlying class.
@@ -625,9 +625,11 @@ class UDerFromLDerSampler(TransformationSampler):
             gamma = self.sampler.sample(x, y)
             p = (1 / self.alpha_u_l) * (gamma.get_u_size() / (gamma.get_l_size() + 1))
             if bern(p):
-                gamma = gamma.get_base_class_object()
-                rand_u_atom = gamma.random_u_atom()
-                return UDerivedClass(gamma, rand_u_atom)
+                # TODO check this
+                #gamma = gamma.get_base_class_object()
+                #rand_u_atom = gamma.random_u_atom()
+                #return UDerivedClass(gamma, rand_u_atom)
+                return gamma
 
     def sample_dummy(self, x, y):
         while True:
@@ -660,6 +662,7 @@ class LDerFromUDerSampler(TransformationSampler):
             gamma = self.sampler.sample(x, y)
             p = (1 / self.alpha_l_u) * (gamma.get_l_size() / (gamma.get_u_size() + 1))
             if bern(p):
+                # TODO check this
                 # gamma = gamma.get_base_class_object()
                 # rand_l_atom = gamma.random_l_atom()
                 # return LDerivedClass(gamma, rand_l_atom)

@@ -1,3 +1,4 @@
+from framework.class_builder import CombinatorialClassBuilder
 from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
@@ -5,44 +6,37 @@ from framework.utils import Counter
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
-from planar_graph_sampler.combinatorial_classes.network import NetworkClass
+from planar_graph_sampler.combinatorial_classes.network import Network
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.bijections.network_merge_in_series import NetworkMergeInSeries
 from planar_graph_sampler.bijections.network_paralel_merge import NetworkMergeInParallel
 
-counter = Counter()  # TODO does this work?
+counter = Counter()
+
+class NetworkBuilder(DefaultBuilder):
+
+    def u_atom(self):
+        """
+        Returns the trivial link network consisting of the poles and an edge between them.
+        :return:
+        """
+        # Create the zero-pole of the network
+        root_half_edge = HalfEdge(self_consistent=True)
+        root_half_edge.node_nr = next(counter)
+
+        # Creates the inf-pole
+        root_half_edge_opposite = HalfEdge(self_consistent=True)
+        root_half_edge_opposite.node_nr = next(counter)
+
+        # Link the poles
+        root_half_edge.opposite = root_half_edge_opposite
+        root_half_edge_opposite.opposite = root_half_edge
+
+        res = Network(root_half_edge, is_linked=True)
+        assert res.get_l_size() == 0 and res.get_u_size() == 1
 
 
-def _create_root_network_edge():
-    # Create the zero-pole of the network
-    root_half_edge = HalfEdge()
-    root_half_edge.next = root_half_edge
-    root_half_edge.prior = root_half_edge
-    root_half_edge.node_nr = next(counter)
-
-    # Creates the inf-pole
-    root_half_edge_opposite = HalfEdge()
-    root_half_edge_opposite.next = root_half_edge_opposite
-    root_half_edge_opposite.prior = root_half_edge_opposite
-    root_half_edge_opposite.node_nr = next(counter)
-
-    # Link the poles
-    root_half_edge.opposite = root_half_edge_opposite
-    root_half_edge_opposite.opposite = root_half_edge
-
-    return root_half_edge
-
-
-def bij_u_atom_to_network(decomp):
-    vertices_list = []
-    edges_list = []
-    root_half_edge = _create_root_network_edge()
-    # The root edge is part from the edges list.
-    edges_list.append(root_half_edge)
-    result = NetworkClass(vertices_list, edges_list, root_half_edge)
-    assert (decomp.get_u_size() == result.get_u_size())
-    assert (decomp.get_l_size() == result.get_l_size())
-    return result
+        return res
 
 
 def bij_s_decomp_to_network(decomp):
@@ -54,6 +48,7 @@ def bij_s_decomp_to_network(decomp):
     result = NetworkMergeInSeries().merge_networks_in_series(network, network_for_plugging)
 
     # Check the properties
+    print("%s %s" % (decomp.get_l_size(), result.get_l_size()))
     print("%s %s" % (decomp.get_u_size(), result.get_u_size()))
     assert (decomp.get_u_size() == result.get_u_size())
     assert (decomp.get_l_size() == result.get_l_size())
@@ -65,7 +60,7 @@ def bij_p_decomp1_to_network(decomp):
     # get the parallel composition of the networks
     result = bij_p_decomp2_to_network(decomp.second)
     # add link between the poles
-    result.edges_list.append(result.root_half_edge)
+    #result.edges_list.append(result.root_half_edge)
     assert (decomp.get_u_size() == result.get_u_size())
     assert (decomp.get_l_size() == result.get_l_size())
     return result
@@ -75,7 +70,7 @@ def bij_p_decomp2_to_network(decomp):
     # decomp has the structure: [set of networks]
     networks = decomp.elems
 
-    # Merge the netwowrks in parallel
+    # Merge the networks in parallel
     result = networks[0]
     for i in range(1, len(networks)):
         result = NetworkMergeInParallel().merge_networks_in_parallel(result, networks[i])
@@ -86,14 +81,13 @@ def bij_p_decomp2_to_network(decomp):
     return result
 
 
-def bij_g_3_arrow_to_network(decomp):
-    three_connected_rooted_planar_graph = decomp
+def bij_g_3_arrow_to_network(g):
     # Extract the components from the three connected rooted planar graph
-    vertices_list = list(three_connected_rooted_planar_graph.vertices_list)
-    edges_list = list(three_connected_rooted_planar_graph.edges_list)
-    root_half_edge = three_connected_rooted_planar_graph.root_half_edge
+    #vertices_list = list(three_connected_rooted_planar_graph.vertices_list)
+    #edges_list = list(three_connected_rooted_planar_graph.edges_list)
+    link_edge = g.get_half_edge()
     # Create and return the network.
-    return NetworkClass(vertices_list, edges_list, root_half_edge)
+    return Network(link_edge, is_linked=True)
 
 
 def network_grammar():
@@ -107,7 +101,6 @@ def network_grammar():
     G_3_arrow = AliasSampler('G_3_arrow')
     G_3_arrow_dx = AliasSampler('G_3_arrow_dx')
     G_3_arrow_dy = AliasSampler('G_3_arrow_dy')
-    Link = AliasSampler('Link')
     D = AliasSampler('D')
     D_dx = AliasSampler('D_dx')
     S = AliasSampler('S')
@@ -125,13 +118,12 @@ def network_grammar():
 
         # networks
 
-        'Link': Bij(U(), bij_u_atom_to_network),  # introduce this just for readability
+        'D': U() + S + P + H,
 
-        'D': Link + S + P + H,
+        #'S': Bij((U() + P + H) * L() * D, bij_s_decomp_to_network),
+        'S': Bij( U()*L()*U(), bij_s_decomp_to_network),
 
-        'S': Bij((Link + P + H) * L() * D, bij_s_decomp_to_network),
-
-        'P': Bij((Link * SetSampler(1, S + H)), bij_p_decomp1_to_network)
+        'P': Bij((U() * SetSampler(1, S + H)), bij_p_decomp1_to_network)
              + Bij(SetSampler(2, S + H), bij_p_decomp2_to_network),
 
         'H': Bij(USubsSampler(G_3_arrow, D), bij_g_3_arrow_to_network),
@@ -148,6 +140,8 @@ def network_grammar():
 
     })
 
+    grammar.set_builder(['D', 'S', 'P', 'H', 'D_dx', 'S_dx', 'P_dx', 'H_dx'], NetworkBuilder())
+
     return grammar
 
 
@@ -160,7 +154,7 @@ if __name__ == '__main__':
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
 
-    sampled_class = 'P'
+    sampled_class = 'S'
 
     g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
 

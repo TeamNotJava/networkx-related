@@ -16,24 +16,26 @@
     Merges two networks in parallel manner.
 """
 
+from planar_graph_sampler.combinatorial_classes.network import Network
+
 
 class NetworkMergeInParallel:
 
     def merge_networks_in_parallel(self, network, network_for_plugging):
-        '''
+        """
         Merges the network for plugging into network in parallel which means their respective inf-poles and
         0-poles coincide.
 
         :param network: first network which will result of the merge operation
         :param network_for_plugging: second network which is plugged in the first one
-        '''
+        """
 
         # Extract the poles from both networks
-        first_net_zero_pole_edge = network.root_half_edge
-        first_net_inf_pole_edge = first_net_zero_pole_edge.opposite
+        first_net_zero_pole_edge = network.get_zero_pole()
+        first_net_inf_pole_edge = network.get_inf_pole()
 
-        second_net_zero_pole_edge = network_for_plugging.root_half_edge
-        second_net_inf_pole_edge = second_net_zero_pole_edge.opposite
+        second_net_zero_pole_edge = network_for_plugging.get_zero_pole()
+        second_net_inf_pole_edge = network_for_plugging.get_inf_pole()
 
         # Merge their 0-poles
         first_net_zero_pole_prior = first_net_zero_pole_edge.prior
@@ -66,9 +68,9 @@ class NetworkMergeInParallel:
             half_edge_walker = half_edge_walker.next
 
         # Add the vertices list from the second network into the first one
-        network.vertices_list += network_for_plugging.vertices_list
+        # network.vertices_list += network_for_plugging.vertices_list
 
         # Add the edges from the second network into the first one
-        network.edges_list += network_for_plugging.edges_list
+        # network.edges_list += network_for_plugging.edges_list
 
         return network

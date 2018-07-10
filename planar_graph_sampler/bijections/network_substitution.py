@@ -19,14 +19,14 @@
 
 class EdgeByNetworkSubstitution:
 
-    def substitute_edge_by_network(self, tree_connected_graph, half_edge_for_sub, network):
-        '''
+    def substitute_edge_by_network(self, half_edge_for_sub, network):
+        """
         Substitute the edge from the tree connected graph with the whole network given as an argument.
 
         :param tree_connected_graph: target tree connected graph where the network will be plugged in
         :param half_edge_for_sub: the half edge which corresponding full edge have to be changed
         :param network : the network for plugging in
-        '''
+        """
 
         # Extract the opposite half edge from the tree connected graph.
         half_edge_for_sub_opp = half_edge_for_sub.opposite
@@ -77,25 +77,25 @@ class EdgeByNetworkSubstitution:
 
         # Add the vertices from the network to the tree connected graph vertex list
         # The poles are not part from the vertices list, therefore we don't have to exclude them.
-        tree_connected_graph.vertices_list += network.vertices_list
+        #tree_connected_graph.vertices_list += network.vertices_list
 
         # Add the edges from the network to the edges list from the tree connected graph.
-        result_edges_set = set()
+        #result_edges_set = set()
         # Add the edges from the tree connected graph and the network
-        result_edges_set.update(tree_connected_graph.edges_list)
-        result_edges_set.update(network.edges_list)
+        #result_edges_set.update(tree_connected_graph.edges_list)
+        #result_edges_set.update(network.edges_list)
 
         # Exclude all possible half edges from the tree and network to prevent both half edges that share and edge to be
         # in the set
-        for edge_for_removing in [net_root_half_edge, net_root_half_edge.opposite, net_root_half_edge_next,
-                                  net_root_half_edge_opp_next, net_root_half_edge_next.opposite,
-                                  net_root_half_edge_opp_next.opposite, half_edge_for_sub, half_edge_for_sub_opp]:
-            if edge_for_removing in result_edges_set:
-                result_edges_set.remove(edge_for_removing)
+        #for edge_for_removing in [net_root_half_edge, net_root_half_edge.opposite, net_root_half_edge_next,
+        #                          net_root_half_edge_opp_next, net_root_half_edge_next.opposite,
+        #                          net_root_half_edge_opp_next.opposite, half_edge_for_sub, half_edge_for_sub_opp]:
+        #    if edge_for_removing in result_edges_set:
+        #        result_edges_set.remove(edge_for_removing)
 
         # Add only the edges from one side
-        result_edges_set.update([half_edge_for_sub, half_edge_for_sub_opp])
+        #result_edges_set.update([half_edge_for_sub, half_edge_for_sub_opp])
 
         # Reinitialize the list of the edges from the tree_connected_graph
-        tree_connected_graph.edges_list.clear()
-        tree_connected_graph.edges_list += result_edges_set
+        #tree_connected_graph.edges_list.clear()
+        #tree_connected_graph.edges_list += result_edges_set

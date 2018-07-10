@@ -16,16 +16,18 @@
 """
 
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
+from planar_graph_sampler.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 
 def primal_map(dissection):
-    """Used in the grammar
+    """
+    Used in the grammar
 
     :param dissection:
+    :return:
     """
-    # todo what else needs to be done here?
-    # petrov: As I have understood the bijection, I think we have implemented everything.
-    return PrimalMap().primal_map_bijection(dissection.get_root())
+    half_edge = PrimalMap().primal_map_bijection(dissection.get_half_edge())
+    return EdgeRootedThreeConnectedPlanarGraph(half_edge)
 
 
 class PrimalMap:

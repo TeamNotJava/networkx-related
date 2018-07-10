@@ -37,7 +37,7 @@ class BinaryTree(ClosureHalfEdge):
     def add_left_child(self, other):
         """
         Adds left child to the root.
-        Only works if the tree does not have two children yet.
+        Only works if the tree does not have two children yet and the child root has the correct color.
         :param other:
         :return:
         """
@@ -62,7 +62,7 @@ class BinaryTree(ClosureHalfEdge):
     def add_right_child(self, other):
         """
         Adds right child to the root.
-        Only works if the tree does not have two children yet.
+        Only works if the tree does not have two children yet and the child root has the correct color.
         :param other:
         :return:
         """

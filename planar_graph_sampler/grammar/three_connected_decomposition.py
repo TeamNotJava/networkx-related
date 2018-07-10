@@ -4,24 +4,7 @@ from framework.evaluation_oracle import EvaluationOracle
 
 from planar_graph_sampler.grammar.irreducible_dissection_decomposition import irreducible_dissection_grammar
 from planar_graph_sampler.bijections.primal_map import primal_map
-from planar_graph_sampler.bijections.whitney_3map_to_3graph import whitney
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
-
-
-def bij_primal(decomp):
-    return primal_map(decomp)
-
-
-def bij_primal_dx(decomp):
-    return primal_map(decomp)
-
-
-def bij_whitney(decomp):
-    return whitney(decomp)
-
-
-def bij_whitney_dx(decomp):
-    return whitney(decomp)
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
 
 def three_connected_graph_grammar():
@@ -47,16 +30,13 @@ def three_connected_graph_grammar():
 
     grammar.add_rules({
 
-        'M_3_arrow': Bij(J_a, bij_primal),
+        'M_3_arrow': Bij(J_a, primal_map),
 
-        'M_3_arrow_dx': Bij(J_a_dx, bij_primal_dx),
+        'M_3_arrow_dx': Bij(J_a_dx, primal_map),
 
-        'G_3_arrow': Trans(M_3_arrow, bij_whitney,
+        'G_3_arrow': Trans(M_3_arrow, eval_transform=lambda evl, x, y: 0.5 * evl),  # see 4.1.9.
 
-                           eval_transform=lambda evl, x, y: 0.5 * evl),  # see 4.1.9.
-
-        'G_3_arrow_dx': Trans(M_3_arrow_dx, bij_whitney_dx,
-                              eval_transform=lambda evl, x, y: 0.5 * evl),
+        'G_3_arrow_dx': Trans(M_3_arrow_dx, eval_transform=lambda evl, x, y: 0.5 * evl),
 
         'G_3_arrow_dy': DyFromDx(G_3_arrow_dx, alpha_u_l=3)  # alpha_u_l = 3, see 5.3.3.
 
@@ -74,9 +54,13 @@ if __name__ == "__main__":
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    sampled_class = 'G_3_arrow'
+    sampled_class = 'G_3_arrow_dy'
 
     g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+    assert g.is_planar()
+
+    print(g.number_of_nodes())
+    print(g.number_of_edges())
 
     import matplotlib.pyplot as plt
     g.plot()
