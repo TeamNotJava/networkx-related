@@ -172,8 +172,8 @@ class HalfEdge(CombinatorialClass):
         edge_list = self.get_all_half_edges()
         nodes = set()
         for edge in edge_list:
-            if edge.node_nr not in nodes:
-                nodes.add(edge.node_nr)
+            #if edge.node_nr not in nodes:
+            nodes.add(edge.node_nr)
         return len(nodes)
 
     def get_number_of_edges(self):

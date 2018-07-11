@@ -20,6 +20,13 @@ class IrreducibleDissection(HalfEdgeGraph):
         assert half_edge.color is 'black'
         super().__init__(half_edge)
 
+    def is_consistent(self):
+        super_ok = super().is_consistent()
+        root_is_black = self.half_edge.color is 'black'
+        root_is_hex = self.half_edge.is_hexagonal
+        twelve_hex_he = len([he for he in self.half_edge.get_all_half_edges() if he.is_hexagonal]) == 12
+        return all([super_ok, root_is_black, root_is_hex, twelve_hex_he])
+
     def get_hexagonal_edges(self):
         """
         Gets the three half-edges on the hexagonal boundary incident to a black node and point in ccw direction.
@@ -123,10 +130,10 @@ class IrreducibleDissection(HalfEdgeGraph):
         # Include the leaves as well.
         G = super().to_networkx_graph(include_unpaired=False)
         for v in G:
-            if nodes[v][0].is_hexagonal:
+            if any([he.is_hexagonal for he in nodes[v]]):
                 G.nodes[v]['color'] = '#e8f442'
             else:
-                G.nodes[v]['color'] = '#eeeeee'
+                G.nodes[v]['color'] = '#aaaaaa'
             if nodes[v][0].color is 'black':
                 # Make black nodes darker.
                 G.nodes[v]['color'] = color_scale(G.nodes[v]['color'], 0.5)

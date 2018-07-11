@@ -82,12 +82,10 @@ if __name__ == "__main__":
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    sampled_class = 'J_a_dx'
+    sampled_class = 'I_dx'
 
     diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
 
-    assert diss.half_edge.color is 'black'
-    assert diss.half_edge.is_hexagonal
     assert diss.is_consistent()
 
     print()
