@@ -15,7 +15,8 @@ class EdgeRootedThreeConnectedPlanarGraph(HalfEdgeGraph):
     def is_consistent(self):
         super_ok = super().is_consistent()
         is_planar = self.is_planar()
-        return super_ok and is_planar
+        is_three_connected = self.is_connected(3)
+        return all([super_ok, is_planar, is_three_connected])
 
     def get_u_size(self):
         # Root edge does not count.

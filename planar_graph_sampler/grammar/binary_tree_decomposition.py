@@ -132,7 +132,7 @@ if __name__ == '__main__':
     print("Needed oracle entries:")
     [print(query) for query in sorted(grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
 
-    tree = grammar.sample('K', symbolic_x, symbolic_y)
+    tree = grammar.sample('K_dy', symbolic_x, symbolic_y)
 
     assert tree.is_consistent()
 

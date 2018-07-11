@@ -126,7 +126,8 @@ class HalfEdgeGraph(CombinatorialClass):
         :param k: default 1
         :return: True iff the graph is k-connected.
         """
-        pass #TODO
+        connectivity_dict = nx.k_components(self.to_networkx_graph())
+        return len(connectivity_dict[k][0]) == self.number_of_nodes()
 
     def to_networkx_graph(self, include_unpaired=False):
         """

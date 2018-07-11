@@ -62,10 +62,8 @@ if __name__ == "__main__":
     sampled_class = 'G_3_arrow_dx'
 
     g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+    print(g)
     assert g.is_consistent()
-
-    print(g.number_of_nodes())
-    print(g.number_of_edges())
 
     import matplotlib.pyplot as plt
     g.plot()

@@ -26,8 +26,9 @@ class Network(HalfEdgeGraph):
         self.u_size = u_size
 
     def is_consistent(self):
-        return super(Network, self).is_consistent()
-        # TODO
+        super_ok = super().is_consistent()
+        is_two_connected = self.is_connected(2)
+        return all([super_ok, is_two_connected])
 
     # returns true if this is the link graph (u atom)
     def is_link_graph(self):

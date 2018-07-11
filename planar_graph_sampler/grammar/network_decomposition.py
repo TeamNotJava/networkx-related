@@ -175,8 +175,8 @@ if __name__ == '__main__':
 
     #while True:
     g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-
-    assert g.is_planar()
+    print(g)
+    assert g.is_consistent()
 
     import matplotlib.pyplot as plt
 
