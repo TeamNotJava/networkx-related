@@ -232,14 +232,47 @@ class Closure:
 
     # Check if the connections between the edges are correct
     def ___test_connections_between_half_edges(self, init_half_edge):
-        # edge_list = self.list_half_edges(init_half_edge, [])
         edge_list = init_half_edge.list_half_edges([])
-
+        node_dict = init_half_edge.get_node_list()
+        hex_half_edge = None
+        num_hex_half_edges = 0
         for edge in edge_list:
+            if edge.is_hexagonal:
+                num_hex_half_edges += 1
+            if hex_half_edge is None and edge.is_hexagonal and edge.prior.is_hexagonal:
+                hex_half_edge = edge
             assert (edge is edge.next.prior)
             assert (edge is edge.prior.next)
             assert (edge is edge.opposite.opposite)
             assert (edge.opposite is not None)
+
+        assert (num_hex_half_edges == 12)
+
+        # Test if the outer face is a hexagon
+        curr_half_edge = hex_half_edge
+        assert(curr_half_edge.is_hexagonal)
+        hex_edges = 0
+        while True:
+            curr_half_edge = curr_half_edge.opposite
+            assert (curr_half_edge.is_hexagonal)
+            if curr_half_edge == hex_half_edge:
+                break
+            curr_half_edge = curr_half_edge.next
+            assert (curr_half_edge.is_hexagonal)
+            if curr_half_edge == hex_half_edge:
+                break
+            hex_edges += 1
+        assert(hex_edges == 5)
+
+        # Test if every node has at most two hexagonal edges
+        for node in node_dict:
+            half_edges = node_dict[node]
+            num_hex = 0
+            for e in half_edges:
+                if e.is_hexagonal:
+                    num_hex += 1
+            assert (num_hex < 3)
+        print("Connections are okay.")
 
     # Checks if half edges at every node are planar
     def ___test_planarity_of_embedding(self, init_half_edge):
