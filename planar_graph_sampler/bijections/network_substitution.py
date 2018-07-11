@@ -32,7 +32,7 @@ class EdgeByNetworkSubstitution:
         half_edge_for_sub_opp = half_edge_for_sub.opposite
 
         # Get the needed edges for manipulation from the network.
-        net_root_half_edge = network.root_half_edge
+        net_root_half_edge = network.get_zero_pole()
         net_root_half_edge_next = net_root_half_edge.next
         net_root_half_edge_prior = net_root_half_edge.prior
         net_root_half_edge_opp_next = net_root_half_edge.opposite.next

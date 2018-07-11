@@ -5,13 +5,6 @@ from planar_graph_sampler.grammar.network_decomposition import network_grammar
 from planar_graph_sampler.combinatorial_classes import UDerivedClass
 
 
-def add_root_edge(decomp):
-    # return decomp.second
-    if isinstance(decomp, ZeroAtomClass):
-        return UAtomClass()
-    return decomp
-
-
 def forget_direction_of_root_edge(decomp):
     return UDerivedClass(decomp, None)
 
@@ -30,34 +23,42 @@ def two_connected_graph_grammar():
     F_dx = AliasSampler('F_dx')
     G_2_dy = AliasSampler('G_2_dy')
     G_2_dy_dx = AliasSampler('G_2_dy_dx')
+    G_2_dx_dy = AliasSampler('G_2_dx_dy')
     G_2_arrow = AliasSampler('G_2_arrow')
     G_2_arrow_dx = AliasSampler('G_2_arrow_dx')
     Trans = TransformationSampler
+    DxFromDy = LDerFromUDerSampler
 
     grammar = DecompositionGrammar()
     grammar.add_rules(network_grammar().get_rules())
 
     grammar.add_rules({
 
-        # 2 connected planar graphs
+        # two connected
 
-        'G_2_arrow': Trans(Z + D, add_root_edge),
+        'G_2_arrow': Trans(Z + D, id,
+                           eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),  # see 5.5
 
-        'F': L * L * G_2_arrow,
+        'F': L**2 * G_2_arrow,
 
-        'G_2_dy': Trans(F, forget_direction_of_root_edge, 'G_2_dy'),
+        'G_2_dy': Trans(F, id,
+                        eval_transform=lambda evl, x, y: 0.5 * evl),
 
-        'G_2_dx': LDerFromUDerSampler(G_2_dy, 2.0),  # see p. 26
+        'G_2_dx': DxFromDy(G_2_dy, alpha_l_u=2.0),  # see p. 26
 
-        # l-derived 2 connected planar graphs
+        # l-derived two connected
 
-        'G_2_arrow_dx': Trans(D_dx, add_root_edge),
+        'G_2_arrow_dx': Trans(D_dx, id,
+                              eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),
 
-        'F_dx': L * L * G_2_arrow_dx + (L + L) * G_2_arrow,  # notice that 2 * L = L + L
+        'F_dx': L**2 * G_2_arrow_dx + 2 * L * G_2_arrow,
 
-        'G_2_dy_dx': Trans(F_dx, forget_direction_of_root_edge, 'G_2_dy_dx'),
+        'G_2_dy_dx': Trans(F_dx, id,
+                           eval_transform=lambda evl, x, y: 0.5 * evl),
 
-        'G_2_dx_dx': LDerFromUDerSampler(G_2_dy_dx, 1.0),  # see 5.5
+        'G_2_dx_dy': G_2_dy_dx,
+
+        'G_2_dx_dx': DxFromDy(G_2_dx_dy, alpha_l_u=1.0)  # see 5.5
 
     })
 

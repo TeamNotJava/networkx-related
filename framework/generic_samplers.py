@@ -11,9 +11,11 @@ class BoltzmannSampler:
 
     Attributes:
         oracle  The oracle to be used by all instantiations of this class.
+        debug_mode Will perform additional (possibly time consuming) checks when set to True.
     """
 
     oracle = None
+    debug_mode = False
 
     def __init__(self):
         # Samplers are always initialized with the default builder.
@@ -399,7 +401,7 @@ class USubsSampler(BinarySampler):
 
     def sample(self, x, y):
         gamma = self.lhs.sample(x, self.rhs.oracle_query_string(x, y))
-        gamma.replace_u_atoms(self.rhs.sample, x, y)
+        gamma.replace_u_atoms(self.rhs, x, y)
         return gamma
 
     def sample_dummy(self, x, y):
@@ -558,6 +560,24 @@ class BijectionSampler(TransformationSampler):
         :param target_class_label: Optional label of the sampled class.
         """
         super(BijectionSampler, self).__init__(sampler, f, None, target_class_label)
+
+    def sample(self, x, y):
+        # sample from the underlying class and apply the bijection
+        if BoltzmannSampler.debug_mode:
+            # l_size/u_size may be not implemented on some classes.
+            try:
+                gamma = self.sampler.sample(x, y)
+                l_size_before = gamma.get_l_size()
+                u_size_before = gamma.get_u_size()
+                gamma = self.f(gamma)
+                l_size_after = gamma.get_l_size()
+                u_size_after = gamma.get_u_size()
+                assert l_size_before == l_size_after and u_size_before == u_size_after
+                return gamma
+            except NotImplementedError:
+                return self.f(self.sampler.sample(x, y))
+        else:
+            return self.f(self.sampler.sample(x, y))
 
     def get_eval(self, x, y):
         # since the target class is isomorphic to the underlying class, the evaluation is also the same

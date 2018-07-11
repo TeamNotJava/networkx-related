@@ -277,7 +277,7 @@ class Closure:
             Uniform random sampling of planar graphs in linear time
         """
 
-        init_half_edge = binary_tree
+        init_half_edge = binary_tree.get_half_edge()
         # This edge is hexagonal and points in ccw direction
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
         return IrreducibleDissection(init_half_edge)

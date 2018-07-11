@@ -210,9 +210,9 @@ if __name__ == "__main__":
     # [print(rule) for rule in grammar.get_recursive_rules()]
     # print()
 
-    # print("Needed oracle queries:")
-    # [print(query) for query in sorted(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))]
-    # print()
+    print("Needed oracle queries:")
+    [print(query) for query in sorted(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))]
+    print()
 
     samples = 100000
 

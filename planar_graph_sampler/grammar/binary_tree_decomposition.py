@@ -121,6 +121,8 @@ def binary_tree_grammar():
 
 if __name__ == '__main__':
     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSampler.debug_mode = True
+
     grammar = binary_tree_grammar()
     grammar.init()
 
@@ -132,11 +134,10 @@ if __name__ == '__main__':
 
     tree = grammar.sample('K', symbolic_x, symbolic_y)
 
-    assert tree.is_tree()
+    assert tree.is_consistent()
 
     print("Black nodes: {}".format(tree.get_l_size()))
     print("Total leaves: {}".format(tree.get_u_size()))
-    print("Root Node {}".format(tree))
 
     import matplotlib.pyplot as plt
 

@@ -15,6 +15,7 @@
     Merges two networks in a series.
 """
 from planar_graph_sampler.combinatorial_classes.network import Network
+from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 
 
 class NetworkMergeInSeries:
@@ -28,6 +29,9 @@ class NetworkMergeInSeries:
         :param network_for_plugging: second network which will be plugged in the first one
         """
 
+        new_l_size = network.get_l_size() + network_for_plugging.get_l_size() + 1
+        new_u_size = network.get_u_size() + network_for_plugging.get_u_size()
+
         # Extract the poles from both networks
         first_net_zero_pole_edge = network.get_zero_pole()
         first_net_inf_pole_edge = network.get_inf_pole()
@@ -35,38 +39,54 @@ class NetworkMergeInSeries:
         second_net_zero_pole_edge = network_for_plugging.get_zero_pole()
         second_net_inf_pole_edge = network_for_plugging.get_inf_pole()
 
-        # Change the poles in the result network so that now the inf-pole from the second network will be inf-pole in the result one
-        first_net_zero_pole_edge.opposite = second_net_inf_pole_edge
-        second_net_inf_pole_edge.opposite = first_net_zero_pole_edge
+        # Create a new half edges for connecting the poles of the network. The edge will not be part from the edges list
+        new_root_half_edge = HalfEdge()
+        # TODO check if this is 'insert_after'
+        new_root_half_edge.node_nr = first_net_zero_pole_edge.node_nr
+        new_root_half_edge.next = first_net_zero_pole_edge.next
+        new_root_half_edge.prior = first_net_zero_pole_edge
+        new_root_half_edge.next.prior = new_root_half_edge
+        first_net_zero_pole_edge.next = new_root_half_edge
+        #new_root_half_edge = first_net_zero_pole_edge.insert_after()
 
+        new_root_opposite = HalfEdge()
+        new_root_opposite.node_nr = second_net_inf_pole_edge.node_nr
+        new_root_opposite.next = second_net_inf_pole_edge.next
+        new_root_opposite.prior = second_net_inf_pole_edge
+        new_root_opposite.next.prior = new_root_opposite
+        second_net_inf_pole_edge.next = new_root_opposite
+
+        new_root_half_edge.opposite = new_root_opposite
+        new_root_opposite.opposite = new_root_half_edge
+
+        # Set the new root edge in the network.
+        #network.root_half_edge = new_root_half_edge
 
         # Get the half edges from both networks for merging
-        first_net_inf_pole_next = first_net_inf_pole_edge.next
         first_net_inf_pole_prior = first_net_inf_pole_edge.prior
-
-        second_net_zero_pole_edge_next = second_net_zero_pole_edge.next
         second_net_zero_pole_edge_prior = second_net_zero_pole_edge.prior
 
         # Merge the both networks so that the inf-pole from the first network is identified with the zero-pole from the second one
-        first_net_inf_pole_next.prior = second_net_zero_pole_edge_prior
-        second_net_zero_pole_edge_prior.next = first_net_inf_pole_next
+        # Handling different while merging the two networks.
+        first_net_inf_pole_edge.prior = second_net_zero_pole_edge_prior
+        second_net_zero_pole_edge_prior.next = first_net_inf_pole_edge
 
-        first_net_inf_pole_prior.next = second_net_zero_pole_edge_next
-        second_net_zero_pole_edge_next.prior = first_net_inf_pole_prior
+        first_net_inf_pole_prior.next = second_net_zero_pole_edge
+        second_net_zero_pole_edge.prior = first_net_inf_pole_prior
 
         # Update the node numbers in the second network zero-pole edges
-        half_edge_walker = second_net_zero_pole_edge_next
+        half_edge_walker = first_net_inf_pole_prior.next
         while half_edge_walker != first_net_inf_pole_prior:
-            half_edge_walker.node_nr = first_net_inf_pole_next.node_nr
+            half_edge_walker.node_nr = first_net_inf_pole_edge.node_nr
             half_edge_walker = half_edge_walker.next
 
         # Add the vertices list from the second network into the first one
         #network.vertices_list += network_for_plugging.vertices_list
-        # Add the previous inf-pole to the vertices list since now the inf-pole is taken from the second network
         #network.vertices_list.append(first_net_inf_pole_edge)
 
         # Add the edges from the second network into the first one
+
         #network.edges_list += network_for_plugging.edges_list
 
         # After a serial merge the poles are never linked.
-        return Network(first_net_zero_pole_edge, is_linked=False)
+        return Network(new_root_half_edge, is_linked=False, l_size=new_l_size, u_size=new_u_size)

@@ -77,16 +77,18 @@ if __name__ == "__main__":
     grammar.init()
 
     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSampler.debug_mode = True
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    sampled_class = 'I'
+    sampled_class = 'J_a_dx'
 
     diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
 
     assert diss.half_edge.color is 'black'
     assert diss.half_edge.is_hexagonal
+    assert diss.is_consistent()
 
     print()
     print(diss.half_edge.node_nr)

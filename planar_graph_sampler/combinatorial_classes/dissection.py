@@ -115,3 +115,19 @@ class IrreducibleDissection(HalfEdgeGraph):
 
         # A path has not been found, therefore the dissection is irreducible and we return True.
         return True
+
+    def to_networkx_graph(self, include_unpaired=None):
+        from planar_graph_sampler.combinatorial_classes.half_edge_graph import color_scale
+        # Get dict of nodes.
+        nodes = self.half_edge.get_node_list()
+        # Include the leaves as well.
+        G = super().to_networkx_graph(include_unpaired=False)
+        for v in G:
+            if nodes[v][0].is_hexagonal:
+                G.nodes[v]['color'] = '#e8f442'
+            else:
+                G.nodes[v]['color'] = '#eeeeee'
+            if nodes[v][0].color is 'black':
+                # Make black nodes darker.
+                G.nodes[v]['color'] = color_scale(G.nodes[v]['color'], 0.5)
+        return G

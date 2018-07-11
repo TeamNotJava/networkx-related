@@ -1,97 +1,111 @@
-from framework.class_builder import CombinatorialClassBuilder
-from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
+from framework.generic_samplers import *
 from framework.utils import Counter
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
-from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
-from planar_graph_sampler.combinatorial_classes.network import Network
+from planar_graph_sampler.bijections.networks import merge_networks_in_parallel, merge_networks_in_series
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
-from planar_graph_sampler.bijections.network_merge_in_series import NetworkMergeInSeries
-from planar_graph_sampler.bijections.network_paralel_merge import NetworkMergeInParallel
+from planar_graph_sampler.combinatorial_classes.network import Network
+from planar_graph_sampler.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n1000
+from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 
 counter = Counter()
 
+
 class NetworkBuilder(DefaultBuilder):
+    """Builds u-atoms of networks."""
 
     def u_atom(self):
         """
-        Returns the trivial link network consisting of the poles and an edge between them.
-        :return:
+
+        :return: The trivial link network consisting of the poles and an edge between them.
         """
-        # Create the zero-pole of the network
+        # Create the zero-pole of the network.
         root_half_edge = HalfEdge(self_consistent=True)
         root_half_edge.node_nr = next(counter)
 
-        # Creates the inf-pole
+        # Creates the inf-pole.
         root_half_edge_opposite = HalfEdge(self_consistent=True)
         root_half_edge_opposite.node_nr = next(counter)
 
-        # Link the poles
+        # Link the poles.
         root_half_edge.opposite = root_half_edge_opposite
         root_half_edge_opposite.opposite = root_half_edge
 
-        res = Network(root_half_edge, is_linked=True)
-        assert res.get_l_size() == 0 and res.get_u_size() == 1
-
-
+        res = Network(root_half_edge, is_linked=True, l_size=0, u_size=1)
         return res
 
 
-def bij_s_decomp_to_network(decomp):
-    # decomp has this structure: ((first_network, l_atom), second_network)
-    network = decomp.first.first
-    network_for_plugging = decomp.second
+class SNetworkBuilder(NetworkBuilder):
+    """Builds S-networks."""
 
-    # Use the serial merge bijection to merge the networks
-    result = NetworkMergeInSeries().merge_networks_in_series(network, network_for_plugging)
+    def product(self, lhs, rhs):
+        """
+        Merges the given networks in series.
 
-    # Check the properties
-    print("%s %s" % (decomp.get_l_size(), result.get_l_size()))
-    print("%s %s" % (decomp.get_u_size(), result.get_u_size()))
-    assert (decomp.get_u_size() == result.get_u_size())
-    assert (decomp.get_l_size() == result.get_l_size())
-    return result
-
-
-def bij_p_decomp1_to_network(decomp):
-    # decomp has the structure: (link_graph, [set of networks])
-    # get the parallel composition of the networks
-    result = bij_p_decomp2_to_network(decomp.second)
-    # add link between the poles
-    #result.edges_list.append(result.root_half_edge)
-    assert (decomp.get_u_size() == result.get_u_size())
-    assert (decomp.get_l_size() == result.get_l_size())
-    return result
+        :param lhs:
+        :param rhs:
+        :return:
+        """
+        if isinstance(lhs, Network) and isinstance(rhs, Network):
+            return merge_networks_in_series(lhs, rhs)
+        if isinstance(lhs, Network):
+            # rhs is an l-atom.
+            assert isinstance(rhs, LAtomClass)
+            return lhs
+        # Other case is symmetric.
+        return self.product(rhs, lhs)
 
 
-def bij_p_decomp2_to_network(decomp):
-    # decomp has the structure: [set of networks]
-    networks = decomp.elems
+class PNetworkBuilder(NetworkBuilder):
+    """Builds P-networks."""
 
-    # Merge the networks in parallel
-    result = networks[0]
-    for i in range(1, len(networks)):
-        result = NetworkMergeInParallel().merge_networks_in_parallel(result, networks[i])
+    def set(self, networks):
+        """
+        Merges a set of networks in parallel.
 
-    # Check the properties
-    assert (decomp.get_u_size() == result.get_u_size())
-    assert (decomp.get_l_size() == result.get_l_size())
-    return result
+        :param networks: Networks to be merged.
+        :return: The network resulting from the parallel merge operation or None if no networks were given.
+        """
+        if len(networks) == 0:
+            return None
+        res = networks[0]
+        for i in range(1, len(networks)):
+            res = merge_networks_in_parallel(res, networks[i])
+        return res
+
+    def product(self, n1, n2):
+        """
+        Merges the set {n1, n2} of networks.
+
+        :param n1:
+        :param n2:
+        :return:
+        """
+        if n2 is None:
+            return n1
+        assert isinstance(n1, Network) and isinstance(n2, Network)
+        return self.set([n1, n2])
 
 
-def bij_g_3_arrow_to_network(g):
-    # Extract the components from the three connected rooted planar graph
-    #vertices_list = list(three_connected_rooted_planar_graph.vertices_list)
-    #edges_list = list(three_connected_rooted_planar_graph.edges_list)
-    link_edge = g.get_half_edge()
-    # Create and return the network.
-    return Network(link_edge, is_linked=True)
+def g_3_arrow_to_network(decomp):
+    if isinstance(decomp, ProdClass):
+        network = decomp.first
+        graph = decomp.second
+        graph.replace_random_edge(network)
+        return Network(graph.get_half_edge(), is_linked=False)
+    else:
+        graph = decomp
+        assert isinstance(graph, EdgeRootedThreeConnectedPlanarGraph)
+        link_edge = graph.get_half_edge()
+        # Create and return the network.
+        return Network(link_edge, is_linked=False)
 
 
 def network_grammar():
     """
+    Constructs the grammar for networks.
 
     :return:
     """
@@ -110,6 +124,8 @@ def network_grammar():
     H = AliasSampler('H')
     H_dx = AliasSampler('H_dx')
     Bij = BijectionSampler
+    Set = SetSampler
+    USubs = USubsSampler
 
     grammar = DecompositionGrammar()
     grammar.add_rules(three_connected_graph_grammar().get_rules())
@@ -120,27 +136,27 @@ def network_grammar():
 
         'D': U() + S + P + H,
 
-        #'S': Bij((U() + P + H) * L() * D, bij_s_decomp_to_network),
-        'S': Bij( U()*L()*U(), bij_s_decomp_to_network),
+        'S': (U() + P + H) * L() * D,
 
-        'P': Bij((U() * SetSampler(1, S + H)), bij_p_decomp1_to_network)
-             + Bij(SetSampler(2, S + H), bij_p_decomp2_to_network),
+        'P': U() * Set(1, S + H) + Set(2, S + H),
 
-        'H': Bij(USubsSampler(G_3_arrow, D), bij_g_3_arrow_to_network),
+        'H': Bij(USubs(G_3_arrow, D), g_3_arrow_to_network),
 
         # l-derived networks
 
         'D_dx': S_dx + P_dx + H_dx,
 
-        'S_dx': (P_dx + H_dx) * L() * D + (U() + P + H) * (D + L() + D_dx),  # todo bijection
+        'S_dx': (P_dx + H_dx) * L() * D + (U() + P + H) * (D + L() * D_dx),
 
-        'P_dx': U() * (S_dx + H_dx) * SetSampler(0, S + H) + (S_dx + H_dx) * SetSampler(1, S + H),  # todo bijection
+        'P_dx': U() * (S_dx + H_dx) * Set(0, S + H) + (S_dx + H_dx) * Set(1, S + H),
 
-        'H_dx': USubsSampler(G_3_arrow_dx, D) + D_dx * USubsSampler(G_3_arrow_dy, D_dx),
+        'H_dx': Bij(USubs(G_3_arrow_dx, D) + D_dx * USubs(G_3_arrow_dy, D), g_3_arrow_to_network),
 
     })
 
     grammar.set_builder(['D', 'S', 'P', 'H', 'D_dx', 'S_dx', 'P_dx', 'H_dx'], NetworkBuilder())
+    grammar.set_builder(['P', 'P_dx'], PNetworkBuilder())
+    grammar.set_builder(['S', 'S_dx'], SNetworkBuilder())
 
     return grammar
 
@@ -149,15 +165,20 @@ if __name__ == '__main__':
     grammar = network_grammar()
     grammar.init()
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+    BoltzmannSampler.debug_mode = False
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
 
-    sampled_class = 'S'
+    sampled_class = 'H_dx'
 
+    #while True:
     g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
 
+    assert g.is_planar()
+
     import matplotlib.pyplot as plt
+
     g.plot()
     plt.show()

@@ -15,6 +15,7 @@
 import networkx as nx
 
 from framework.generic_classes import CombinatorialClass
+from framework.utils import Counter
 
 
 class HalfEdge(CombinatorialClass):
@@ -42,7 +43,6 @@ class HalfEdge(CombinatorialClass):
     def get_u_size(self):
         return self.get_number_of_edges()
 
-
     def insert_after(self, new=None):
         """
         Inserts a half that follows this half edge in ccw order.
@@ -57,6 +57,7 @@ class HalfEdge(CombinatorialClass):
         new.prior = self
         new.next = old_next
         old_next.prior = new
+        return new
 
     def insert_before(self, new=None):
         """
@@ -72,6 +73,7 @@ class HalfEdge(CombinatorialClass):
         new.next = self
         new.prior = old_prior
         old_prior.next = new
+        return new
 
     def invert(self):
         """
@@ -144,7 +146,7 @@ class HalfEdge(CombinatorialClass):
 
     def get_all_half_edges(self, edge_set=None, include_opp=True, include_unpaired=True):
         """
-
+        The half-edge itself where this was originally called is guaranteed to be in the result when include_opp is set to False.
         :param edge_set:
         :param include_opp:
         :param include_unpaired:
@@ -179,16 +181,6 @@ class HalfEdge(CombinatorialClass):
         Returns the number of edges (NOT half-edges!) in the graph.
         :return:
         """
-        # TODO implement without altering the list while iteration
-        #edge_list = self.list_half_edges([])
-        #num_edges = 0
-        #for edge in edge_list:
-        #    # Check if half-edge is a 'real' edge.
-        #    if edge.opposite is not None:
-        #        num_edges += 1
-        #        # Don't count twice.
-        #        edge_list.remove(edge.opposite)
-        #return num_edges
         return len(self.get_all_half_edges(include_opp=False, include_unpaired=False))
 
     def get_node_list(self):
@@ -197,7 +189,7 @@ class HalfEdge(CombinatorialClass):
         half-edges belonging to the node number.
         :return:
         """
-        edge_list = self.list_half_edges([])
+        edge_list = self.get_all_half_edges()
         node_list = {}
         for edge in edge_list:
             if edge.node_nr in node_list:
@@ -208,21 +200,23 @@ class HalfEdge(CombinatorialClass):
                 node_list[edge.node_nr] = [edge]
         return node_list
 
-
-
-    def to_networkx_graph(self):
+    def to_networkx_graph(self, include_unpaired=False):
         """
         Transforms a list of planar map half-edged into a networkx graph.
         :return:
         """
-        half_edge_list = self.list_half_edges([])
+        # Get the counter.
+        counter = Counter()
+        # Get all edges (one half-edge per edge).
+        half_edges = self.get_all_half_edges(include_opp=False, include_unpaired=include_unpaired)
 
-        # Remove all unpaired half-edges
-        half_edge_list = [x for x in half_edge_list if not x.opposite is None]
         G = nx.Graph()
-        while len(half_edge_list) > 0:
-            half_edge = half_edge_list.pop()
-            G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
+        while len(half_edges) > 0:
+            half_edge = half_edges.pop()
+            if half_edge.opposite is not None:
+                G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
+            else:
+                G.add_edge(half_edge.node_nr, next(counter))
         return G
 
     def plot(self):
@@ -250,7 +244,7 @@ class ClosureHalfEdge(HalfEdge):
         self.is_hexagonal = False
         # Indicates if the half-edge is an edge added by the complete closure
         self.added_by_comp_clsr = False
-    
+
     def __repr__(self):
         """
         Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)
@@ -292,7 +286,7 @@ class ClosureHalfEdge(HalfEdge):
             if x is 'white':
                 colors.append('#999999')
         nx.draw(G, with_labels=True, node_color=colors)
-    
+
     # Adds the fresh half edge to the closure between the prior and the next half-edge
     def add_to_closure(self, prior_half_edge, next_half_edge, opposite_half_edge):
         self.opposite = opposite_half_edge

@@ -4,6 +4,7 @@ from framework.generic_classes import *
 class CombinatorialClassBuilder:
     """
     Interface for objects that build combinatorial classes.
+    # TODO implement size checking mechanism.
     """
 
     def zero_atom(self):
