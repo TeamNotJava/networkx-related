@@ -1,12 +1,12 @@
 import random as rnd
 
-from framework.generic_classes import CombinatorialClass
 from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 
 
 class IrreducibleDissection(HalfEdgeGraph):
     """
-
+    Represents the class 'I' of irreducible dissections from the paper.
+    It is however also used for rooted and derived dissections (sizes are incorrect then).
     """
 
     def __init__(self, half_edge):
@@ -50,18 +50,20 @@ class IrreducibleDissection(HalfEdgeGraph):
 
     def get_u_size(self):
         """
-        The u-size is the number of faces.
+        The u-size is the number of inner faces.
         :return: Number of faces.
         """
-        # Not really sure if this is correct.
-        return self.number_of_half_edges() / 4
+        return (self.number_of_half_edges() - 6) / 4
 
     def get_l_size(self):
         """
-        The l-size is the number of black vertices.
+        The l-size is the number of black inner vertices.
         :return:
         """
-        raise NotImplementedError
+        node_dict = self.half_edge.get_node_list()
+        black_vertices = len([node_nr for node_nr in node_dict if node_dict[node_nr][0].color is 'black'])
+        # There are always 3 hexagonal outer black vertices.
+        return black_vertices - 3
 
     def is_admissible(self):
         """

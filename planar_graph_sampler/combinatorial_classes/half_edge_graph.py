@@ -94,10 +94,22 @@ class HalfEdgeGraph(CombinatorialClass):
         :param y:
         :return:
         """
-        pass
+        raise NotImplementedError
 
     def replace_l_atoms(self, sampler, x, y):
-        pass
+        raise NotImplementedError
+
+    def __str__(self):
+        repr = ""
+        try:
+            repr += "L-size: {0}\n".format(self.get_l_size())
+        except NotImplementedError:
+            pass
+        try:
+            repr += "U-size: {0}\n".format(self.get_u_size())
+        except NotImplementedError:
+            pass
+        return repr
 
     # Networkx based functionality.
 
@@ -114,7 +126,7 @@ class HalfEdgeGraph(CombinatorialClass):
         :param k: default 1
         :return: True iff the graph is k-connected.
         """
-        pass
+        pass #TODO
 
     def to_networkx_graph(self, include_unpaired=False):
         """
@@ -151,16 +163,16 @@ class HalfEdgeGraph(CombinatorialClass):
 
 def color_scale(hexstr, factor):
     """
-    Scales a hex string by ``scalefactor``. Returns scaled hex string.
+    Scales a hex string by ``factor``. Returns scaled hex string.
 
     To darken the color, use a float value between 0 and 1.
     To brighten the color, use a float value greater than 1.
 
-    >>> colorscale("#DF3C3C", .5)
+    >>> color_scale("#DF3C3C", .5)
     #6F1E1E
-    >>> colorscale("#52D24F", 1.6)
+    >>> color_scale("#52D24F", 1.6)
     #83FF7E
-    >>> colorscale("#4F75D2", 1)
+    >>> color_scale("#4F75D2", 1)
     #4F75D2
     """
 

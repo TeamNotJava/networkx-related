@@ -77,27 +77,16 @@ if __name__ == "__main__":
     grammar.init()
 
     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    BoltzmannSampler.debug_mode = True
+    BoltzmannSampler.debug_mode = False
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    sampled_class = 'I_dx'
+    sampled_class = 'J_a_dx'
 
     diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-
+    print(diss)
     assert diss.is_consistent()
-
-    print()
-    print(diss.half_edge.node_nr)
-    print(diss.half_edge.opposite.node_nr)
-    print(diss.number_of_nodes())
-    print(diss.number_of_edges())
-
-    print(diss.number_of_half_edges())
-    print(len(diss.get_half_edge().get_all_half_edges(include_opp=False, include_unpaired=False)))
-
-    [print(he) for he in diss.get_hexagonal_edges()]
 
     import matplotlib.pyplot as plt
     diss.plot()
