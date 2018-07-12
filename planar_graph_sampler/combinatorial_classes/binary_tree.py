@@ -105,11 +105,11 @@ class BinaryTree(HalfEdgeGraph):
     def get_l_size(self):
         return self.black_nodes_count
 
-    def to_networkx_graph(self, include_unpaired=None):
+    def to_networkx_graph(self, include_unpaired=True):
         # Get dict of nodes.
         nodes = self.half_edge.get_node_list()
         # Include the leaves as well.
-        G = super().to_networkx_graph(include_unpaired=True)
+        G = super().to_networkx_graph(include_unpaired=include_unpaired)
         for v in G:
             if v not in nodes:
                 # v is a leaf.

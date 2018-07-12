@@ -3,6 +3,8 @@ import networkx as nx
 from framework.generic_classes import CombinatorialClass
 from framework.utils import Counter
 
+from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
+
 
 class HalfEdgeGraph(CombinatorialClass):
     """
@@ -17,6 +19,8 @@ class HalfEdgeGraph(CombinatorialClass):
         """
 
         :param half_edge:
+        :type half_edge HalfEdge
+
         """
         self.half_edge = half_edge
 
@@ -111,7 +115,7 @@ class HalfEdgeGraph(CombinatorialClass):
             pass
         return repr
 
-    # Networkx based functionality.
+    # Networkx related functionality.
 
     def is_tree(self):
         return nx.is_tree(self.to_networkx_graph())
@@ -128,6 +132,22 @@ class HalfEdgeGraph(CombinatorialClass):
         """
         connectivity_dict = nx.k_components(self.to_networkx_graph())
         return len(connectivity_dict[k][0]) == self.number_of_nodes()
+
+    def combinatorial_embedding(self, embedding=None):
+        """Format needed by planar graph drawer"""
+        if embedding is None:
+            embedding = {}
+        node_nr = self.half_edge.node_nr
+        if node_nr in embedding:
+            return embedding
+        incident = self.half_edge.incident_half_edges()
+        incident_node_nrs = [he.opposite.node_nr for he in incident if he.opposite is not None]
+        embedding[node_nr] = incident_node_nrs
+        for he in incident:
+            if he.opposite is not None:
+                HalfEdgeGraph(he.opposite).combinatorial_embedding(embedding)
+        return embedding
+
 
     def to_networkx_graph(self, include_unpaired=False):
         """
@@ -148,18 +168,26 @@ class HalfEdgeGraph(CombinatorialClass):
                 G.add_edge(half_edge.node_nr, next(counter))
         return G
 
-    def plot(self):
+    def plot(self, with_labels=True, use_planar_drawer=False):
         """
 
-        :param colors:
+        :param with_labels:
+        :param use_planar_drawer:
         :return:
         """
         G = self.to_networkx_graph()
+        # Generate planar embedding or use default algorithm.
+        pos = None
+        if use_planar_drawer:
+            emb = self.combinatorial_embedding()
+            pos = nx.combinatorial_embedding_to_pos(emb)
+        # Take color attributes on the nodes into account.
         colors = nx.get_node_attributes(G, 'color').values()
+
         if len(colors) == G.number_of_nodes():
-            nx.draw(G, with_labels=True, node_color=list(colors))
+            nx.draw(G, pos=pos, with_labels=with_labels, node_color=list(colors))
         else:
-            nx.draw(G, with_labels=True)
+            nx.draw(G, pos=pos, with_labels=with_labels)
 
 
 def color_scale(hexstr, factor):
