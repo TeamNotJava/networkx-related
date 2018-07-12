@@ -75,6 +75,31 @@ class HalfEdge(CombinatorialClass):
         old_prior.next = new
         return new
 
+    def remove(self):
+        '''
+        Removes the half_edge and and its connections.
+        There is no a half edge which has connection to it after the removal.
+        :return:
+        '''
+        # Connect corresponding next and prior half edges.
+        self.__connect_next_and_prior()
+        # Clear the half edge object.
+        self.clear()
+
+    def __connect_next_and_prior(self):
+        self.next.prior = self.prior
+        self.prior.next = self.next
+
+    def clear(self):
+        '''
+        Clear all the half_edge connections and data from it.
+        :return:
+        '''
+        self.opposite = None
+        self.prior = None
+        self.next = None
+        self.node_nr = -1
+
     def invert(self):
         """
         Inverts order.
