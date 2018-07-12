@@ -20,6 +20,7 @@ from framework.generic_samplers import *
 from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
 from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
 from planar_graph_sampler.grammar.two_connected_decomposition import two_connected_graph_grammar
+from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 from planar_graph_sampler.evaluations_planar_graph import *
 from planar_graph_sampler.grammar.two_connected_decomposition import two_connected_graph_grammar
 from planar_graph_sampler.bijections.block_decomposition import BlockDecomposition
@@ -42,10 +43,10 @@ def ___sample_binary_tree(size):
     if size != 0: 
         while node_num != size:
             number_trials += 1
-            tree = grammar.sample('R_b', symbolic_x, symbolic_y)
+            tree = grammar.sample('K', symbolic_x, symbolic_y)
             node_num = tree.black_nodes_count + tree.white_nodes_count
     else:
-        tree = grammar.sample('R_b', symbolic_x, symbolic_y)
+        tree = grammar.sample('K', symbolic_x, symbolic_y)
         node_num = tree.black_nodes_count + tree.white_nodes_count
 
     end_sampling = timer()
@@ -55,12 +56,36 @@ def ___sample_binary_tree(size):
     
     return data, tree
 
-def ___get_btree_height(btree):
-    pass
-    
 def ___sample_three_connected(size):
-    raise NotImplementedError
+    # Sample three connected edge rooted graphs
+    start_sampling = timer()
+    number_trials = 0
+    if size < 500:
+        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+    else:
+        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
 
+    grammar = three_connected_graph_grammar()
+    grammar.init()
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    node_num = 0
+
+    if size != 0:
+        while node_num != size:
+            number_trials += 1
+            three_connected = grammar.sample('M_3_arrow', symbolic_x, symbolic_y)
+            node_num = three_connected.get_l_size()
+    else:
+        three_connected = grammar.sample('M_3_arrow', symbolic_x, symbolic_y)
+        node_num = three_connected.get_l_size()
+    
+    end_sampling = timer()
+    time_needed = end_sampling - start_sampling
+
+    data = (node_num, number_trials, time_needed)
+    return data, three_connected
+    
 
 def ___sample_two_connected(size):
     start_sampling = timer()
@@ -79,10 +104,10 @@ def ___sample_two_connected(size):
     if size != 0: 
         while node_num != size:
             number_trials += 1
-            two_connectd = grammar.sample('D', symbolic_x, symbolic_y)
+            two_connectd = grammar.sample('G_2_arrow', symbolic_x, symbolic_y)
             node_num = len(two_connectd.vertices_list)
     else:
-        two_connectd = grammar.sample('D', symbolic_x, symbolic_y)
+        two_connectd = grammar.sample('G_2_arrow', symbolic_x, symbolic_y)
         node_num = len(two_connectd.vertices_list)
 
     edge_num = len(two_connectd.edges_list)
@@ -90,9 +115,9 @@ def ___sample_two_connected(size):
     end_sampling = timer()
     time_needed = end_sampling - start_sampling
 
-    data_list = [node_num, edge_num, number_trials, time_needed]
+    data = (node_num, edge_num, number_trials, time_needed)
     
-    return data_list
+    return data, two_connectd
 
 def ___sample_one_connected(size):  
     raise NotImplementedError
@@ -100,10 +125,39 @@ def ___sample_one_connected(size):
 def ___sample_planar_graphs(size):
     raise NotImplementedError
 
+def ___sample_combinatorial_class(comb_class, symbolic_x, symbolic_y, size):
+    start_sampling = timer()
+    number_trials = 0
+    if size < 500:
+        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+    else:
+        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+
+    grammar = two_connected_graph_grammar()
+    grammar.init()
+    node_num = 0
+
+    if size != 0: 
+        while node_num != size:
+            number_trials += 1
+            graph = grammar.sample(comb_class, symbolic_x, symbolic_y)
+            node_num = graph.get_number_of_nodes()
+    else:
+        graph = grammar.sample(comb_class, symbolic_x, symbolic_y)
+        node_num = graph.get_number_of_nodes()
+
+    edge_num = graph.get_number_of_edges()
+
+    end_sampling = timer()
+    time_needed = end_sampling - start_sampling
+
+    data = (node_num, edge_num, number_trials, time_needed)
+    
+    return data, graph
+
+
 def ___write_to_file(file_name, data_list):
     file = open(file_name,'w')
-    #for data in data_list:
-    #    file.write(str(data))
     for data in data_list:
         for d in data:
             file.write(str(d))
@@ -116,24 +170,36 @@ def create_data(comb_class, sample_num, samples_size):
     obj_list = []
 
     if comb_class is "binary_tree":
-        for i in repeat(None,sample_num):
-            d, t = ___sample_binary_tree(samples_size)
+        for i in repeat(None, sample_num):
+            d, g = ___sample_binary_tree(samples_size)
             data.append(d)
-            obj_list.append(t)
-        file_name = "binary_tree"
-
+            obj_list.append(g)
     elif comb_class is "three_connected":
-        pass
+        sample = 'M_3_arrow'
+        symbolic_x = 'x*G_1_dx(x,y)'
+        symbolic_y = 'D(x*G_1_dx(x,y),y)'
     elif comb_class is "two_connected":
-        pass
+        sample = 'M_2_arrow'
+        symbolic_x = 'x*G_1_dx(x,y)'
+        symbolic_y = 'y'
     elif comb_class is "one_connected":
-        pass    
+        sample = 'G_1'
+        symbolic_x = 'x'
+        symbolic_y = 'y'
     elif comb_class is "planar_graph":
-        pass
+        sample = 'G'
+        symbolic_x = 'x'
+        symbolic_y = 'y'
     else:
         raise Exception("No such combinatorial class!")
 
-    ___write_to_file(file_name, data)
+    if comb_class is not "binary_tree":
+        for i in repeat(None, sample_num):
+            d, g = ___sample_combinatorial_class(sample, symbolic_x, symbolic_y, samples_size)
+            data.append(d)
+            obj_list.append(g)
+
+    ___write_to_file(comb_class, data)
 
     return obj_list
 
