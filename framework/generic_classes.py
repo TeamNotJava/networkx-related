@@ -58,10 +58,16 @@ class DummyClass(CombinatorialClass):
         raise NotImplementedError
 
     def replace_u_atoms(self, sampler, x, y):
-        raise NotImplementedError
+        for _ in range(self.u_size):
+            dummy = sampler.sample(x, y)
+            self.l_size += dummy.get_l_size()
+            self.u_size += dummy.get_u_size() - 1
 
     def replace_l_atoms(self, sampler, x, y):
-        raise NotImplementedError
+        for _ in range(self.l_size):
+            dummy = sampler.sample(x, y)
+            self.l_size += dummy.get_l_size() - 1
+            self.u_size += dummy.get_u_size()
 
     def __str__(self):
         return '(l: ' + str(self.l_size) + ", u: " + str(self.u_size) + ')'

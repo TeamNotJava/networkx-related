@@ -126,7 +126,9 @@ class DecompositionGrammar:
             if isinstance(sampler, TransformationSampler):
                 sampler.set_target_class_label(alias)
 
-    def set_builder(self, rules, builder):
+    def set_builder(self, rules=None, builder=DefaultBuilder):
+        if rules is None:
+            rules = self.rules.keys()
         v = self.SetBuilderVisitor(builder)
         for alias in rules:
             self.get_rule(alias).accept(v)

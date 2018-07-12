@@ -365,7 +365,7 @@ class LSubsSampler(BinarySampler):
     def sample(self, x, y):
         gamma = self.lhs.sample(self.rhs.oracle_query_string(x, y), y)
         # todo this is wrong, we must replace using different sample calls
-        gamma.replace_l_atoms(self.rhs.sample, x, y)
+        gamma.replace_l_atoms(self.rhs, x, y)
         return gamma
 
     def sample_dummy(self, x, y):
