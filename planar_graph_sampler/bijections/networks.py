@@ -21,28 +21,11 @@ def merge_networks_in_series(network, network_for_plugging):
     second_net_inf_pole_edge = network_for_plugging.get_inf_pole()
 
     # Create a new half edges for connecting the poles of the network. The edge will not be part from the edges list
-    #new_root_half_edge = HalfEdge()
-    # TODO check if this is 'insert_after'
-    #new_root_half_edge.node_nr = first_net_zero_pole_edge.node_nr
-    #new_root_half_edge.next = first_net_zero_pole_edge.next
-    #new_root_half_edge.prior = first_net_zero_pole_edge
-    #new_root_half_edge.next.prior = new_root_half_edge
-    #first_net_zero_pole_edge.next = new_root_half_edge
     new_root_half_edge = first_net_zero_pole_edge.insert_after()
-
-    #new_root_opposite = HalfEdge()
-    #new_root_opposite.node_nr = second_net_inf_pole_edge.node_nr
-    #new_root_opposite.next = second_net_inf_pole_edge.next
-    #new_root_opposite.prior = second_net_inf_pole_edge
-    #new_root_opposite.next.prior = new_root_opposite
-    #second_net_inf_pole_edge.next = new_root_opposite
     new_root_opposite = second_net_inf_pole_edge.insert_after()
 
     new_root_half_edge.opposite = new_root_opposite
     new_root_opposite.opposite = new_root_half_edge
-
-    # Set the new root edge in the network.
-    # network.root_half_edge = new_root_half_edge
 
     # Get the half edges from both networks for merging
     first_net_inf_pole_prior = first_net_inf_pole_edge.prior
@@ -62,13 +45,17 @@ def merge_networks_in_series(network, network_for_plugging):
         half_edge_walker.node_nr = first_net_inf_pole_edge.node_nr
         half_edge_walker = half_edge_walker.next
 
-    # Add the vertices list from the second network into the first one
-    # network.vertices_list += network_for_plugging.vertices_list
-    # network.vertices_list.append(first_net_inf_pole_edge)
+    # Check whether the original poles of the network that are merged are linked or not. If they are not linked
+    # than the corresponding half edges between them have to be removed.
+    if not network.is_linked:
+        # Remove the half edges between the zero and inf pole from the first network
+        first_net_zero_pole_edge.remove()
+        first_net_inf_pole_edge.remove()
 
-    # Add the edges from the second network into the first one
-
-    # network.edges_list += network_for_plugging.edges_list
+    if not network_for_plugging.is_linked:
+        # Remove the half edges between the zero and inf pole from the first network
+        second_net_zero_pole_edge.remove()
+        second_net_inf_pole_edge.remove()
 
     # After a serial merge the poles are never linked.
     return Network(new_root_half_edge, is_linked=False, l_size=new_l_size, u_size=new_u_size)
@@ -125,12 +112,6 @@ def merge_networks_in_parallel(network, network_for_plugging):
     while half_edge_walker != first_net_inf_pole_next:
         half_edge_walker.node_nr = first_net_inf_pole_edge.node_nr
         half_edge_walker = half_edge_walker.next
-
-    # Add the vertices list from the second network into the first one
-    # network.vertices_list += network_for_plugging.vertices_list
-
-    # Add the edges from the second network into the first one
-    # network.edges_list += network_for_plugging.edges_list
 
     return Network(first_net_zero_pole_edge, res_is_linked, new_l_size, new_u_size)
 
