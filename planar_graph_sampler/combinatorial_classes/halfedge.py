@@ -45,7 +45,7 @@ class HalfEdge(CombinatorialClass):
 
     def insert_after(self, new=None):
         """
-        Inserts a half that follows this half edge in ccw order.
+        Inserts a half-edge that follows this half-edge in ccw order.
         :param new:
         :return:
         """
@@ -75,6 +75,7 @@ class HalfEdge(CombinatorialClass):
         old_prior.next = new
         return new
 
+
     def remove(self):
         '''
         Removes the half_edge and and its connections.
@@ -99,6 +100,27 @@ class HalfEdge(CombinatorialClass):
         self.prior = None
         self.next = None
         self.node_nr = -1
+
+    def insert_all(self, other):
+        """
+        Inserts the given half-edge and all its incident half-edge after this half-edge.
+
+        :param other:
+        :return:
+        """
+        # Set node numbers.
+        for he in other.incident_half_edges():
+            he.node_nr = self.node_nr
+        other_degree = other.degree()
+        old_degree = self.degree()
+        old_next = self.next
+        self.next = other
+        old_other_prior = other.prior
+        other.prior = self
+        old_next.prior = old_other_prior
+        old_other_prior.next = old_next
+        assert self.degree() == other_degree + old_degree
+
 
     def invert(self):
         """
@@ -171,11 +193,8 @@ class HalfEdge(CombinatorialClass):
 
     def get_all_half_edges(self, edge_set=None, include_opp=True, include_unpaired=True):
         """
-        The half-edge itself where this was originally called is guaranteed to be in the result when include_opp is set to False.
-        :param edge_set:
-        :param include_opp:
-        :param include_unpaired:
-        :return:
+        The half-edge itself where this was originally called is guaranteed to be in the result when include_opp is
+        set to False.
         """
         if edge_set is None:
             edge_set = set()

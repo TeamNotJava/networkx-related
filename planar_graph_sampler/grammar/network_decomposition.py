@@ -173,12 +173,17 @@ if __name__ == '__main__':
 
     sampled_class = 'H_dx'
 
-    #while True:
-    g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-    print(g)
-    assert g.is_consistent()
+    while True:
+        try:
+            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+            if g.get_l_size() > 800:
+                print(g)
+                # assert g.is_consistent()
 
-    import matplotlib.pyplot as plt
+                import matplotlib.pyplot as plt
 
-    g.plot()
-    plt.show()
+                g.plot(with_labels=False)
+                plt.show()
+                break
+        except RecursionError:
+            pass

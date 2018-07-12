@@ -3,6 +3,7 @@ from timeit import default_timer as timer
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler, BoltzmannSampler
 from framework.generic_samplers import *
 from framework.generic_classes import DummyClass
+from framework.class_builder import DummyBuilder
 from framework.utils import bern
 
 from planar_graph_sampler.evaluations_planar_graph import *
@@ -189,17 +190,19 @@ if __name__ == "__main__":
     grammar.add_rules(connected_rules)
     grammar.add_rules(planar_graphs_rules)
     grammar.init()
+    # todo make this work
+    grammar.set_builder(builder=DummyBuilder())
 
     oracles = {
         '100': {'oracle': planar_graph_evals_n100, 'size': 100},
         '1000': {'oracle': planar_graph_evals_n1000, 'size': 1000},
         '1000m2': {'oracle': planar_graph_evals_n1000_mu2, 'size': 1000},
     }
-    oracle = '100'
+    oracle = '1000'
     BoltzmannSampler.oracle = EvaluationOracle(oracles[oracle]['oracle'])
     end_main = timer()
 
-    # symbolic_x = 'x*G_1_dx(x,y)'
+    #symbolic_x = 'x*G_1_dx(x,y)'
     # symbolic_y = 'D(x*G_1_dx(x,y),y)'
     symbolic_x = 'x'
     symbolic_y = 'y'

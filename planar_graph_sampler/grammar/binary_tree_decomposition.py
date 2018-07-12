@@ -129,12 +129,10 @@ if __name__ == '__main__':
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    print("Needed oracle entries:")
-    [print(query) for query in sorted(grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
-
     tree = grammar.sample('K_dy', symbolic_x, symbolic_y)
 
     assert tree.is_consistent()
+    e = tree.combinatorial_embedding()
 
     print("Black nodes: {}".format(tree.get_l_size()))
     print("Total leaves: {}".format(tree.get_u_size()))

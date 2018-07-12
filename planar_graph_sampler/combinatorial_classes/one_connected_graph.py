@@ -13,101 +13,16 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 from framework.generic_classes import CombinatorialClass
+from framework.utils import Counter
+from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
+from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 
+counter = Counter()
 
-class VertexRootedTwoConnectedPlanarGraph(CombinatorialClass):
+class OneConnectedPlanarGraph(HalfEdgeGraph):
 
-    def __init__(self, vertices_list, edges_list, root_vertex):
-        self.vertices_list = vertices_list
-        self.edges_list = edges_list
-        # A list of half-edges belonging to the root-vertex
-        self.root_vertex = root_vertex
-    
-    def get_u_size(self):
-        return len(self.edges_list)
-
-    def get_l_size(self):
-        return len(self.vertices_list) - 1
-
-    def u_atoms(self):
-        raise NotImplementedError
-
-    def l_atoms(self):
-        raise NotImplementedError
-
-    def random_u_atom(self):
-        raise NotImplementedError
-
-    def random_l_atom(self):
-        raise NotImplementedError
-
-    # we don't need this.
-    def replace_u_atoms(self, sampler, x, y):
-        raise NotImplementedError
-
-    # we don't need this 
-    def replace_l_atoms(self, sampler, x, y):
-        raise NotImplementedError
-
-    # this is an ugly method to avoid using isinstance or similar
-    def is_l_atom(self):
-        raise NotImplementedError
-
-    # this is an ugly method to avoid using isinstance or similar
-    def is_u_atom(self):
-        raise NotImplementedError
-
-    def __str__(self):
-        repr = 'Root Edge : %s \n' % self.root_half_edge.__repr__()
-        repr += 'Vertices : %s' % self.vertices_list.__repr__()
-        repr += 'Edges : %s' % self.edges_list.__repr__()
-        return repr
-
-
-class UnootedTwoConnectedPlanarGraph(CombinatorialClass):
-
-    def __init__(self, vertices_list, edges_list, root_vertex):
-        self.vertices_list = vertices_list
-        self.edges_list = edges_list
-        # A list of half-edges belonging to the root-vertex
-        self.root_vertex = root_vertex
-    
-    def get_u_size(self):
-        return len(self.edges_list)
-
-    def get_l_size(self):
-        return len(self.vertices_list)
-
-    def u_atoms(self):
-        raise NotImplementedError
-
-    def l_atoms(self):
-        raise NotImplementedError
-
-    def random_u_atom(self):
-        raise NotImplementedError
-
-    def random_l_atom(self):
-        raise NotImplementedError
-
-    # we don't need this.
-    def replace_u_atoms(self, sampler, x, y):
-        raise NotImplementedError
-
-    # we don't need this 
-    def replace_l_atoms(self, sampler, x, y):
-        raise NotImplementedError
-
-    # this is an ugly method to avoid using isinstance or similar
-    def is_l_atom(self):
-        raise NotImplementedError
-
-    # this is an ugly method to avoid using isinstance or similar
-    def is_u_atom(self):
-        raise NotImplementedError
-
-    def __str__(self):
-        repr = 'Root Edge : %s \n' % self.root_half_edge.__repr__()
-        repr += 'Vertices : %s' % self.vertices_list.__repr__()
-        repr += 'Edges : %s' % self.edges_list.__repr__()
-        return repr
+    def __init__(self, half_edge=None):
+        if half_edge is None:
+            half_edge = HalfEdge(self_consistent=True)
+            half_edge.node_nr = next(counter)
+        super().__init__(half_edge)

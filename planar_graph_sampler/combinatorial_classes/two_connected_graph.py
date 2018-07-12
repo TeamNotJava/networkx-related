@@ -12,68 +12,83 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+import random as rnd
+
 from framework.generic_classes import CombinatorialClass
 
 from planar_graph_sampler.bijections.block_decomposition import BlockDecomposition
+from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 
 
-class EdgeRootedTwoConnectedPlanarGraph(CombinatorialClass):
+class TwoConnectedPlanarGraph(HalfEdgeGraph):
 
-    def __init__(self, vertices_list, edges_list, root_half_edge):
-        self.vertices_list = vertices_list
-        self.edges_list = edges_list
-        self.root_half_edge = root_half_edge
+    def __init__(self, half_edge):
+        super().__init__(half_edge)
+
+    def is_consistent(self):
+        super_ok = super().is_consistent()
+        #two_connected = self.is_connected(2)
+        planar = self.is_planar()
+        return all([super_ok, True, planar])
+
+
+class EdgeRootedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
+
+    def __init__(self, root_half_edge):
+        super().__init__(root_half_edge)
 
     def get_u_size(self):
-        return len(self.edges_list)
+        return super().get_u_size() - 1
 
     def get_l_size(self):
-        return len(self.vertices_list)
+        return super().get_l_size() - 2
 
-    def u_atoms(self):
-        raise NotImplementedError
+class UDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
 
-    def l_atoms(self):
-        raise NotImplementedError
+    def __init__(self, half_edge):
+        super().__init__(half_edge)
 
-    def random_u_atom(self):
-        raise NotImplementedError
+    def get_u_size(self):
+        return super().get_u_size() - 1
 
-    def random_l_atom(self):
-        raise NotImplementedError
+class ULDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
 
-    # we don't need this.
-    def replace_u_atoms(self, sampler, x, y):
-        raise NotImplementedError
+    def __init__(self, half_edge):
+        super().__init__(half_edge)
 
-    # we need this as we replace every unmarked node (l-atom) with a l-der one-connected graph
+    def get_u_size(self):
+        return super().get_u_size() - 1
+
+    def get_l_size(self):
+        return super().get_l_size() - 1
+
+class LDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
+
+    def __init__(self, half_edge):
+        super().__init__(half_edge)
+
+    def get_l_size(self):
+        return super().get_l_size() - 1
+
+
     def replace_l_atoms(self, sampler, x, y):
-        nodes_for_subs = self.vertices_list
-        # Switch to diconary representation of the nodes
-        nodes_for_subs = self.vertices_list[0].get_nodes_dictonary()
+        nodes = self.half_edge.get_node_list()
+        # Select a random node and save a half-edge incident to it.
+        random_node = rnd.choice(list(nodes.keys()))
+        self.half_edge = nodes[random_node][0]
+        # Remove the random node.
+        nodes.pop(random_node)
+        # Sample a graph and merge it with all remaining nodes.
+        for node in nodes:
+            # Sampler is for Z_L * G_1_dx
+            plug_in = sampler.sample(x,y).second.get_half_edge()
+            # Get any half-edge incident to the current node.
+            he = nodes[node][0]
+            he.insert_all(plug_in)
 
-        node_by_one_connected_subs = BlockDecomposition()
+class BiLDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
+    def __init__(self, half_edge):
+        super().__init__(half_edge)
 
-        for node in nodes_for_subs:
-            node_half_edges = nodes_for_subs[node]
-            # Sample only for unmakred nodes
-            if not node_half_edges[0].marked_vertex:
-                # Sample a L-derived one-connected graph at the unmarked node
-                l_der_one_connected = sampler.sample(x, y)
-                node_by_one_connected_subs.replace_node_with_l_der_one_connected(node_half_edges, l_der_one_connected)
-        # Dummy
-        return self
-
-    # this is an ugly method to avoid using isinstance or similar
-    def is_l_atom(self):
-        raise NotImplementedError
-
-    # this is an ugly method to avoid using isinstance or similar
-    def is_u_atom(self):
-        raise NotImplementedError
-
-    def __str__(self):
-        repr = 'Root Edge : %s \n' % self.root_half_edge.__repr__()
-        repr += 'Vertices : %s' % self.vertices_list.__repr__()
-        repr += 'Edges : %s' % self.edges_list.__repr__()
-        return repr
+    def get_l_size(self):
+        return super().get_l_size() - 2
