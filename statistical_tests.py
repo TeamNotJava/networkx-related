@@ -105,10 +105,10 @@ def ___stat_test_three_connected_graphs(data, graphs, size, tolerance):
  
     return dist
     
-def ___stat_test_two_connected_graphs(data, graphs, tolerance):
+def ___stat_test_two_connected_graphs(data, graphs, size, tolerance):
     raise NotImplementedError
 
-def ___stat_test_one_connected_graphs(data, graphs, tolerance):
+def ___stat_test_one_connected_graphs(data, graphs, size, tolerance):
     raise NotImplementedError
 
 def ___stat_test_planar_graphs(data, graphs, size, tolerance):
@@ -299,25 +299,25 @@ def main():
         comb_class = "three-connected"
         graph_list = create_data("three_connected", sample_num, samples_size)
         data = ___file_to_data_frame("three_connected")
-        passed = ___stat_test_three_connected_graphs(data, graph_list, samples_size)
+        passed = ___stat_test_three_connected_graphs(data, graph_list, samples_size, tolerance)
     elif args.two_connected:
         print(COLOR_BLUE + "                  TWO-CONNECTED TEST" + COLOR_END)
         comb_class = "two-connected"
         graph_list = create_data("two_connected", sample_num, samples_size)
         data = ___file_to_data_frame("two_connected")
-        passed = ___stat_test_three_connected_graphs(data, graph_list, samples_size)
+        passed = ___stat_test_two_connected_graphs(data, graph_list, samples_size, tolerance)
     elif args.one_connected:
         print(COLOR_BLUE + "                  ONE-CONNECTED TEST" + COLOR_END)
         comb_class = "one-connected"
         graph_list = create_data("one_connected", sample_num, samples_size)
         data = ___file_to_data_frame("one_connected")
-        passed = ___stat_test_three_connected_graphs(data, graph_list, samples_size)
+        passed = ___stat_test_one_connected_graphs(data, graph_list, samples_size, tolerance)
     elif args.planar:
         print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
         comb_class = "planar graph"
         graph_list = create_data("planar_graph", sample_num, samples_size)
         data = ___file_to_data_frame("planar_graph")
-        passed = ___stat_test_three_connected_graphs(data, graph_list, samples_size)
+        passed = ___stat_test_planar_graphs(data, graph_list, samples_size, tolerance)
     else:
         raise Exception("Wrong combinatorial class.")
 
