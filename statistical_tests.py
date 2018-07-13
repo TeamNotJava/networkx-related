@@ -16,6 +16,7 @@ import argparse
 import logging
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 from math import fabs, sqrt
 import copy
 import networkx as nx
@@ -30,14 +31,15 @@ COLOR_BLUE = '\033[94m'
 COLOR_END = '\033[0m'
 
 
-def ___stat_test_binary_trees(data, trees, size):
+def ___stat_test_binary_trees(data, trees, size, tolerance):
     print(COLOR_BLUE + "                  BINARY TREE TEST" + COLOR_END)
     # Calculate average number of trials to get the right size
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     #___calculate_number_of_possible_graphs(size, "binary_tree")
-    dist, graphs = ___test_distribution(trees) 
-    #___get_avr_btree_hight(graphs, size)   
+    dist, graphs = ___test_distribution(trees, tolerance) 
+    #___get_avr_btree_hight(graphs, size)  
+    ___draw_size_distribution_diagram(graphs, tolerance)
     return dist
 
 def ___get_avr_num_trials(data):  
@@ -56,7 +58,6 @@ def ___get_avr_time(data):
     avr = avr / len(times)
     print("Avr. comp. time..........................{}".format(avr))
 
-
 def ___get_avr_btree_hight(data, size):
     # Average height of a btree is asymptotic to 2* sqrt(pi * n)
     avr = 2 * sqrt(2 * size)
@@ -66,16 +67,15 @@ def ___get_avr_btree_hight(data, size):
     graphs = list(data.keys())
     hights = []
     for g in graphs:
-        init_half_edge = g
+        init_half_edge = g.get_half_edge()
         if init_half_edge.opposite is not None:
             half_edge_list = init_half_edge.list_half_edges()
             for h in half_edge_list:
                 if h.opposite is None:
                     init_half_edge = h
                     break
-        g_hight = ___get_tree_hight(init_half_edge, 0)
+        g_hight = ___get_tree_hight(init_half_edge)
         hights.append(g_hight)
-    
     avr = 0
     for h in hights:
         avr += h
@@ -83,43 +83,40 @@ def ___get_avr_btree_hight(data, size):
     print("Avr. sampled tree height.................{}".format(avr))
 
 
-def ___get_tree_hight(init_half_edge, hight):
-    left = 0
-    right = 0
-    if init_half_edge.next.opposite is not None:
-        left = ___get_tree_hight(init_half_edge.next, hight+1)
-    
-    if init_half_edge.prior.opposite is not None:
-        right = ___get_tree_hight(init_half_edge.prior, hight+1)
+def ___get_tree_hight(init_half_edge, hight=0):
+    if init_half_edge is None:
+        return hight - 1
+
+    left = ___get_tree_hight(init_half_edge.next.opposite, hight+1)
+    right = ___get_tree_hight(init_half_edge.prior.opposite, hight+1)
 
     if left > right:
-        hight += left
+        return left
     else:
-        hight += right
-    return hight
-    
+        return right
 
-def ___stat_test_three_connected_graphs(data, graphs, size):
+def ___stat_test_three_connected_graphs(data, graphs, size, tolerance):
     print(COLOR_BLUE + "              THREE CONNECTED TEST" + COLOR_END)
     # Calculate average number of trials to get the right size
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     #___calculate_number_of_possible_graphs(size, "binary_tree")
-    dist, graphs = ___test_distribution(graphs) 
-    #___get_avr_btree_hight(graphs, size)   
+    dist, graphs = ___test_distribution(graphs, tolerance) 
+ 
     return dist
     
-
-def ___stat_test_two_connected_graphs(data, graphs):
+def ___stat_test_two_connected_graphs(data, graphs, tolerance):
     raise NotImplementedError
 
-def ___stat_test_one_connected_graphs(data, graphs):
+def ___stat_test_one_connected_graphs(data, graphs, tolerance):
     raise NotImplementedError
 
-def ___stat_test_planar_graphs(data, graphs):
-    raise NotImplementedError
+def ___stat_test_planar_graphs(data, graphs, size, tolerance):
+    special_graphs = ___test_for_special_graphs(graphs, size) 
+    return special_graphs
 
-def ___test_distribution(objects):
+def ___test_distribution(objects, tolerance):
+    tolerance = tolerance / 100
     # Convert to netwokrx graphs
     nx_objects = [ o.to_networkx_graph() for o in objects]
 
@@ -151,20 +148,36 @@ def ___test_distribution(objects):
     wrong = 0
     for g in graphs:
         diff = fabs(graphs[g] - target)
-        tolerance = target * 0.9 # x% variance is allowed
-        if diff > tolerance or diff < tolerance:
+        margin = target * tolerance # x% variance is allowed
+        if diff > margin or diff < margin:
             wrong += 1
-        if wrong > (graphs_num/2):
+        if wrong > (graphs_num * tolerance):
             # More then halv of the graphs exceed the tolerance
             return False, graphs
     return True, graphs
 
-def ___draw_size_distribution_diagram(data):
-    raise NotImplementedError
+def ___draw_size_distribution_diagram(data, tolerance):
+    x_data = [x for x in range(len(data))]
+    y_data = list(data.values())
+    mean = 0
+    for y in y_data:
+        mean += y
+    mean = mean / len(data)
+    _, ax = plt.subplots()
+    # Draw bars, position them in the center of the tick mark on the x-axis
+    ax.bar(x_data, y_data, color = '#539caf', align = 'center')
+    ax.axhline(mean, color='green', linewidth=2)
+    ax.axhline(mean+tolerance, color='green', linewidth=1)
+    ax.axhline(mean-tolerance, color='green', linewidth=1)
+    ax.set_ylabel("Number of graphs")
+    ax.set_xlabel("Graph type")
+    ax.set_title("Occurance of Different Graph Types")
+    plt.show()
+    
 
 
 def ___calculate_number_of_possible_graphs(size, object_class):
-    number = 0
+    # Verify if this numbers are really correct
     if object_class is "binary_tree":
         raise NotImplementedError
     elif object_class is "three_connected":
@@ -182,8 +195,50 @@ def ___calculate_number_of_possible_graphs(size, object_class):
     else:
         raise NotImplementedError
 
-def ___test_for_special_graphs(data):
-    raise NotImplementedError
+def ___test_for_special_graphs(graphs, size):
+    cycle = nx.cycle_graph(size)   
+    path = nx.path_graph(size)
+    star = nx.star_graph(size)
+    cycl_ladder = nx.circular_ladder_graph(size)
+    ladder = nx.ladder_graph(size)
+    wheel = nx.wheel_graph(size)
+
+    cycle_found = False
+    path_found = False
+    star_found = False
+    cycl_ladder_found = False
+    ladder_found = False
+    wheel_found = False
+
+    # Check if we sampled on of this special graphs
+    for g in graphs:
+        if nx.is_isomorphic(g, cycle):
+            cycle_found = True         
+        if nx.is_isomorphic(g, path):
+            path_found = True
+        if nx.is_isomorphic(g, star):
+            star_found = True
+        if nx.is_isomorphic(g, cycl_ladder):
+            cycl_ladder_found = True
+        if nx.is_isomorphic(g, ladder):
+            ladder_found = True
+        if nx.is_isomorphic(g, wheel):
+            wheel_found = True
+
+
+    print("Sampled cycle............................{}".format(cycle_found))
+    print("Sampled path.............................{}".format(path_found))
+    print("Sampled star.............................{}".format(star_found))
+    print("Sampled circular ladder..................{}".format(cycl_ladder_found))
+    print("Sampled ladder...........................{}".format(ladder_found))
+    print("Sampled wheel............................{}".format(wheel_found))
+
+    passed = cycle_found and path_found and star_found and cycl_ladder_found and ladder_found and wheel_found
+    return passed
+            
+def ___create_clique(size):
+    pass
+
 
 def ___find_the_right_const_for_evals(data):
     raise NotImplementedError
@@ -195,6 +250,7 @@ def ___parse_data(file_name):
             line_list = l.split(' ')
             line_list.remove('\n')
             data.append(tuple(line_list))
+    print("No. sampled graphs.......................{}".format(len(data)))
     return data
 
 def ___file_to_data_frame(file_name):
@@ -208,6 +264,9 @@ def ___file_to_data_frame(file_name):
     data_frame = pd.DataFrame.from_records(data, columns = labels)
     return data_frame
 
+def ___compare_with_other_generator():
+    pass
+
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
     argparser.add_argument('-d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
@@ -216,14 +275,17 @@ def main():
     argparser.add_argument('-two', '--two_connected', action='store_true', help='Make statistical tests for two connected graphs')
     argparser.add_argument('-one', '--one_connected', action='store_true', help='Make statistical tests for one connected graphs')
     argparser.add_argument('-planar', '--planar_graph', action='store_true', help='Make statistical tests for planar graphs')
+    argparser.add_argument('-plot', '--plot_distribution', action='store_true', help='Plot the distribution of the different graph types')
     argparser.add_argument('samples', type=int, help="Sample x number of time.")
     argparser.add_argument('size', type=int, help="Sample object of a certain size.")
+    argparser.add_argument('tolerance', type=int, help="Tolerance for test")
 
     args = argparser.parse_args()
     logging.basicConfig(level=args.loglevel)
 
     sample_num = args.samples
     samples_size = args.size
+    tolerance = args.tolerance
     passed = False
     comb_class = None
 
@@ -231,7 +293,7 @@ def main():
         comb_class = "binary tree"
         tree_list = create_data("binary_tree", sample_num, samples_size)
         data = ___file_to_data_frame("binary_tree")
-        passed = ___stat_test_binary_trees(data, tree_list, samples_size)
+        passed = ___stat_test_binary_trees(data, tree_list, samples_size, tolerance)
     elif args.three_connectd:
         print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
         comb_class = "three-connected"
@@ -264,6 +326,120 @@ def main():
     else:
         print(COLOR_RED + '{} test...........................FAILED'.format(comb_class) + COLOR_END) 
 
+
+def ___test_tree():
+    half_edges = [HalfEdge() for i in range(27)]
+
+    half_edges[0].opposite = None
+    half_edges[0].next = half_edges[1]
+    half_edges[0].prior = half_edges[2]
+
+    half_edges[1].opposite = half_edges[3]
+    half_edges[1].next = half_edges[2]
+    half_edges[1].prior = half_edges[0]
+
+    half_edges[2].opposite = half_edges[12]
+    half_edges[2].next = half_edges[0]
+    half_edges[2].prior = half_edges[1]
+
+    half_edges[3].opposite = half_edges[1]
+    half_edges[3].next = half_edges[4]
+    half_edges[3].prior = half_edges[5]
+
+    half_edges[4].opposite = half_edges[6]
+    half_edges[4].next = half_edges[5]
+    half_edges[4].prior = half_edges[3]
+
+    half_edges[5].opposite = half_edges[9]
+    half_edges[5].next = half_edges[3]
+    half_edges[5].prior = half_edges[4]
+
+    half_edges[6].opposite = half_edges[4]
+    half_edges[6].next = half_edges[7]
+    half_edges[6].prior = half_edges[8]
+
+    half_edges[7].opposite = None
+    half_edges[7].next = half_edges[8]
+    half_edges[7].prior = half_edges[6]
+
+    half_edges[8].opposite = None
+    half_edges[8].next = half_edges[6]
+    half_edges[8].prior = half_edges[7]
+
+    half_edges[9].opposite = half_edges[5]
+    half_edges[9].next = half_edges[10]
+    half_edges[9].prior = half_edges[11]
+
+    half_edges[10].opposite = None
+    half_edges[10].next = half_edges[11]
+    half_edges[10].prior = half_edges[9]
+
+    half_edges[11].opposite = half_edges[21]
+    half_edges[11].next = half_edges[9]
+    half_edges[11].prior = half_edges[10]
+
+    half_edges[12].opposite = half_edges[2]
+    half_edges[12].next = half_edges[13]
+    half_edges[12].prior = half_edges[14]
+
+    half_edges[13].opposite = None
+    half_edges[13].next = half_edges[14]
+    half_edges[13].prior = half_edges[12]
+
+    half_edges[14].opposite = half_edges[15]
+    half_edges[14].next = half_edges[12]
+    half_edges[14].prior = half_edges[13]
+
+    half_edges[15].opposite = half_edges[14]
+    half_edges[15].next = half_edges[16]
+    half_edges[15].prior = half_edges[17]
+
+    half_edges[16].opposite = half_edges[18]
+    half_edges[16].next = half_edges[17]
+    half_edges[16].prior = half_edges[15]
+
+    half_edges[17].opposite = None
+    half_edges[17].next = half_edges[15]
+    half_edges[17].prior = half_edges[16]
+
+    half_edges[18].opposite = half_edges[16]
+    half_edges[18].next = half_edges[19]
+    half_edges[18].prior = half_edges[20]
+
+    half_edges[19].opposite = None
+    half_edges[19].next = half_edges[20]
+    half_edges[19].prior = half_edges[18]
+
+    half_edges[20].opposite = None
+    half_edges[20].next = half_edges[19]
+    half_edges[20].prior = half_edges[18]
+
+    half_edges[21].opposite = half_edges[11]
+    half_edges[21].next = half_edges[22]
+    half_edges[21].prior = half_edges[23]
+
+    half_edges[22].opposite = half_edges[24]
+    half_edges[22].next = half_edges[23]
+    half_edges[22].prior = half_edges[21]
+
+    half_edges[23].opposite = None
+    half_edges[23].next = half_edges[21]
+    half_edges[23].prior = half_edges[22]
+
+    half_edges[24].opposite = half_edges[22]
+    half_edges[24].next = half_edges[25]
+    half_edges[24].prior = half_edges[26]
+
+    half_edges[25].opposite = None
+    half_edges[25].next = half_edges[26]
+    half_edges[25].prior = half_edges[24]
+
+    half_edges[26].opposite = None
+    half_edges[26].next = half_edges[24]
+    half_edges[26].prior = half_edges[25]
+
+
+    return half_edges[0]
 
 if __name__ == '__main__':
     main()

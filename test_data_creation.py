@@ -204,6 +204,4 @@ def create_data(comb_class, sample_num, samples_size):
     return obj_list
 
 
-    
-
 

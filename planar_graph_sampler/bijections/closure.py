@@ -287,29 +287,10 @@ class Closure:
     def closure(self, binary_tree):
         """Implements the bijection between the binary trees and the irreducible
         dissections of hexagon. 
-
-        Parameters
-        ----------
-        binary_tree: BinaryTree
-
-        Returns
-        -------
-        IrreducibleDissection(init_half_edge): IrreducibleDissection
+        :param: binary_tree: BinaryTree
+        :return: IrreducibleDissection(init_half_edge): IrreducibleDissection
             Irreducible dissection of hexagon
-
-        Notes
-        -----
-        The partial closure takes a binary tree as input and closes the tree, such that
-        every face in the resulting graph has degree four. Afterwards, the complete
-        closure is performed, where the partialy closed binary tree is intergrated into
-        a hexagon (irreducible dissection of hexagon) [1].
-
-        References
-        ----------
-        .. [1] Eric Fusy:
-            Uniform random sampling of planar graphs in linear time
         """
-
         init_half_edge = binary_tree
         # This edge is hexagonal and points in ccw direction
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
