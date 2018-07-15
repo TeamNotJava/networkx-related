@@ -21,8 +21,11 @@ from math import fabs, sqrt
 import copy
 import networkx as nx
 import networkx.algorithms.isomorphism as iso
+from networkx.algorithms import isomorphism
 from test_data_creation import create_data
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
+from framework.utils import Counter
+counter = Counter()
 
 # Define colors for output
 COLOR_RED = '\033[91m'
@@ -40,6 +43,9 @@ def ___stat_test_binary_trees(data, trees, size, tolerance):
     dist, graphs = ___test_distribution(trees, tolerance) 
     #___get_avr_btree_hight(graphs, size)  
     ___draw_size_distribution_diagram(graphs, tolerance)
+    #___draw_most_frequent_graph(graphs)
+    #___draw_least_frequent_graph(graphs)
+    
     return dist
 
 def ___get_avr_num_trials(data):  
@@ -116,20 +122,26 @@ def ___stat_test_planar_graphs(data, graphs, size, tolerance):
     return special_graphs
 
 def ___test_distribution(objects, tolerance):
-    tolerance = tolerance / 100
     # Convert to netwokrx graphs
     nx_objects = [ o.to_networkx_graph() for o in objects]
 
     graphs = dict()
-    # Count isomorphic graphs
+    # Filter out isomorphic graphs
+    # SOMETHING IS WRONG HERE
     for g1 in nx_objects:
         graphs[g1] = 1
         for g2 in nx_objects:
-            if g2 != g1 and nx.is_isomorphic(g1, g2):
+            if g2 is not g1 and iso.is_isomorphic(g1,g2):
                 nx_objects.remove(g2)
                 graphs[g1] += 1
         nx_objects.remove(g1)
-    
+ 
+    # THIS SOMETIMES OUTPUTS ISOMORPHIC GRAPHS WHY?!
+    # The dictionary shoud only contain pairwise non-isomorphic graphs!?
+    for g in graphs:
+        nx.draw(g)
+        plt.show()
+      
     # If the sampler samples the object uniformly then the size
     # distribution must be uniform
     total_num = 0
@@ -147,14 +159,26 @@ def ___test_distribution(objects, tolerance):
     # than the target
     wrong = 0
     for g in graphs:
-        diff = fabs(graphs[g] - target)
-        margin = target * tolerance # x% variance is allowed
-        if diff > margin or diff < margin:
+        lower = target - target * tolerance
+        upper = target + target * tolerance
+        if graphs[g] > upper or graphs[g] < lower:
             wrong += 1
         if wrong > (graphs_num * tolerance):
-            # More then halv of the graphs exceed the tolerance
             return False, graphs
     return True, graphs
+
+def grouper(iterable):
+    prev = None
+    group = []
+    for item in iterable:
+        if not prev or iso.is_isomorphic(item,prev):
+            group.append(item)
+        else:
+            yield group
+            group = [item]
+        prev = item
+    if group:
+        yield group
 
 def ___draw_size_distribution_diagram(data, tolerance):
     x_data = [x for x in range(len(data))]
@@ -163,6 +187,7 @@ def ___draw_size_distribution_diagram(data, tolerance):
     for y in y_data:
         mean += y
     mean = mean / len(data)
+    tolerance = mean * tolerance
     _, ax = plt.subplots()
     # Draw bars, position them in the center of the tick mark on the x-axis
     ax.bar(x_data, y_data, color = '#539caf', align = 'center')
@@ -173,9 +198,33 @@ def ___draw_size_distribution_diagram(data, tolerance):
     ax.set_xlabel("Graph type")
     ax.set_title("Occurance of Different Graph Types")
     plt.show()
+
+def ___draw_most_frequent_graph(graphs):
+    max_number = -1
+    max_graph = None
+    for g in graphs:
+        if graphs[g] > max_number:
+            max_number = graphs[g]
+            max_graph = g
+    nx.draw(max_graph)
+    plt.title('The Most Frequent Graph')
+    plt.show()
+
+def ___draw_least_frequent_graph(graphs):
+    min_number = float("inf")
+    min_graph = None
+    for g in graphs:
+        if graphs[g] < min_number:
+            min_number = graphs[g]
+            min_graph = g
+    nx.draw(min_graph)
+    plt.title('The Least Frequent Graph')
+    plt.show()
+
+
+def ___test_size_distribution_overall():
+    pass
     
-
-
 def ___calculate_number_of_possible_graphs(size, object_class):
     # Verify if this numbers are really correct
     if object_class is "binary_tree":
@@ -285,7 +334,7 @@ def main():
 
     sample_num = args.samples
     samples_size = args.size
-    tolerance = args.tolerance
+    tolerance = args.tolerance / 100
     passed = False
     comb_class = None
 
@@ -330,113 +379,149 @@ def main():
 def ___test_tree():
     half_edges = [HalfEdge() for i in range(27)]
 
+    number = next(counter)
     half_edges[0].opposite = None
     half_edges[0].next = half_edges[1]
     half_edges[0].prior = half_edges[2]
+    half_edges[0].node_nr = number
 
     half_edges[1].opposite = half_edges[3]
     half_edges[1].next = half_edges[2]
     half_edges[1].prior = half_edges[0]
+    half_edges[1].node_nr = number
 
     half_edges[2].opposite = half_edges[12]
     half_edges[2].next = half_edges[0]
     half_edges[2].prior = half_edges[1]
+    half_edges[2].node_nr = number
 
+    number = next(counter)
     half_edges[3].opposite = half_edges[1]
     half_edges[3].next = half_edges[4]
     half_edges[3].prior = half_edges[5]
+    half_edges[3].node_nr = number
 
     half_edges[4].opposite = half_edges[6]
     half_edges[4].next = half_edges[5]
     half_edges[4].prior = half_edges[3]
+    half_edges[4].node_nr = number
 
     half_edges[5].opposite = half_edges[9]
     half_edges[5].next = half_edges[3]
     half_edges[5].prior = half_edges[4]
+    half_edges[5].node_nr = number
 
+    number = next(counter)
     half_edges[6].opposite = half_edges[4]
     half_edges[6].next = half_edges[7]
     half_edges[6].prior = half_edges[8]
+    half_edges[6].node_nr = number
 
     half_edges[7].opposite = None
     half_edges[7].next = half_edges[8]
     half_edges[7].prior = half_edges[6]
+    half_edges[7].node_nr = number
 
     half_edges[8].opposite = None
     half_edges[8].next = half_edges[6]
     half_edges[8].prior = half_edges[7]
+    half_edges[8].node_nr = number
 
+    number = next(counter)
     half_edges[9].opposite = half_edges[5]
     half_edges[9].next = half_edges[10]
     half_edges[9].prior = half_edges[11]
+    half_edges[9].node_nr = number
 
     half_edges[10].opposite = None
     half_edges[10].next = half_edges[11]
     half_edges[10].prior = half_edges[9]
+    half_edges[10].node_nr = number
 
     half_edges[11].opposite = half_edges[21]
     half_edges[11].next = half_edges[9]
     half_edges[11].prior = half_edges[10]
+    half_edges[11].node_nr = number
 
+    number = next(counter)
     half_edges[12].opposite = half_edges[2]
     half_edges[12].next = half_edges[13]
     half_edges[12].prior = half_edges[14]
+    half_edges[12].node_nr = number
 
     half_edges[13].opposite = None
     half_edges[13].next = half_edges[14]
     half_edges[13].prior = half_edges[12]
+    half_edges[13].node_nr = number
 
     half_edges[14].opposite = half_edges[15]
     half_edges[14].next = half_edges[12]
     half_edges[14].prior = half_edges[13]
+    half_edges[14].node_nr = number
 
+    number = next(counter)
     half_edges[15].opposite = half_edges[14]
     half_edges[15].next = half_edges[16]
     half_edges[15].prior = half_edges[17]
+    half_edges[15].node_nr = number
 
     half_edges[16].opposite = half_edges[18]
     half_edges[16].next = half_edges[17]
     half_edges[16].prior = half_edges[15]
+    half_edges[16].node_nr = number
 
     half_edges[17].opposite = None
     half_edges[17].next = half_edges[15]
     half_edges[17].prior = half_edges[16]
+    half_edges[17].node_nr = number
 
+    number = next(counter)
     half_edges[18].opposite = half_edges[16]
     half_edges[18].next = half_edges[19]
     half_edges[18].prior = half_edges[20]
+    half_edges[18].node_nr = number
 
     half_edges[19].opposite = None
     half_edges[19].next = half_edges[20]
     half_edges[19].prior = half_edges[18]
+    half_edges[19].node_nr = number
 
     half_edges[20].opposite = None
     half_edges[20].next = half_edges[19]
     half_edges[20].prior = half_edges[18]
+    half_edges[20].node_nr = number
 
+    number = next(counter)
     half_edges[21].opposite = half_edges[11]
     half_edges[21].next = half_edges[22]
     half_edges[21].prior = half_edges[23]
+    half_edges[21].node_nr = number
 
     half_edges[22].opposite = half_edges[24]
     half_edges[22].next = half_edges[23]
     half_edges[22].prior = half_edges[21]
+    half_edges[22].node_nr = number
 
     half_edges[23].opposite = None
     half_edges[23].next = half_edges[21]
     half_edges[23].prior = half_edges[22]
+    half_edges[23].node_nr = number
 
+    number = next(counter)
     half_edges[24].opposite = half_edges[22]
     half_edges[24].next = half_edges[25]
     half_edges[24].prior = half_edges[26]
+    half_edges[24].node_nr = number
 
     half_edges[25].opposite = None
     half_edges[25].next = half_edges[26]
     half_edges[25].prior = half_edges[24]
+    half_edges[25].node_nr = number
 
     half_edges[26].opposite = None
     half_edges[26].next = half_edges[24]
     half_edges[26].prior = half_edges[25]
+    half_edges[26].node_nr = number
 
 
     return half_edges[0]
