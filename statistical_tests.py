@@ -142,7 +142,7 @@ def ___test_distribution(objects, tolerance):
     for g1 in nx_objects:
         graphs[g1] = 1
         for g2 in reversed(nx_objects):
-            if g2 is not g1 and iso.is_isomorphic(g1,g2,edge_match=nm):
+            if g2 is not g1 and iso.is_isomorphic(g1,g2,node_match=nm):
                 nx_objects.remove(g2)
                 graphs[g1] += 1
         nx_objects.remove(g1)
