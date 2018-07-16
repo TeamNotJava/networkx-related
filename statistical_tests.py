@@ -16,6 +16,7 @@ import argparse
 import logging
 import pandas as pd
 import numpy as np
+from scipy import stats
 import matplotlib.pyplot as plt
 from math import fabs, sqrt
 import copy
@@ -47,6 +48,16 @@ def ___stat_test_binary_trees(data, trees, size, tolerance):
     #___draw_least_frequent_graph(graphs)
     
     return dist
+
+def ___kolmogorov_smirnow_test(data):
+    d, p = stats.kstest(data, 'uniform')
+    print("KS-test p-value..........................{}".format(p))
+    alpha = 0.05
+    if p <= alpha:
+        print(COLOR_RED + "Kolmogorov-Smirnow Test..................FAILED" + COLOR_END)
+        return False
+    print(COLOR_GREEN + "Kolmogorov-Smirnow Test..................PASSED" + COLOR_END)   
+    return True
 
 def ___get_avr_num_trials(data):  
     trials = data.copy().trials
@@ -126,18 +137,16 @@ def ___test_distribution(objects, tolerance):
     nx_objects = [ o.to_networkx_graph() for o in objects]
 
     graphs = dict()
+    nm = iso.categorical_node_match('color',['black','white'])
     # Filter out isomorphic graphs
-    # SOMETHING IS WRONG HERE
     for g1 in nx_objects:
         graphs[g1] = 1
-        for g2 in nx_objects:
-            if g2 is not g1 and iso.is_isomorphic(g1,g2):
+        for g2 in reversed(nx_objects):
+            if g2 is not g1 and iso.is_isomorphic(g1,g2,edge_match=nm):
                 nx_objects.remove(g2)
                 graphs[g1] += 1
         nx_objects.remove(g1)
  
-    # THIS SOMETIMES OUTPUTS ISOMORPHIC GRAPHS WHY?!
-    # The dictionary shoud only contain pairwise non-isomorphic graphs!?
     for g in graphs:
         nx.draw(g)
         plt.show()
@@ -157,28 +166,19 @@ def ___test_distribution(objects, tolerance):
 
     # Check if there are graphs which occure significantla less/more often 
     # than the target
-    wrong = 0
-    for g in graphs:
-        lower = target - target * tolerance
-        upper = target + target * tolerance
-        if graphs[g] > upper or graphs[g] < lower:
-            wrong += 1
-        if wrong > (graphs_num * tolerance):
-            return False, graphs
-    return True, graphs
+    # wrong = 0
+    # for g in graphs:
+    #     lower = target - target * tolerance
+    #     upper = target + target * tolerance
+    #     if graphs[g] > upper or graphs[g] < lower:
+    #         wrong += 1
+    #     if wrong > (graphs_num * tolerance):
+    #         return False, graphs
 
-def grouper(iterable):
-    prev = None
-    group = []
-    for item in iterable:
-        if not prev or iso.is_isomorphic(item,prev):
-            group.append(item)
-        else:
-            yield group
-            group = [item]
-        prev = item
-    if group:
-        yield group
+    test = ___kolmogorov_smirnow_test(list(graphs.values()))
+    return test, graphs
+
+
 
 def ___draw_size_distribution_diagram(data, tolerance):
     x_data = [x for x in range(len(data))]
@@ -285,7 +285,7 @@ def ___test_for_special_graphs(graphs, size):
     passed = cycle_found and path_found and star_found and cycl_ladder_found and ladder_found and wheel_found
     return passed
             
-def ___create_clique(size):
+def ___ration_nodes_edges(size):
     pass
 
 

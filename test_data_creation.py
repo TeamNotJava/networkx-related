@@ -29,7 +29,7 @@ from planar_graph_sampler.bijections.block_decomposition import BlockDecompositi
 def ___sample_binary_tree(size):
     start_sampling = timer()
     number_trials = 0
-    if size < 500:
+    if size <= 100:
         BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
     else:
         BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
@@ -60,7 +60,7 @@ def ___sample_three_connected(size):
     # Sample three connected edge rooted graphs
     start_sampling = timer()
     number_trials = 0
-    if size < 500:
+    if size <= 100:
         BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
     else:
         BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
@@ -90,7 +90,7 @@ def ___sample_three_connected(size):
 def ___sample_two_connected(size):
     start_sampling = timer()
     number_trials = 0
-    if size < 500:
+    if size <= 100:
         BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
     else:
         BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
@@ -128,7 +128,7 @@ def ___sample_planar_graphs(size):
 def ___sample_combinatorial_class(comb_class, symbolic_x, symbolic_y, size):
     start_sampling = timer()
     number_trials = 0
-    if size < 500:
+    if size == 100:
         BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
     else:
         BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)

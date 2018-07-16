@@ -114,7 +114,7 @@ class HalfEdge(CombinatorialClass):
             id(self), self.node_nr, id(self.opposite), id(self.next), id(self.prior))
         return repr
 
-    def list_half_edges(self, edge_list):
+    def list_half_edges(self, edge_list=[]):
         """
         Returns a list with half-edges.
         :param edge_list:
@@ -198,7 +198,28 @@ class HalfEdge(CombinatorialClass):
         while len(half_edge_list) > 0:
             half_edge = half_edge_list.pop()
             G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
+            G.nodes[half_edge.node_nr]['color'] = half_edge.color
         return G
+
+    def get_edge_list(self):
+        half_edge_list = self.list_half_edges()
+        # Remove all unpaired half-edges
+        half_edge_list = [x for x in half_edge_list if not x.opposite is None]
+        edge_list = set()
+
+        for h in half_edge_list:
+            print(h)
+
+        for half_edge in half_edge_list:
+            t = (half_edge.node_nr, half_edge.opposite.node_nr)
+            edge_list.add(t)
+            half_edge_list.remove(half_edge)
+            half_edge_list.remove(half_edge.opposite)
+            
+            print(t)
+
+        return edge_list
+
 
     def plot(self):
         """
