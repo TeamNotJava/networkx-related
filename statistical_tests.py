@@ -49,14 +49,15 @@ def ___stat_test_binary_trees(data, trees, size, tolerance):
     
     return dist
 
-def ___kolmogorov_smirnow_test(data):
-    d, p = stats.kstest(data, 'uniform')
+def ___kolmogorov_smirnov_test(data, avr):
+    u = stats.uniform(0, avr)
+    d, p = stats.kstest(data, u.cdf)
     print("KS-test p-value..........................{}".format(p))
     alpha = 0.05
     if p <= alpha:
-        print(COLOR_RED + "Kolmogorov-Smirnow Test..................FAILED" + COLOR_END)
+        print(COLOR_RED + "Kolmogorov-Smirnov Test..................FAILED" + COLOR_END)
         return False
-    print(COLOR_GREEN + "Kolmogorov-Smirnow Test..................PASSED" + COLOR_END)   
+    print(COLOR_GREEN + "Kolmogorov-Smirnov Test..................PASSED" + COLOR_END)   
     return True
 
 def ___get_avr_num_trials(data):  
@@ -175,7 +176,7 @@ def ___test_distribution(objects, tolerance):
     #     if wrong > (graphs_num * tolerance):
     #         return False, graphs
 
-    test = ___kolmogorov_smirnow_test(list(graphs.values()))
+    test = ___kolmogorov_smirnov_test(list(graphs.values()),target)
     return test, graphs
 
 
@@ -373,7 +374,7 @@ def main():
     if passed:
         print(COLOR_GREEN + '{} test.........................PASSED'.format(comb_class) + COLOR_END)
     else:
-        print(COLOR_RED + '{} test...........................FAILED'.format(comb_class) + COLOR_END) 
+        print(COLOR_RED + '{} test.........................FAILED'.format(comb_class) + COLOR_END) 
 
 
 def ___test_tree():
