@@ -42,7 +42,7 @@ def ___stat_test_binary_trees(data, trees, size, tolerance):
     ___get_avr_time(data)
     #___calculate_number_of_possible_graphs(size, "binary_tree")
     dist, graphs = ___test_distribution(trees, tolerance) 
-    #___get_avr_btree_hight(graphs, size)  
+    #___get_avr_btree_height(graphs, size)  
     ___draw_size_distribution_diagram(graphs, tolerance)
     #___draw_most_frequent_graph(graphs)
     #___draw_least_frequent_graph(graphs)
@@ -76,14 +76,14 @@ def ___get_avr_time(data):
     avr = avr / len(times)
     print("Avr. comp. time..........................{}".format(avr))
 
-def ___get_avr_btree_hight(data, size):
+def ___get_avr_btree_height(data, size):
     # Average height of a btree is asymptotic to 2* sqrt(pi * n)
     avr = 2 * sqrt(2 * size)
     print("Avr. binary tree height..................{}".format(avr))
 
     # Check what average height our trees have
     graphs = list(data.keys())
-    hights = []
+    heights = []
     for g in graphs:
         init_half_edge = g.get_half_edge()
         if init_half_edge.opposite is not None:
@@ -92,21 +92,21 @@ def ___get_avr_btree_hight(data, size):
                 if h.opposite is None:
                     init_half_edge = h
                     break
-        g_hight = ___get_tree_hight(init_half_edge)
-        hights.append(g_hight)
+        g_height = ___get_tree_height(init_half_edge)
+        heights.append(g_height)
     avr = 0
-    for h in hights:
+    for h in heights:
         avr += h
-    avr = avr / len(hights)
+    avr = avr / len(heights)
     print("Avr. sampled tree height.................{}".format(avr))
 
 
-def ___get_tree_hight(init_half_edge, hight=0):
+def ___get_tree_height(init_half_edge, height=0):
     if init_half_edge is None:
-        return hight - 1
+        return height - 1
 
-    left = ___get_tree_hight(init_half_edge.next.opposite, hight+1)
-    right = ___get_tree_hight(init_half_edge.prior.opposite, hight+1)
+    left = ___get_tree_height(init_half_edge.next.opposite, height+1)
+    right = ___get_tree_height(init_half_edge.prior.opposite, height+1)
 
     if left > right:
         return left
