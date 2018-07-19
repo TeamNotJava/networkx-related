@@ -8,6 +8,8 @@ from planar_graph_sampler.grammar.two_connected_decomposition import two_connect
 
 
 class Merger(DefaultBuilder):
+    """Merges a set of l-derived graphs at their marked vertices."""
+
     def set(self, graphs):
         if len(graphs) is 0:
             return OneConnectedPlanarGraph()
@@ -24,11 +26,14 @@ def one_connected_graph_grammar():
     """
 
     # Some shortcuts to make the grammar more readable.
-    L = LAtomSampler()
+    L = LAtomSampler
     G_2_dx = AliasSampler('G_2_dx')
     G_2_dx_dx = AliasSampler('G_2_dx_dx')
     G_1_dx = AliasSampler('G_1_dx')
     G_1_dx_dx = AliasSampler('G_1_dx_dx')
+    Set = SetSampler
+    LSubs = LSubsSampler
+    Rej = RejectionSampler
 
     grammar = DecompositionGrammar()
     grammar.add_rules(two_connected_graph_grammar().get_rules())
@@ -36,11 +41,11 @@ def one_connected_graph_grammar():
 
         # 1 connected planar graphs
 
-        'G_1_dx': SetSampler(0, LSubsSampler(G_2_dx, L * G_1_dx)),
+        'G_1_dx': Set(0, LSubs(G_2_dx, L() * G_1_dx)),
 
-        'G_1_dx_dx': (G_1_dx + L * G_1_dx_dx) * (LSubsSampler(G_2_dx_dx, L * G_1_dx)) * G_1_dx,
+        'G_1_dx_dx': (G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx) * G_1_dx,
 
-        'G_1': RejectionSampler(G_1_dx, lambda g: bern(1 / (g.get_l_size() + 1)), 'G_1'),  # lemma 15
+        'G_1': Rej(G_1_dx, lambda g: bern(1 / (g.get_l_size() + 1)), 'G_1'),  # lemma 15
 
     })
     grammar.set_builder(['G_1_dx'], Merger())
@@ -61,15 +66,16 @@ if __name__ == '__main__':
     sampled_class = 'G_1_dx'
 
     while True:
+
         try:
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+            if g.get_l_size() == 5:
+                print(g)
+                assert g.is_consistent()
+
+                import matplotlib.pyplot as plt
+
+                g.plot(with_labels=False)
+                plt.show()
         except RecursionError:
             pass
-        if g.get_l_size() > 5:
-            print(g)
-            assert g.is_consistent()
-
-            import matplotlib.pyplot as plt
-
-            g.plot(with_labels=False)
-            plt.show()

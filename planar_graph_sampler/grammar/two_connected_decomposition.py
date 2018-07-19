@@ -16,11 +16,14 @@ from planar_graph_sampler.combinatorial_classes import UDerivedClass
 def to_G_2_dy(decomp):
     return UDerivedTwoConnectedPlanarGraph(decomp.second.get_half_edge())
 
+
 def to_G_2_dx(g_2_dy):
     return LDerivedTwoConnectedPlanarGraph(g_2_dy.get_half_edge())
 
+
 def to_G_2_dx_dx(g_2_dy):
     return BiLDerivedTwoConnectedPlanarGraph(g_2_dy.get_half_edge())
+
 
 def to_G_2_dx_dy(decomp):
     return ULDerivedTwoConnectedPlanarGraph(decomp.second.get_half_edge())
