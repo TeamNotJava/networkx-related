@@ -1,3 +1,5 @@
+import math
+
 class EvaluationOracle:
     """Maintains a table of evaluations used by the samplers.
 
@@ -33,3 +35,10 @@ class EvaluationOracle:
             return self.evals[query_string]
         except KeyError:
             raise KeyError('Oracle key missing: {}'.format(query_string))
+
+    def get_probability(self, class_label, symbolic_x, symbolic_y, l_size, u_size):
+        """Computes the probability of an object with the given sizes."""
+        query_string = '{}({},{})'.format(class_label, symbolic_x, symbolic_y)
+        l_term = math.pow(self.get(symbolic_x), l_size) / math.factorial(l_size)
+        u_term = math.pow(self.get(symbolic_y), u_size)
+        return (l_term * u_term) / self.get(query_string)
