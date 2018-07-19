@@ -64,7 +64,7 @@ class VertexRootedTwoConnectedPlanarGraph(CombinatorialClass):
         return repr
 
 
-class UnootedTwoConnectedPlanarGraph(CombinatorialClass):
+class UnrootedTwoConnectedPlanarGraph(CombinatorialClass):
 
     def __init__(self, vertices_list, edges_list, root_vertex):
         self.vertices_list = vertices_list

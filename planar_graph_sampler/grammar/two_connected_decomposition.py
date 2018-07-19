@@ -3,16 +3,22 @@ from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 
 from planar_graph_sampler.grammar.network_decomposition import network_grammar
 from planar_graph_sampler.combinatorial_classes import UDerivedClass
+from framework.evaluation_oracle import EvaluationOracle
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 
 def add_root_edge(decomp):
-    # return decomp.second
     if isinstance(decomp, ZeroAtomClass):
         return UAtomClass()
+    # Check if the poles in decomp are adjecent.
+    # if not add an edge between the poles and root the whole graph on this new edge.
+    # This edge is directed from 0 to inf
+    # TODO Are our roots currently directed? If not why, if yes how?
     return decomp
 
 
 def forget_direction_of_root_edge(decomp):
+    # just forget about the direction of the root edge (maybe the edge between 0 and inf added in add_root_edge)
     return UDerivedClass(decomp, None)
 
 
@@ -62,3 +68,21 @@ def two_connected_graph_grammar():
     })
 
     return grammar
+
+
+if __name__ == "__main__":
+    grammar = two_connected_graph_grammar()
+    grammar.init()
+
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'y'
+
+    sampled_class = 'G_2_dy'
+
+    g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+
+    import matplotlib.pyplot as plt
+    g.get_base_class_object.root_half_edge.plot()
+    plt.show()

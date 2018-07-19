@@ -30,14 +30,6 @@ def one_connected_graph_grammar():
 
         'G_1': RejectionSampler(G_1_dx, lambda g: bern(1 / (g.get_l_size() + 1)), 'G_1'),  # lemma 15
 
-        # planar graphs
-
-        'G': SetSampler(0, G_1),
-
-        'G_dx': G_1_dx * G,
-
-        'G_dx_dx': G_1_dx_dx * G + G_1_dx * G_dx,
-
     })
 
     return grammar
