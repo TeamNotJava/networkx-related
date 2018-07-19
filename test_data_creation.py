@@ -29,10 +29,11 @@ from planar_graph_sampler.bijections.block_decomposition import BlockDecompositi
 def ___sample_binary_tree(size):
     start_sampling = timer()
     number_trials = 0
-    if size <= 100:
-        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
-    else:
-        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+    # if size <= 100:
+    #     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+    # else:
+    #     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
 
     grammar = binary_tree_grammar()
     grammar.init()

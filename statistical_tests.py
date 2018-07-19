@@ -37,28 +37,17 @@ COLOR_END = '\033[0m'
 
 def ___stat_test_binary_trees(data, trees, size, tolerance):
     print(COLOR_BLUE + "                  BINARY TREE TEST" + COLOR_END)
-    # Calculate average number of trials to get the right size
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
-    #___calculate_number_of_possible_graphs(size, "binary_tree")
-    dist, graphs = ___test_distribution(trees, tolerance) 
-    #___get_avr_btree_hight(graphs, size)  
+    num_graphs = ___calculate_number_of_possible_graphs(size, 'binary_tree')
+    graphs = ___non_isomorphic_graphs_dict(trees)
+    if size != 0:
+        dist = ___test_uniform_distribution(graphs, tolerance)
+    else:
+        dist = ___test_poisson_distribution(graphs, tolerance) 
     ___draw_size_distribution_diagram(graphs, tolerance)
-    #___draw_most_frequent_graph(graphs)
-    #___draw_least_frequent_graph(graphs)
-    
-    return dist
 
-def ___kolmogorov_smirnov_test(data, avr):
-    u = stats.uniform(0, avr)
-    d, p = stats.kstest(data, u.cdf)
-    print("KS-test p-value..........................{}".format(p))
-    alpha = 0.05
-    if p <= alpha:
-        print(COLOR_RED + "Kolmogorov-Smirnov Test..................FAILED" + COLOR_END)
-        return False
-    print(COLOR_GREEN + "Kolmogorov-Smirnov Test..................PASSED" + COLOR_END)   
-    return True
+    return dist
 
 def ___get_avr_num_trials(data):  
     trials = data.copy().trials
@@ -100,7 +89,6 @@ def ___get_avr_btree_hight(data, size):
     avr = avr / len(hights)
     print("Avr. sampled tree height.................{}".format(avr))
 
-
 def ___get_tree_hight(init_half_edge, hight=0):
     if init_half_edge is None:
         return hight - 1
@@ -118,25 +106,40 @@ def ___stat_test_three_connected_graphs(data, graphs, size, tolerance):
     # Calculate average number of trials to get the right size
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
-    #___calculate_number_of_possible_graphs(size, "binary_tree")
-    dist, graphs = ___test_distribution(graphs, tolerance) 
+    #___calculate_number_of_possible_graphs(size, "three_connected")
+    dist, graphs = ___test_uniform_distribution(graphs, tolerance) 
  
     return dist
     
 def ___stat_test_two_connected_graphs(data, graphs, size, tolerance):
-    raise NotImplementedError
+    print(COLOR_BLUE + "                TWO CONNECTED TEST" + COLOR_END)
+    # Calculate average number of trials to get the right size
+    ___get_avr_num_trials(data)
+    ___get_avr_time(data)
+    #___calculate_number_of_possible_graphs(size, "three_connected")
+    dist, graphs = ___test_uniform_distribution(graphs, tolerance) 
+ 
+    return dist
 
 def ___stat_test_one_connected_graphs(data, graphs, size, tolerance):
-    raise NotImplementedError
+    print(COLOR_BLUE + "                 ONE CONNECTED TEST" + COLOR_END)
+    # Calculate average number of trials to get the right size
+    ___get_avr_num_trials(data)
+    ___get_avr_time(data)
+    #___calculate_number_of_possible_graphs(size, "three_connected")
+    dist, graphs = ___test_uniform_distribution(graphs, tolerance) 
+ 
+    return dist
 
 def ___stat_test_planar_graphs(data, graphs, size, tolerance):
     special_graphs = ___test_for_special_graphs(graphs, size) 
     return special_graphs
 
-def ___test_distribution(objects, tolerance):
+# Returns a dictonary of pairwise non-isomorphic graphs with
+# frequencies 
+def ___non_isomorphic_graphs_dict(objects):
     # Convert to netwokrx graphs
-    nx_objects = [ o.to_networkx_graph() for o in objects]
-
+    nx_objects = [o.to_networkx_graph() for o in objects]
     graphs = dict()
     nm = iso.categorical_node_match('color',['black','white'])
     # Filter out isomorphic graphs
@@ -148,38 +151,55 @@ def ___test_distribution(objects, tolerance):
                 graphs[g1] += 1
         nx_objects.remove(g1)
  
-    for g in graphs:
-        nx.draw(g)
-        plt.show()
-      
-    # If the sampler samples the object uniformly then the size
-    # distribution must be uniform
-    total_num = 0
-    graphs_num = 0
-    for g in graphs:
-        graphs_num += 1
-        total_num += graphs[g]
+    # for g in graphs:
+    #     nx.draw(g, with_labels=True)
+    #     plt.show()
+    return graphs
 
-    target = float(total_num / graphs_num)
-    
+# Tests if the graphs frequencies are uniformly distributed using
+# Kolmogorov-Smirnov test
+def ___test_uniform_distribution(graphs, tolerance):  
+    total_num = 0
+    graphs_num = len(graphs)
+    test_data = list(graphs.values())
+    for i in test_data:
+        total_num += i
+    target = float(total_num / graphs_num)  
     print("Avr. No. graphs per size.................{}".format(target))
     print("No. non-isom. graphs.....................{}".format(graphs_num))
 
-    # Check if there are graphs which occure significantla less/more often 
-    # than the target
-    # wrong = 0
-    # for g in graphs:
-    #     lower = target - target * tolerance
-    #     upper = target + target * tolerance
-    #     if graphs[g] > upper or graphs[g] < lower:
-    #         wrong += 1
-    #     if wrong > (graphs_num * tolerance):
-    #         return False, graphs
+    u = stats.uniform(0, target)
+    d, p = stats.kstest(test_data, u.cdf)
+    print("KS-test p-value..........................{}".format(p))
+    alpha = 0.05
+    if p <= alpha:
+        print(COLOR_RED + "Kolmogorov-Smirnov Test..................failed" + COLOR_END)
+        return False
+    print(COLOR_GREEN + "Kolmogorov-Smirnov Test..................passed" + COLOR_END)   
+    return True
 
-    test = ___kolmogorov_smirnov_test(list(graphs.values()),target)
-    return test, graphs
+# Tests if the graphs frequencies are poisson distributed using
+# Kolmogorov-Smirnov test
+def ___test_poisson_distribution(data, tolerance):
+    total_num = 0
+    graphs_num = len(data)
+    test_data = list(data.values())
+    for i in test_data:
+        total_num += i
+    # Target has to be the maximum likelihood estimator!
+    target = float(total_num / graphs_num)
+    print("Avr. No. graphs per size.................{}".format(target))
+    print("No. non-isom. graphs.....................{}".format(graphs_num))
 
-
+    pois = stats.poisson(1)
+    d, p = stats.kstest(test_data, pois.cdf)
+    print("KS-test p-value..........................{}".format(p))
+    alpha = 0.05
+    if p <= alpha:
+        print(COLOR_RED + "Kolmogorov-Smirnov Test..................failed" + COLOR_END)
+        return False
+    print(COLOR_GREEN + "Kolmogorov-Smirnov Test..................passed" + COLOR_END)   
+    return True
 
 def ___draw_size_distribution_diagram(data, tolerance):
     x_data = [x for x in range(len(data))]
@@ -221,15 +241,11 @@ def ___draw_least_frequent_graph(graphs):
     nx.draw(min_graph)
     plt.title('The Least Frequent Graph')
     plt.show()
-
-
-def ___test_size_distribution_overall():
-    pass
     
 def ___calculate_number_of_possible_graphs(size, object_class):
     # Verify if this numbers are really correct
     if object_class is "binary_tree":
-        raise NotImplementedError
+        sizes = [1, 1, 1, 1, 4, 6, 12, 20, 30]
     elif object_class is "three_connected":
         # 	Number of labeled 3-connected graphs with n nodes. 
         sizes = [1, 26, 1768, 225096, 51725352, 21132802544, 15463799747936]
@@ -243,7 +259,14 @@ def ___calculate_number_of_possible_graphs(size, object_class):
         # Number of planar graphs on n labeled nodes.
         sizes =[1, 1, 2, 8, 64, 1023, 32071, 1823707, 163947848, 20402420291]
     else:
-        raise NotImplementedError
+        raise Exception("No such object.")
+    
+    if len(sizes) < size:
+        print("No. graphs...............................unknown")
+        return None
+    else:
+        print("No.graphs................................{}".format(sizes[size - 1]))
+        return sizes[size - 1]
 
 def ___test_for_special_graphs(graphs, size):
     cycle = nx.cycle_graph(size)   
@@ -285,14 +308,35 @@ def ___test_for_special_graphs(graphs, size):
 
     passed = cycle_found and path_found and star_found and cycl_ladder_found and ladder_found and wheel_found
     return passed
+
+def ___analyse_fusys_data(file_name):
+    nx_objects = ___fusy_graphs_to_networkx(file_name)
+    graphs = dict()
+    # Filter out isomorphic graphs
+    for g1 in nx_objects:
+        graphs[g1] = 1
+        for g2 in reversed(nx_objects):
+            if g2 is not g1 and iso.is_isomorphic(g1,g2):
+                nx_objects.remove(g2)
+                graphs[g1] += 1
+        nx_objects.remove(g1)
+
+    print("No. of graphs............................{}".format(len(graphs)))
+    dist = ___test_uniform_distribution(graphs, 20)
+    ___draw_size_distribution_diagram(graphs, 20)
+
+    data = []
+    with open("fusy_stat.txt") as file:
+        for l in file:
+            line_list = l.split(' ')
+            data.append(tuple(line_list))
+    print("No. sampled graphs.......................{}".format(len(data)))
+    labels = ["trials", "nodes"]
+    data_frame = pd.DataFrame.from_records(data, columns = labels)
+
+    ___get_avr_num_trials(data_frame)
+
             
-def ___ration_nodes_edges(size):
-    pass
-
-
-def ___find_the_right_const_for_evals(data):
-    raise NotImplementedError
-
 def ___parse_data(file_name):
     data = []
     with open(file_name) as file:
@@ -303,19 +347,53 @@ def ___parse_data(file_name):
     print("No. sampled graphs.......................{}".format(len(data)))
     return data
 
+def ___parse_fusy_graphs(file_name):
+    data = []
+    create_new_list = True
+    with open(file_name) as file:      
+        for l in file:
+            if l != '\n':
+                if l[0] == 'P':  
+                    if create_new_list:
+                        graph = []
+                        create_new_list = False
+                    else:
+                        data.append(graph)
+                        graph = []
+                else:
+                    line_list = l.split(' ')
+                    node1 = int(line_list[0])
+                    node2 = int(line_list[1])                 
+                    if node1 != node2:
+                        edge = (node1, node2)
+                        graph.append(edge)
+    return data
+
+def ___fusy_graphs_to_networkx(file_name):
+    fusy_graphs = ___parse_fusy_graphs(file_name)
+    ntwx_graphs = []
+
+    for elist in fusy_graphs:
+        G = nx.Graph()
+        G.add_edges_from(elist)
+        ntwx_graphs.append(G)
+
+    return ntwx_graphs
+
 def ___file_to_data_frame(file_name):
     data = ___parse_data(file_name)
     labels = []
     if file_name is "binary_tree":
         labels = ["nodes", "leaves", "trials", "time"]
+    elif file_name is "fusy_stat.txt":
+        labels = ["trials", "nodes", "edges"]
+    elif file_name is "fusy_stat_btree.txt":
+        labels = ["trials", "nodes"]
     else:
         labels = ["nodes", "edges", "trials", "time"]
 
     data_frame = pd.DataFrame.from_records(data, columns = labels)
     return data_frame
-
-def ___compare_with_other_generator():
-    pass
 
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
@@ -326,6 +404,7 @@ def main():
     argparser.add_argument('-one', '--one_connected', action='store_true', help='Make statistical tests for one connected graphs')
     argparser.add_argument('-planar', '--planar_graph', action='store_true', help='Make statistical tests for planar graphs')
     argparser.add_argument('-plot', '--plot_distribution', action='store_true', help='Plot the distribution of the different graph types')
+    argparser.add_argument('-fusy', '--analyse_fusy', action='store_true', help='Analyse data produced by Fusy`s implementation')
     argparser.add_argument('samples', type=int, help="Sample x number of time.")
     argparser.add_argument('size', type=int, help="Sample object of a certain size.")
     argparser.add_argument('tolerance', type=int, help="Tolerance for test")
@@ -343,7 +422,7 @@ def main():
         comb_class = "binary tree"
         tree_list = create_data("binary_tree", sample_num, samples_size)
         data = ___file_to_data_frame("binary_tree")
-        passed = ___stat_test_binary_trees(data, tree_list, samples_size, tolerance)
+        passed = ___stat_test_binary_trees(data, tree_list, samples_size, tolerance)     
     elif args.three_connectd:
         print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
         comb_class = "three-connected"
@@ -362,12 +441,15 @@ def main():
         graph_list = create_data("one_connected", sample_num, samples_size)
         data = ___file_to_data_frame("one_connected")
         passed = ___stat_test_one_connected_graphs(data, graph_list, samples_size, tolerance)
-    elif args.planar:
+    elif args.planar_graph:
         print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
         comb_class = "planar graph"
         graph_list = create_data("planar_graph", sample_num, samples_size)
         data = ___file_to_data_frame("planar_graph")
         passed = ___stat_test_planar_graphs(data, graph_list, samples_size, tolerance)
+    elif args.analyse_fusy:
+        print(COLOR_BLUE + "                ANALYSE FUSYS DATA" + COLOR_END)
+        ___analyse_fusys_data("fusy_graphs_btree.txt")
     else:
         raise Exception("Wrong combinatorial class.")
 
@@ -376,6 +458,206 @@ def main():
     else:
         print(COLOR_RED + '{} test.........................FAILED'.format(comb_class) + COLOR_END) 
 
+
+def ___small_test_tree_black():
+    half_edges = [HalfEdge() for i in range(15)]
+
+    number = next(counter)
+    half_edges[0].opposite = None
+    half_edges[0].next = half_edges[1]
+    half_edges[0].prior = half_edges[2]
+    half_edges[0].node_nr = number
+    half_edges[0].color = 'black'
+
+    half_edges[1].opposite = half_edges[3]
+    half_edges[1].next = half_edges[2]
+    half_edges[1].prior = half_edges[0]
+    half_edges[1].node_nr = number
+    half_edges[1].color = 'black'
+
+    half_edges[2].opposite = half_edges[6]
+    half_edges[2].next = half_edges[0]
+    half_edges[2].prior = half_edges[1]
+    half_edges[2].node_nr = number
+    half_edges[2].color = 'black'
+
+    number = next(counter)
+    half_edges[3].opposite = half_edges[1]
+    half_edges[3].next = half_edges[4]
+    half_edges[3].prior = half_edges[5]
+    half_edges[3].node_nr = number
+    half_edges[3].color = 'white'
+
+    half_edges[4].opposite = None
+    half_edges[4].next = half_edges[5]
+    half_edges[4].prior = half_edges[3]
+    half_edges[4].node_nr = number
+    half_edges[4].color = 'white'
+
+    half_edges[5].opposite = None
+    half_edges[5].next = half_edges[3]
+    half_edges[5].prior = half_edges[4]
+    half_edges[5].node_nr = number
+    half_edges[5].color = 'white'
+
+    number = next(counter)
+    half_edges[6].opposite = half_edges[2]
+    half_edges[6].next = half_edges[7]
+    half_edges[6].prior = half_edges[8]
+    half_edges[6].node_nr = number
+    half_edges[6].color = 'white'
+
+    half_edges[7].opposite = half_edges[9]
+    half_edges[7].next = half_edges[8]
+    half_edges[7].prior = half_edges[6]
+    half_edges[7].node_nr = number
+    half_edges[7].color = 'white'
+
+    half_edges[8].opposite = half_edges[12]
+    half_edges[8].next = half_edges[6]
+    half_edges[8].prior = half_edges[7]
+    half_edges[8].node_nr = number
+    half_edges[8].color = 'white'
+
+    number = next(counter)
+    half_edges[9].opposite = half_edges[7]
+    half_edges[9].next = half_edges[10]
+    half_edges[9].prior = half_edges[11]
+    half_edges[9].node_nr = number
+    half_edges[9].color = 'black'
+
+    half_edges[10].opposite = None
+    half_edges[10].next = half_edges[11]
+    half_edges[10].prior = half_edges[9]
+    half_edges[10].node_nr = number
+    half_edges[10].color = 'black'
+
+    half_edges[11].opposite = None
+    half_edges[11].next = half_edges[9]
+    half_edges[11].prior = half_edges[10]
+    half_edges[11].node_nr = number
+    half_edges[11].color = 'black'
+
+    number = next(counter)
+    half_edges[12].opposite = half_edges[8]
+    half_edges[12].next = half_edges[13]
+    half_edges[12].prior = half_edges[14]
+    half_edges[12].node_nr = number
+    half_edges[12].color = 'black'
+
+    half_edges[13].opposite = None
+    half_edges[13].next = half_edges[14]
+    half_edges[13].prior = half_edges[12]
+    half_edges[13].node_nr = number
+    half_edges[13].color = 'black'
+
+    half_edges[14].opposite = None
+    half_edges[14].next = half_edges[12]
+    half_edges[14].prior = half_edges[13]
+    half_edges[14].node_nr = number
+    half_edges[14].color = 'black'
+
+    return half_edges[0]
+
+def ___small_test_tree_white():
+    half_edges = [HalfEdge() for i in range(15)]
+
+    number = next(counter)
+    half_edges[0].opposite = None
+    half_edges[0].next = half_edges[1]
+    half_edges[0].prior = half_edges[2]
+    half_edges[0].node_nr = number
+    half_edges[0].color = 'white'
+
+    half_edges[1].opposite = half_edges[3]
+    half_edges[1].next = half_edges[2]
+    half_edges[1].prior = half_edges[0]
+    half_edges[1].node_nr = number
+    half_edges[1].color = 'white'
+
+    half_edges[2].opposite = half_edges[6]
+    half_edges[2].next = half_edges[0]
+    half_edges[2].prior = half_edges[1]
+    half_edges[2].node_nr = number
+    half_edges[2].color = 'white'
+
+    number = next(counter)
+    half_edges[3].opposite = half_edges[1]
+    half_edges[3].next = half_edges[4]
+    half_edges[3].prior = half_edges[5]
+    half_edges[3].node_nr = number
+    half_edges[3].color = 'black'
+
+    half_edges[4].opposite = None
+    half_edges[4].next = half_edges[5]
+    half_edges[4].prior = half_edges[3]
+    half_edges[4].node_nr = number
+    half_edges[4].color = 'black'
+
+    half_edges[5].opposite = None
+    half_edges[5].next = half_edges[3]
+    half_edges[5].prior = half_edges[4]
+    half_edges[5].node_nr = number
+    half_edges[5].color = 'black'
+
+    number = next(counter)
+    half_edges[6].opposite = half_edges[2]
+    half_edges[6].next = half_edges[7]
+    half_edges[6].prior = half_edges[8]
+    half_edges[6].node_nr = number
+    half_edges[6].color = 'black'
+
+    half_edges[7].opposite = half_edges[9]
+    half_edges[7].next = half_edges[8]
+    half_edges[7].prior = half_edges[6]
+    half_edges[7].node_nr = number
+    half_edges[7].color = 'balck'
+
+    half_edges[8].opposite = None
+    half_edges[8].next = half_edges[6]
+    half_edges[8].prior = half_edges[7]
+    half_edges[8].node_nr = number
+    half_edges[8].color = 'black'
+
+    number = next(counter)
+    half_edges[9].opposite = half_edges[7]
+    half_edges[9].next = half_edges[10]
+    half_edges[9].prior = half_edges[11]
+    half_edges[9].node_nr = number
+    half_edges[9].color = 'white'
+
+    half_edges[10].opposite = None
+    half_edges[10].next = half_edges[11]
+    half_edges[10].prior = half_edges[9]
+    half_edges[10].node_nr = number
+    half_edges[10].color = 'white'
+
+    half_edges[11].opposite = None
+    half_edges[11].next = half_edges[9]
+    half_edges[11].prior = half_edges[10]
+    half_edges[11].node_nr = number
+    half_edges[11].color = 'white'
+
+    number = next(counter)
+    half_edges[12].opposite = half_edges[8]
+    half_edges[12].next = half_edges[13]
+    half_edges[12].prior = half_edges[14]
+    half_edges[12].node_nr = number
+    half_edges[12].color = 'white'
+
+    half_edges[13].opposite = None
+    half_edges[13].next = half_edges[14]
+    half_edges[13].prior = half_edges[12]
+    half_edges[13].node_nr = number
+    half_edges[13].color = 'white'
+
+    half_edges[14].opposite = None
+    half_edges[14].next = half_edges[12]
+    half_edges[14].prior = half_edges[13]
+    half_edges[14].node_nr = number
+    half_edges[14].color = 'white'
+
+    return half_edges[0]
 
 def ___test_tree():
     half_edges = [HalfEdge() for i in range(27)]
@@ -523,7 +805,6 @@ def ___test_tree():
     half_edges[26].next = half_edges[24]
     half_edges[26].prior = half_edges[25]
     half_edges[26].node_nr = number
-
 
     return half_edges[0]
 
