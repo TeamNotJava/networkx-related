@@ -27,7 +27,8 @@ class Network(HalfEdgeGraph):
 
     def is_consistent(self):
         super_ok = super().is_consistent()
-        is_two_connected = self.is_connected(2)
+        # Only the linked networks are 2-connected.
+        is_two_connected = not self.is_linked or self.is_connected(2)
         return all([super_ok, is_two_connected])
 
     # returns true if this is the link graph (u atom)
@@ -72,3 +73,12 @@ class Network(HalfEdgeGraph):
     def random_l_atom(self):
         rand_index = rn.randrange(self.get_l_size())
         return nth(self.l_atoms(), rand_index)
+
+    def to_networkx_graph(self, include_unpaired=False):
+        g = super().to_networkx_graph()
+        if not self.is_linked:
+            link = self.half_edge
+            g.remove_edge(link.node_nr, link.opposite.node_nr)
+        return g
+
+

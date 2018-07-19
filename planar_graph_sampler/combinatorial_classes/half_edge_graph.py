@@ -139,15 +139,18 @@ class HalfEdgeGraph(CombinatorialClass):
             embedding = {}
         node_nr = self.half_edge.node_nr
         if node_nr in embedding:
-            return embedding
+            res = nx.PlanarEmbedding()
+            res.set_data(embedding)
+            return res
         incident = self.half_edge.incident_half_edges()
         incident_node_nrs = [he.opposite.node_nr for he in incident if he.opposite is not None]
         embedding[node_nr] = incident_node_nrs
         for he in incident:
             if he.opposite is not None:
                 HalfEdgeGraph(he.opposite).combinatorial_embedding(embedding)
-        return embedding
-
+        res = nx.PlanarEmbedding()
+        res.set_data(embedding)
+        return res
 
     def to_networkx_graph(self, include_unpaired=False):
         """
@@ -168,7 +171,7 @@ class HalfEdgeGraph(CombinatorialClass):
                 G.add_edge(half_edge.node_nr, next(counter))
         return G
 
-    def plot(self, with_labels=True, use_planar_drawer=False):
+    def plot(self, with_labels=False, use_planar_drawer=False):
         """
 
         :param with_labels:
@@ -180,14 +183,14 @@ class HalfEdgeGraph(CombinatorialClass):
         pos = None
         if use_planar_drawer:
             emb = self.combinatorial_embedding()
-            pos = nx.combinatorial_embedding_to_pos(emb)
+            pos = nx.combinatorial_embedding_to_pos(emb, fully_triangulate=False)
         # Take color attributes on the nodes into account.
         colors = nx.get_node_attributes(G, 'color').values()
 
         if len(colors) == G.number_of_nodes():
-            nx.draw(G, pos=pos, with_labels=with_labels, node_color=list(colors))
+            nx.draw(G, pos=pos, with_labels=with_labels, node_color=list(colors), node_size=100)
         else:
-            nx.draw(G, pos=pos, with_labels=with_labels)
+            nx.draw(G, pos=pos, with_labels=with_labels, node_size=100)
 
 
 def color_scale(hexstr, factor):
