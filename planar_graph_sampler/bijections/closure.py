@@ -50,7 +50,8 @@ class Closure:
 
                     if top_half_edge.number_proximate_inner_edges == 3:
                         new_half_edge = ClosureHalfEdge()
-                        new_half_edge.add_to_closure(current_half_edge, current_half_edge.next, top_half_edge, False)
+                       # new_half_edge.add_to_closure(current_half_edge, current_half_edge.next, top_half_edge, False)
+                        current_half_edge.add_to_closure(top_half_edge, False, new_half_edge)
                         current_half_edge = top_half_edge.prior
                     else:
                         stack.append(top_half_edge)
@@ -77,7 +78,8 @@ class Closure:
 
         # Connect the starting half-edge of our planar map with the first node of the hexagon
         new_half_edge = ClosureHalfEdge()
-        new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge, True)
+        #new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge, True)
+        hexagon_start_half_edge.add_to_closure(starting_half_edge, True, new_half_edge)
 
         connecting_half_edge = new_half_edge
 
@@ -120,10 +122,12 @@ class Closure:
 
                 if visited_more and id(hexagon_iter) == id(hexagon[0]):
                     last_added_edge = connecting_half_edge.next
-                    fresh_half_edge.add_to_closure(connecting_half_edge, last_added_edge, current_half_edge, True)
+                    #fresh_half_edge.add_to_closure(connecting_half_edge, last_added_edge, current_half_edge, True)
+                    connecting_half_edge.add_to_closure(current_half_edge, True, fresh_half_edge)
                 else:
                     last_added_edge = hexagon_iter.next
-                    fresh_half_edge.add_to_closure(hexagon_iter, last_added_edge, current_half_edge, True)
+                    # fresh_half_edge.add_to_closure(hexagon_iter, last_added_edge, current_half_edge, True)
+                    hexagon_iter.add_to_closure(current_half_edge, True, fresh_half_edge)
 
                 distance = 0
             else:
@@ -286,7 +290,7 @@ class Closure:
         init_half_edge = binary_tree
         # This edge is hexagonal and points in ccw direction
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
-        # self.test_partial_closure(init_half_edge)
-        # self.test_connections_between_half_edges(init_half_edge)
-        # self.test_planarity_of_embedding(init_half_edge)
+        self.test_partial_closure(init_half_edge)
+        self.test_connections_between_half_edges(init_half_edge)
+        self.test_planarity_of_embedding(init_half_edge)
         return IrreducibleDissection(init_half_edge)
