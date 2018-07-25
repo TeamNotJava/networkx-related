@@ -44,8 +44,11 @@ def ___sample_binary_tree(size):
     if size != 0: 
         while node_num != size:
             number_trials += 1
-            tree = grammar.sample('K', symbolic_x, symbolic_y)
-            node_num = tree.black_nodes_count + tree.white_nodes_count
+            try:
+                tree = grammar.sample('K', symbolic_x, symbolic_y)
+                node_num = tree.black_nodes_count + tree.white_nodes_count
+            except Exception:
+                number_trials += 1     
     else:
         tree = grammar.sample('K', symbolic_x, symbolic_y)
         node_num = tree.black_nodes_count + tree.white_nodes_count
@@ -75,8 +78,11 @@ def ___sample_three_connected(size):
     if size != 0:
         while node_num != size:
             number_trials += 1
-            three_connected = grammar.sample('M_3_arrow', symbolic_x, symbolic_y)
-            node_num = three_connected.get_l_size()
+            try:
+                three_connected = grammar.sample('M_3_arrow', symbolic_x, symbolic_y)
+                node_num = three_connected.get_l_size()
+            except Exception:
+                number_trials += 1
     else:
         three_connected = grammar.sample('M_3_arrow', symbolic_x, symbolic_y)
         node_num = three_connected.get_l_size()
@@ -105,8 +111,11 @@ def ___sample_two_connected(size):
     if size != 0: 
         while node_num != size:
             number_trials += 1
-            two_connectd = grammar.sample('G_2_arrow', symbolic_x, symbolic_y)
-            node_num = len(two_connectd.vertices_list)
+            try:
+                two_connectd = grammar.sample('G_2_arrow', symbolic_x, symbolic_y)
+                node_num = len(two_connectd.vertices_list)
+            except Exception:
+                number_trials += 1
     else:
         two_connectd = grammar.sample('G_2_arrow', symbolic_x, symbolic_y)
         node_num = len(two_connectd.vertices_list)

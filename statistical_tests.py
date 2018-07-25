@@ -39,12 +39,9 @@ def ___stat_test_binary_trees(data, trees, size, tolerance):
     print(COLOR_BLUE + "                  BINARY TREE TEST" + COLOR_END)
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
-    num_graphs = ___calculate_number_of_possible_graphs(size, 'binary_tree')
+    ___calculate_number_of_possible_graphs(size, 'binary_tree')
     graphs = ___non_isomorphic_graphs_dict(trees)
-    if size != 0:
-        dist = ___test_uniform_distribution(graphs, tolerance)
-    else:
-        dist = ___test_poisson_distribution(graphs, tolerance) 
+    dist = ___test_uniform_distribution(graphs, tolerance)
     ___draw_size_distribution_diagram(graphs, tolerance)
 
     return dist
@@ -108,7 +105,8 @@ def ___stat_test_three_connected_graphs(data, graphs, size, tolerance):
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     #___calculate_number_of_possible_graphs(size, "three_connected")
-    dist, graphs = ___test_uniform_distribution(graphs, tolerance) 
+    dist = ___test_uniform_distribution(graphs, tolerance) 
+    ___test_for_special_graphs
  
     return dist
     
@@ -118,8 +116,8 @@ def ___stat_test_two_connected_graphs(data, graphs, size, tolerance):
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     #___calculate_number_of_possible_graphs(size, "three_connected")
-    dist, graphs = ___test_uniform_distribution(graphs, tolerance) 
- 
+    dist = ___test_uniform_distribution(graphs, tolerance) 
+    ___test_for_special_graphs(graphs, size)
     return dist
 
 def ___stat_test_one_connected_graphs(data, graphs, size, tolerance):
@@ -128,8 +126,8 @@ def ___stat_test_one_connected_graphs(data, graphs, size, tolerance):
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     #___calculate_number_of_possible_graphs(size, "three_connected")
-    dist, graphs = ___test_uniform_distribution(graphs, tolerance) 
- 
+    dist= ___test_uniform_distribution(graphs, tolerance) 
+    ___test_for_special_graphs(graphs, size)
     return dist
 
 def ___stat_test_planar_graphs(data, graphs, size, tolerance):
@@ -169,7 +167,8 @@ def ___test_uniform_distribution(graphs, tolerance):
     print("Avr. No. graphs per size.................{}".format(target))
     print("No. non-isom. graphs.....................{}".format(graphs_num))
 
-    u = stats.uniform(0, target)
+    loc, scale = stats.uniform.fit(test_data)
+    u = stats.uniform(loc=loc, scale=scale)
     d, p = stats.kstest(test_data, u.cdf)
     print("KS-test p-value..........................{}".format(p))
     alpha = 0.05
@@ -193,6 +192,8 @@ def ___test_poisson_distribution(data, tolerance):
     print("No. non-isom. graphs.....................{}".format(graphs_num))
 
     pois = stats.poisson(1)
+    #loc, scale = stats.poisson.fit(test_data)
+    #pois = stats.poisson(loc=loc, scale=scale)
     d, p = stats.kstest(test_data, pois.cdf)
     print("KS-test p-value..........................{}".format(p))
     alpha = 0.05
@@ -312,6 +313,7 @@ def ___test_for_special_graphs(graphs, size):
 
 def ___analyse_fusys_data(file_name):
     nx_objects = ___fusy_graphs_to_networkx(file_name)
+
     graphs = dict()
     # Filter out isomorphic graphs
     for g1 in nx_objects:
