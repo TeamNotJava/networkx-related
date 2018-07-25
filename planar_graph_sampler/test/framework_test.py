@@ -169,6 +169,9 @@ def closure_test():
     # Do a deep copy of the tree as we want to plot it later in its original state.
     import copy
     init_half_edge = c.closure(copy.deepcopy(tree))
+    c.test_partial_closure(init_half_edge)
+    c.test_connections_between_half_edges(init_half_edge)
+    c.test_planarity_of_embedding(init_half_edge)
     return c, tree, init_half_edge
 
 

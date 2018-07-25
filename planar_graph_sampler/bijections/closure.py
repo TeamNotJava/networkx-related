@@ -50,17 +50,7 @@ class Closure:
 
                     if top_half_edge.number_proximate_inner_edges == 3:
                         new_half_edge = ClosureHalfEdge()
-                        new_half_edge.node_nr = current_half_edge.node_nr
-                        new_half_edge.color = current_half_edge.color
-
-                        top_half_edge.opposite = new_half_edge
-                        new_half_edge.opposite = top_half_edge
-
-                        new_half_edge.next = current_half_edge.next
-                        new_half_edge.prior = current_half_edge
-                        current_half_edge.next.prior = new_half_edge
-                        current_half_edge.next = new_half_edge
-
+                        new_half_edge.add_to_closure(current_half_edge, current_half_edge.next, top_half_edge, False)
                         current_half_edge = top_half_edge.prior
                     else:
                         stack.append(top_half_edge)
@@ -87,7 +77,7 @@ class Closure:
 
         # Connect the starting half-edge of our planar map with the first node of the hexagon
         new_half_edge = ClosureHalfEdge()
-        new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge)
+        new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge, True)
 
         connecting_half_edge = new_half_edge
 
@@ -130,10 +120,10 @@ class Closure:
 
                 if visited_more and id(hexagon_iter) == id(hexagon[0]):
                     last_added_edge = connecting_half_edge.next
-                    fresh_half_edge.add_to_closure(connecting_half_edge, last_added_edge, current_half_edge)
+                    fresh_half_edge.add_to_closure(connecting_half_edge, last_added_edge, current_half_edge, True)
                 else:
                     last_added_edge = hexagon_iter.next
-                    fresh_half_edge.add_to_closure(hexagon_iter, last_added_edge, current_half_edge)
+                    fresh_half_edge.add_to_closure(hexagon_iter, last_added_edge, current_half_edge, True)
 
                 distance = 0
             else:
@@ -202,8 +192,8 @@ class Closure:
 
         return hexagon_half_edges[0]
 
-    def ___test_partial_closure(self, init_half_edge):
-        edge_list = init_half_edge.list_half_edges([])
+    def test_partial_closure(self, init_half_edge):
+        edge_list = init_half_edge.list_half_edges()
         stem_list = []
 
         for edge in edge_list:
@@ -231,7 +221,7 @@ class Closure:
         print("Partial closure is okay.")
 
     # Check if the connections between the edges are correct
-    def ___test_connections_between_half_edges(self, init_half_edge):
+    def test_connections_between_half_edges(self, init_half_edge):
         edge_list = init_half_edge.list_half_edges([])
         node_dict = init_half_edge.get_node_list()
         hex_half_edge = None
@@ -275,7 +265,7 @@ class Closure:
         print("Connections are okay.")
 
     # Checks if half edges at every node are planar
-    def ___test_planarity_of_embedding(self, init_half_edge):
+    def test_planarity_of_embedding(self, init_half_edge):
         edge_list = init_half_edge.list_half_edges([])
 
         # Check if there are two different edges that have the same prior/next half-edge
@@ -283,6 +273,8 @@ class Closure:
             for i in edge_list:
                 if id(i) != id(edge) and (i.prior is edge.prior or i.next is edge.next):
                     raise Exception("There are two different edges with the samp prior/next.")
+
+        print("Embedding is okay.")
 
     def closure(self, binary_tree):
         """Implements the bijection between the binary trees and the irreducible
@@ -294,4 +286,7 @@ class Closure:
         init_half_edge = binary_tree
         # This edge is hexagonal and points in ccw direction
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
+        # self.test_partial_closure(init_half_edge)
+        # self.test_connections_between_half_edges(init_half_edge)
+        # self.test_planarity_of_embedding(init_half_edge)
         return IrreducibleDissection(init_half_edge)
