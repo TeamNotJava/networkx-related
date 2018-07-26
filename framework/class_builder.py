@@ -17,9 +17,22 @@ class CombinatorialClassBuilder:
         raise NotImplementedError
 
     def product(self, lhs, rhs):
+        """
+
+        Parameters
+        ----------
+        lhs: CombinatorialClass
+        rhs: CombinatorialClass
+        """
         raise NotImplementedError
 
     def set(self, elements):
+        """
+
+        Parameters
+        ----------
+        elements: list of CombinatorialClass
+        """
         raise NotImplementedError
 
 
@@ -59,14 +72,14 @@ class DummyBuilder(CombinatorialClassBuilder):
         return DummyClass(u_size=1)
 
     def product(self, lhs, rhs):
-        l_size = lhs.get_l_size() + rhs.get_l_size()
-        u_size = lhs.get_u_size() + rhs.get_u_size()
+        l_size = lhs.l_size + rhs.u_size
+        u_size = lhs.u_size + rhs.u_size
         return DummyClass(l_size, u_size)
 
-    def set(self, dummies):
+    def set(self, elements):
         l_size = 0
         u_size = 0
-        for dummy in dummies:
-            l_size += dummy.get_l_size()
-            u_size += dummy.get_u_size()
+        for dummy in elements:
+            l_size += dummy.l_size
+            u_size += dummy.u_size
         return DummyClass(l_size, u_size)

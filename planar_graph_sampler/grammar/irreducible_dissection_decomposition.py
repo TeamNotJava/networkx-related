@@ -1,16 +1,11 @@
-import logging
-from random import choice
-import networkx as nx
-
 from framework.generic_samplers import *
-from framework.generic_classes import CombinatorialClass
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
+from framework.generic_samplers import BoltzmannSamplerBase
 
 from planar_graph_sampler.bijections.closure import Closure
 from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
-from planar_graph_sampler.rejections.admissibility_check import check_admissibility
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 
 def closure(binary_tree):
@@ -76,8 +71,8 @@ if __name__ == "__main__":
     grammar = irreducible_dissection_grammar()
     grammar.init()
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    BoltzmannSampler.debug_mode = False
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.debug_mode = False
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'

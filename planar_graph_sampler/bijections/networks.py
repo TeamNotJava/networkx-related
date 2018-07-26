@@ -6,12 +6,12 @@ def merge_networks_in_series(network, network_for_plugging):
     Merges the network for plugging into netwrok in a serial manner which means that the infinite pole from the
     network is identified with the 0-pole from network_for_plugging.
 
-    :param network: first network which will result in merged networks
-    :param network_for_plugging: second network which will be plugged in the first one
+    :param network: _first network which will result in merged networks
+    :param network_for_plugging: _second network which will be plugged in the _first one
     """
 
-    new_l_size = network.get_l_size() + network_for_plugging.get_l_size() + 1
-    new_u_size = network.get_u_size() + network_for_plugging.get_u_size()
+    new_l_size = network.l_size() + network_for_plugging.l_size() + 1
+    new_u_size = network.u_size() + network_for_plugging.u_size()
 
     # Extract the poles from both networks
     first_net_zero_pole_edge = network.get_zero_pole()
@@ -31,7 +31,7 @@ def merge_networks_in_series(network, network_for_plugging):
     first_net_inf_pole_prior = first_net_inf_pole_edge.prior
     second_net_zero_pole_edge_prior = second_net_zero_pole_edge.prior
 
-    # Merge the both networks so that the inf-pole from the first network is identified with the zero-pole from the second one
+    # Merge the both networks so that the inf-pole from the _first network is identified with the zero-pole from the _second one
     # Handling different while merging the two networks.
     first_net_inf_pole_edge.prior = second_net_zero_pole_edge_prior
     second_net_zero_pole_edge_prior.next = first_net_inf_pole_edge
@@ -39,7 +39,7 @@ def merge_networks_in_series(network, network_for_plugging):
     first_net_inf_pole_prior.next = second_net_zero_pole_edge
     second_net_zero_pole_edge.prior = first_net_inf_pole_prior
 
-    # Update the node numbers in the second network zero-pole edges
+    # Update the node numbers in the _second network zero-pole edges
     half_edge_walker = first_net_inf_pole_prior.next
     while half_edge_walker != first_net_inf_pole_prior:
         half_edge_walker.node_nr = first_net_inf_pole_edge.node_nr
@@ -48,12 +48,12 @@ def merge_networks_in_series(network, network_for_plugging):
     # Check whether the original poles of the network that are merged are linked or not. If they are not linked
     # than the corresponding half edges between them have to be removed.
     if not network.is_linked:
-        # Remove the half edges between the zero and inf pole from the first network
+        # Remove the half edges between the zero and inf pole from the _first network
         first_net_zero_pole_edge.remove()
         first_net_inf_pole_edge.remove()
 
     if not network_for_plugging.is_linked:
-        # Remove the half edges between the zero and inf pole from the first network
+        # Remove the half edges between the zero and inf pole from the _first network
         second_net_zero_pole_edge.remove()
         second_net_inf_pole_edge.remove()
 
@@ -66,14 +66,14 @@ def merge_networks_in_parallel(network, network_for_plugging):
     Merges the network for plugging into network in parallel which means their respective inf-poles and
     0-poles coincide.
 
-    :param network: first network which will result of the merge operation
-    :param network_for_plugging: second network which is plugged in the first one
+    :param network: _first network which will result of the merge operation
+    :param network_for_plugging: _second network which is plugged in the _first one
     """
 
     assert not (network.is_linked and network_for_plugging.is_linked)
 
-    new_l_size = network.get_l_size() + network_for_plugging.get_l_size()
-    new_u_size = network.get_u_size() + network_for_plugging.get_u_size()
+    new_l_size = network.l_size() + network_for_plugging.l_size()
+    new_u_size = network.u_size() + network_for_plugging.u_size()
     res_is_linked = network.is_linked or network_for_plugging.is_linked
 
     # Extract the poles from both networks
@@ -148,7 +148,7 @@ def substitute_edge_by_network(half_edge_for_sub, network):
         half_edge_for_sub_next.prior = net_root_half_edge_prior
         net_root_half_edge_prior.next = half_edge_for_sub_next
 
-        # Update the node numbers in the second network zero-pole half edges
+        # Update the node numbers in the _second network zero-pole half edges
         half_edge_walker = half_edge_for_sub.next
         while half_edge_walker != half_edge_for_sub:
             half_edge_walker.node_nr = half_edge_for_sub.node_nr

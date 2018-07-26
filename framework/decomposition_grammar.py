@@ -1,19 +1,22 @@
+from framework.class_builder import DefaultBuilder
 from framework.generic_samplers import *
 import sys
 
+from framework.generic_samplers import BoltzmannSamplerBase
 
-class AliasSampler(BoltzmannSampler):
+
+class AliasSampler(BoltzmannSamplerBase):
     """
-    I have decided to put the Alias sampler here because it is so closely linked to the grammar
-    An alias sampler is a sampler defined by a rule in a decomposition grammar.
-    The rule can contain the same alias sampler itself.
+    I have decided to put the Alias _sampler here because it is so closely linked to the grammar
+    An alias _sampler is a _sampler defined by a rule in a decomposition grammar.
+    The rule can contain the same alias _sampler itself.
     This allows to implement recursive decompositions.
     """
 
-    grammar_not_initialized_error_msg = ": you have to set the grammar this Alias sampler belongs to before using it"
+    grammar_not_initialized_error_msg = ": you have to set the grammar this Alias _sampler belongs to before using it"
 
     def __init__(self, alias, grammar=None):
-        super().__init__()
+        super(AliasSampler, self).__init__()
         self.alias = alias
         self.grammar = grammar
 
@@ -24,7 +27,7 @@ class AliasSampler(BoltzmannSampler):
 
     # here we let the visitor decide if he wants to recurse further down into the children
     # kind of ugly but needed to avoid infinite recursion
-    # alternative: let the Alias sampler itself decide that
+    # alternative: let the Alias _sampler itself decide that
     def accept(self, visitor):
         visitor_wants_to_go_on = visitor.visit(self)
         if visitor_wants_to_go_on:
@@ -65,7 +68,7 @@ class AliasSampler(BoltzmannSampler):
         return self.grammar.get_rule(self.alias).sample_dummy(x, y)
 
 
-class DecompositionGrammar:
+class DecompositionGrammar(object):
     """
     Represents a decomposition grammar as a collection of several rules.
     """
@@ -117,7 +120,7 @@ class DecompositionGrammar:
         self.recursive_rules = set(recursive_rules)
 
     def infer_target_class_labels(self):
-        # Just looks if the top sampler of a rule is a transformation sampler and this case
+        # Just looks if the top _sampler of a rule is a transformation _sampler and this case
         # automatically sets the label of the target class.
         for alias in self.rules:
             sampler = self.rules[alias]
@@ -137,7 +140,7 @@ class DecompositionGrammar:
         self.rules[alias] = sampler
 
     def add_rules(self, rules):
-        # Merges the dictionaries, second has higher priority.
+        # Merges the dictionaries, _second has higher priority.
         self.rules = {**self.rules, **rules}
 
     def get_rules(self):
@@ -148,12 +151,12 @@ class DecompositionGrammar:
 
     def get_recursive_rules(self):
         if self.recursive_rules is None:
-            sys.exit("You have to initialize the grammar first. Call init(top_rule) after adding all your rules.")
+            sys.exit("You have to initialize the grammar _first. Call init(top_rule) after adding all your rules.")
         return self.recursive_rules
 
     def is_recursive_rule(self, key):
         if self.recursive_rules is None:
-            sys.exit("You have to initialize the grammar first. Call init(top_rule) after adding all your rules.")
+            sys.exit("You have to initialize the grammar _first. Call init(top_rule) after adding all your rules.")
         return key in self.recursive_rules
 
     def collect_oracle_queries(self, alias, x, y):
@@ -192,7 +195,7 @@ class DecompositionGrammar:
 
     class DFSVisitor:
         """
-        Traverses the given sampler hierarchy with a DFS.
+        Traverses the given _sampler hierarchy with a DFS.
         """
 
         def __init__(self, f):
@@ -201,14 +204,14 @@ class DecompositionGrammar:
             self.seen_alias_samplers = []
 
         def visit(self, sampler):
-            # Apply the function to the current sampler.
+            # Apply the function to the current _sampler.
             r = self.f(sampler)
             # Append the return value to the result list if any.
             if r is not None:
                 self.result.append(r)
             if isinstance(sampler, AliasSampler):
                 if sampler.alias in self.seen_alias_samplers:
-                    # Don't recurse into the alias sampler because we have already seen it.
+                    # Don't recurse into the alias _sampler because we have already seen it.
                     return False
                 else:
                     self.seen_alias_samplers.append(sampler.alias)
@@ -232,12 +235,12 @@ class DecompositionGrammar:
                 # Don't recurse into the alias samplers.
                 return False
             else:
-                # Otherwise set the given builder.
+                # Otherwise set the given _builder.
                 sampler.set_builder(self.builder)
 
     class PrecomputeEvaluationsVisitor:
         """
-        Precomputes evaluations for the sampler in the given hierarchy.
+        Precomputes evaluations for the _sampler in the given hierarchy.
         """
 
         def __init__(self):
@@ -277,17 +280,17 @@ class DecompositionGrammar:
                 self.result.add(sampler.oracle_query_string(self.x, self.y))
 
             if isinstance(sampler, LSubsSampler):
-                self.stack_x.append((sampler.rhs, self.x))
-                self.x = sampler.rhs.oracle_query_string(self.x, self.y)
+                self.stack_x.append((sampler._rhs, self.x))
+                self.x = sampler._rhs.oracle_query_string(self.x, self.y)
 
             if isinstance(sampler, USubsSampler):
-                self.stack_y.append((sampler.rhs, self.y))
-                self.y = sampler.rhs.oracle_query_string(self.x, self.y)
+                self.stack_y.append((sampler._rhs, self.y))
+                self.y = sampler._rhs.oracle_query_string(self.x, self.y)
 
             if isinstance(sampler, TransformationSampler) and not isinstance(sampler, BijectionSampler):
-                if sampler.eval_transform is None:
+                if sampler._eval_transform is None:
                     self.result.add(sampler.oracle_query_string(self.x, self.y))
-                # otherwise the sampler has an eval_transform function and does not directly query the oracle
+                # otherwise the _sampler has an _eval_transform function and does not directly query the oracle
 
             if isinstance(sampler, AliasSampler):
                 if sampler.alias in self.seen_alias_samplers:

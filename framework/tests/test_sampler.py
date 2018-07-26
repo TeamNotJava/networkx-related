@@ -1,7 +1,8 @@
-import random 
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
+from framework.generic_samplers import BoltzmannSamplerBase
+
 
 class TestSampler(object):
     def setUp(self):
@@ -64,12 +65,12 @@ class TestSampler(object):
     def test_sample_coin_grammar(self):
         """Test if for coint_grammar the pseudo random sampled element is equal to the expected result
         """
-        BoltzmannSampler.oracle = self.coin_oracle
+        BoltzmannSamplerBase.oracle = self.coin_oracle
         coinflip = self.coin_grammar.sample('CoinFlip', 'x', 'y')
 
     def test_sample_tree_grammar(self):
 
-        BoltzmannSampler.oracle = self.tree_oracle
+        BoltzmannSamplerBase.oracle = self.tree_oracle
         tree = self.tree_grammar.sample('Tree', 'x', 'y')
         print(tree)
         raise AssertionError

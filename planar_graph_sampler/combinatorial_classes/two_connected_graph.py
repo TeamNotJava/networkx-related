@@ -34,11 +34,11 @@ class EdgeRootedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
     def __init__(self, root_half_edge):
         super().__init__(root_half_edge)
 
-    def get_u_size(self):
-        return super().get_u_size() - 1
+    def u_size(self):
+        return super().u_size() - 1
 
-    def get_l_size(self):
-        return super().get_l_size() - 2
+    def l_size(self):
+        return super().l_size() - 2
 
 
 class UDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
@@ -46,8 +46,8 @@ class UDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
     def __init__(self, half_edge):
         super().__init__(half_edge)
 
-    def get_u_size(self):
-        return super().get_u_size() - 1
+    def u_size(self):
+        return super().u_size() - 1
 
 
 class ULDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
@@ -55,11 +55,11 @@ class ULDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
     def __init__(self, half_edge):
         super().__init__(half_edge)
 
-    def get_u_size(self):
-        return super().get_u_size() - 1
+    def u_size(self):
+        return super().u_size() - 1
 
-    def get_l_size(self):
-        return super().get_l_size() - 1
+    def l_size(self):
+        return super().l_size() - 1
 
 
 class LDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
@@ -67,8 +67,8 @@ class LDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
     def __init__(self, half_edge):
         super().__init__(half_edge)
 
-    def get_l_size(self):
-        return super().get_l_size() - 1
+    def l_size(self):
+        return super().l_size() - 1
 
     def replace_l_atoms(self, sampler, x, y):
         nodes = self.half_edge.get_node_list()
@@ -91,8 +91,8 @@ class BiLDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
         super().__init__(half_edge)
         self.random_node_2 = None
 
-    def get_l_size(self):
-        return super().get_l_size() - 2
+    def l_size(self):
+        return super().l_size() - 2
 
     def replace_l_atoms(self, sampler, x, y):
         nodes = self.half_edge.get_node_list()

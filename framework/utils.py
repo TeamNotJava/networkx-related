@@ -24,14 +24,14 @@ def bern(p):
 
 def exp_tail(d, x):
     """
-    Tail of the exponential series starting at d. Needed in the set sampler.
+    Tail of the exponential series starting at _d. Needed in the set _sampler.
     :param d:
     :param x:
     :return:
     """
 
     result = exp(x)
-    # Subtract the first d terms.
+    # Subtract the _first _d terms.
     for i in range(d):
         result -= (pow(x, i) / factorial(i))
     return result

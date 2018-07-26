@@ -37,10 +37,10 @@ class HalfEdge(CombinatorialClass):
         # Node the half-edge is  assigned to
         self.node_nr = -1
 
-    def get_l_size(self):
+    def l_size(self):
         return self.get_number_of_nodes()
 
-    def get_u_size(self):
+    def u_size(self):
         return self.get_number_of_edges()
 
     def insert_after(self, new=None):

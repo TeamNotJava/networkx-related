@@ -18,11 +18,11 @@ class EdgeRootedThreeConnectedPlanarGraph(HalfEdgeGraph):
         is_three_connected = self.is_connected(3)
         return all([super_ok, is_planar, is_three_connected])
 
-    def get_u_size(self):
+    def u_size(self):
         # Root edge does not count.
         return self.number_of_edges() - 1
 
-    def get_l_size(self):
+    def l_size(self):
         # The vertices adjacent to the root do not count.
         return self.number_of_nodes() - 2
 
@@ -61,7 +61,7 @@ class UDerivedEdgeRootedThreeConnectedPlanarGraph(EdgeRootedThreeConnectedPlanar
                                                                                       root_half_edge.opposite}
         self.random_edge = rnd.choice(list(possible_edges))
 
-    def get_u_size(self):
+    def u_size(self):
         # Root edge and random edge do not count.
         return self.number_of_edges() - 2
 

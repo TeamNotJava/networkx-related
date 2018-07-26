@@ -1,10 +1,11 @@
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.generic_samplers import *
 from framework.evaluation_oracle import EvaluationOracle
+from framework.generic_samplers import BoltzmannSamplerBase
 
 from planar_graph_sampler.grammar.irreducible_dissection_decomposition import irreducible_dissection_grammar
 from planar_graph_sampler.bijections.primal_map import primal_map
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 from planar_graph_sampler.combinatorial_classes.three_connected_graph import UDerivedEdgeRootedThreeConnectedPlanarGraph
 
 
@@ -43,7 +44,7 @@ def three_connected_graph_grammar():
 
         'G_3_arrow_dx': Trans(M_3_arrow_dx, eval_transform=lambda evl, x, y: 0.5 * evl),
 
-        'G_3_arrow_dy': Bij(DyFromDx(G_3_arrow_dx, alpha_u_l=3), to_G_3_arrow_dx)  # alpha_u_l = 3, see 5.3.3.
+        'G_3_arrow_dy': Bij(DyFromDx(G_3_arrow_dx, alpha_u_l=3), to_G_3_arrow_dx)  # _alpha_u_l = 3, see 5.3.3.
 
     })
 
@@ -54,7 +55,7 @@ if __name__ == "__main__":
     grammar = three_connected_graph_grammar()
     grammar.init()
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'

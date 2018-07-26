@@ -51,7 +51,7 @@ class EdgeByNetworkSubstitution:
             half_edge_for_sub_next.prior = net_root_half_edge_prior
             net_root_half_edge_prior.next = half_edge_for_sub_next
 
-            # Update the node numbers in the second network zero-pole half edges
+            # Update the node numbers in the _second network zero-pole half edges
             half_edge_walker = half_edge_for_sub.next
             while half_edge_walker != half_edge_for_sub:
                 half_edge_walker.node_nr = half_edge_for_sub.node_nr

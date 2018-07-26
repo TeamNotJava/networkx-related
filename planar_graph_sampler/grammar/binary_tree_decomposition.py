@@ -2,6 +2,7 @@ from framework.class_builder import CombinatorialClassBuilder
 from framework.evaluation_oracle import EvaluationOracle
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.generic_samplers import *
+from framework.generic_samplers import BoltzmannSamplerBase
 from framework.utils import bern, Counter
 
 from planar_graph_sampler.combinatorial_classes import BinaryTree
@@ -14,7 +15,7 @@ counter = Counter()
 class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     """
     Builds white-rooted binary trees (rules 'R_w', 'R_w_head', 'R_w_as').
-    The builder is in the same file as the gramamr it belongs to because it is quite closely connected.
+    The _builder is in the same file as the gramamr it belongs to because it is quite closely connected.
     """
 
     def u_atom(self):
@@ -31,7 +32,7 @@ class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
 class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     """
     Builds black-rooted binary trees (rules 'R_b', 'R_b_head', 'R_b_as').
-    The builder is in the same file as the gramamr it belongs to because it is quite closely connected.
+    The _builder is in the same file as the gramamr it belongs to because it is quite closely connected.
     """
 
     def l_atom(self):
@@ -45,12 +46,12 @@ class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     def product(self, lhs, rhs):
         res = None
         if lhs.is_leaf():
-            # rhs is not a leaf.
+            # _rhs is not a leaf.
             assert rhs.is_black_rooted()
             rhs.add_left_child(lhs)
             res = rhs
         elif rhs.is_leaf():
-            # lhs is not a leaf.
+            # _lhs is not a leaf.
             res = self.product(rhs, lhs).flip()
         elif lhs.is_white_rooted() and rhs.is_black_rooted():
             # Both are not leaves.
@@ -90,7 +91,7 @@ def binary_tree_grammar():
     # Add the decomposition rules.
     grammar.add_rules({
 
-        'K': Rej(K_dy, lambda gamma: bern(2 / (gamma.get_u_size() + 1))),  # See section 4.1.6. for this rejection.
+        'K': Rej(K_dy, lambda gamma: bern(2 / (gamma.u_size() + 1))),  # See section 4.1.6. for this rejection.
 
         'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),
 
@@ -111,7 +112,7 @@ def binary_tree_grammar():
         'R_w': (U() + R_b) * (U() + R_b),
 
     })
-    # Set builder information.
+    # Set _builder information.
     grammar.set_builder(['R_w', 'R_w_head', 'R_w_as', 'R_b_head_help'], WhiteRootedBinaryTreeBuilder())
     grammar.set_builder(['R_b', 'R_b_head', 'R_b_as'], BlackRootedBinaryTreeBuilder())
 
@@ -120,24 +121,47 @@ def binary_tree_grammar():
 
 
 if __name__ == '__main__':
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    BoltzmannSampler.debug_mode = True
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.debug_mode = True
 
     grammar = binary_tree_grammar()
     grammar.init()
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'K'
 
-    tree = grammar.sample('K_dy', symbolic_x, symbolic_y)
 
-    assert tree.is_consistent()
-    e = tree.combinatorial_embedding()
+    while True:
+        try:
+            tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+        except RecursionError:
+            pass
+        if tree.l_size() > 10:
+            print(tree)
+            assert tree.is_consistent()
 
-    print("Black nodes: {}".format(tree.get_l_size()))
-    print("Total leaves: {}".format(tree.get_u_size()))
 
-    import matplotlib.pyplot as plt
+            import matplotlib.pyplot as plt
 
-    tree.plot()
-    plt.show()
+            tree.plot(with_labels=False)
+            plt.show()
+
+
+    c = [0,0,0,0,0,0,0]
+    samples = 100000
+    i = 0
+    while i < samples:
+        try:
+            tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+        except RecursionError:
+            pass
+        if tree.l_size() == l_size:
+            assert tree.is_consistent()
+            c[tree.u_size()] += 1
+            i += 1
+    print(c)
+    a = BoltzmannSampler.oracle.get_probability(sampled_class, symbolic_x, symbolic_y, l_size, 3)
+    b = BoltzmannSampler.oracle.get_probability(sampled_class, symbolic_x, symbolic_y, l_size, 4)
+    print(a / (a + b))
+    print(b / (a + b))

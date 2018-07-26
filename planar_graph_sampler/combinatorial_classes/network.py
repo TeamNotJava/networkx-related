@@ -14,7 +14,7 @@ class Network(HalfEdgeGraph):
         #self.vertices_list = vertices_list
         # It contains all the edges in the network.
         #self.edges_list = edges_list
-        # The first part of the edge between the poles.
+        # The _first part of the edge between the poles.
         assert half_edge.opposite is not None
         super().__init__(half_edge)
         self.is_linked = is_linked
@@ -50,7 +50,7 @@ class Network(HalfEdgeGraph):
         """
         return self.half_edge.opposite
 
-    def get_u_size(self):
+    def u_size(self):
         # number of edges + 1 because of the root edge
         #return len(self.edges_list)
         #res = self.number_of_edges()
@@ -59,7 +59,7 @@ class Network(HalfEdgeGraph):
         #return res
         return self.u_size
 
-    def get_l_size(self):
+    def l_size(self):
         # The poles are not part from the vertices list.
         #return len(self.vertices_list)
         # The poles don't count.
@@ -67,11 +67,11 @@ class Network(HalfEdgeGraph):
         return self.l_size
 
     def random_u_atom(self):
-        rand_index = rn.randrange(self.get_u_size())
+        rand_index = rn.randrange(self.u_size())
         return nth(self.u_atoms(), rand_index)
 
     def random_l_atom(self):
-        rand_index = rn.randrange(self.get_l_size())
+        rand_index = rn.randrange(self.l_size())
         return nth(self.l_atoms(), rand_index)
 
     def to_networkx_graph(self, include_unpaired=False):

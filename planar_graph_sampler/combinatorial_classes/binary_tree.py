@@ -99,10 +99,10 @@ class BinaryTree(HalfEdgeGraph):
     def is_leaf(self):
         return False
 
-    def get_u_size(self):
+    def u_size(self):
         return self.leaves_count
 
-    def get_l_size(self):
+    def l_size(self):
         return self.black_nodes_count
 
     def to_networkx_graph(self, include_unpaired=True):
@@ -129,8 +129,8 @@ class Leaf(CombinatorialClass):
     def is_leaf(self):
         return True
 
-    def get_u_size(self):
+    def u_size(self):
         return 1
 
-    def get_l_size(self):
+    def l_size(self):
         return 0

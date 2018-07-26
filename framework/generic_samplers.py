@@ -1,17 +1,24 @@
-from framework.class_builder import DefaultBuilder, DummyBuilder
+from framework.class_builder import DefaultBuilder
 from framework.generic_classes import *
 from framework.utils import *
 
 
-# All references in comments in this file refer to:
-# "E. Fusy: Uniform Random Sampling of Planar Graphs in Linear Time"
-
-class BoltzmannSampler:
+class BoltzmannSamplerBase(object):
     """Abstract base class for Boltzmann samplers.
 
-    Attributes:
-        oracle  The oracle to be used by all instantiations of this class.
-        debug_mode Will perform additional (possibly time consuming) checks when set to True.
+    Attributes
+    ----------
+    oracle: EvaluationOracle
+        The oracle to be used by all instantiations of this class and its subclasses.
+    debug_mode: bool
+        Will perform additional (possibly time consuming) checks when set to True.
+
+    References
+    ----------
+    .. [1] E. Fusy:
+        Uniform Random Sampling of Planar Graphs in Linear Time'
+        ??
+        ??
     """
 
     oracle = None
@@ -19,30 +26,34 @@ class BoltzmannSampler:
 
     def __init__(self):
         # Samplers are always initialized with the default builder.
-        self.builder = DefaultBuilder()
-        self.precomputed_eval = None
+        self._builder = DefaultBuilder()
+        self._precomputed_eval = None
 
+    @property
     def sampled_class(self):
         """Returns a string representation of the sampled class.
 
-        :rtype: str
+        Returns
+        -------
+        str
+            A string representation of the sampled class.
         """
         raise NotImplementedError
 
     def sample(self, x, y):
-        """Invokes this sampler with the given x and y parameters.
+        """Invokes this _sampler with the given x and y parameters.
 
-        :param x: symbolic x argument
-        :param y: symbolic y argument
-        :rtype: CombinatorialClass
-        """
-        raise NotImplementedError
+        Parameters
+        ----------
+        x: str
+            symbolic x argument
+        y: str
+            symbolic y argument
 
-    def sample_dummy(self, x, y):
-        """Samples a dummy object that just records l-size and u-size.
-
-        :param x:
-        :param y:
+        Returns
+        -------
+        CombinatorialClass
+            The result of the sampling operation.
         """
         raise NotImplementedError
 
@@ -51,28 +62,48 @@ class BoltzmannSampler:
 
         Possibly queries the oracle directly or indirectly.
 
-        :param x: symbolic x argument
-        :param y: symbolic y argument
-        :rtype: float
+        Parameters
+        ----------
+        x: str
+            symbolic x argument
+        y: str
+            symbolic y argument
+
+        Returns
+        -------
+        evaluation: float
+            The value of the generating function of the sampled class at the given point.
         """
         raise NotImplementedError
 
     def precompute_eval(self, x, y):
         """Precomputes the evaluation of the generating function and stores it.
 
-        :param x: symbolic x argument
-        :param y: symbolic y argument
+        Parameters
+        ----------
+        x: str
+            symbolic x argument
+        y: str
+            symbolic y argument
         """
-        self.precomputed_eval = self.get_eval(x, y)
+        self._precomputed_eval = self.get_eval(x, y)
 
     def oracle_query_string(self, x, y):
         """String used as key in oracle.
 
-        This is like a 'symbolic evaluation' of the generating function of the class being sampled from this sampler.
+        This is like a 'symbolic evaluation' of the generating function of the class being sampled from this _sampler.
 
-        :param x: symbolic x argument
-        :param y: symbolic y argument
-        :rtype: str
+        Parameters
+        ----------
+        x: str
+            symbolic x argument
+        y: str
+            symbolic y argument
+
+        Returns
+        -------
+        query_string: str
+            String that may be used to query the oracle for the generating function of the sampled class.
         """
         raise NotImplementedError
 
@@ -81,21 +112,30 @@ class BoltzmannSampler:
 
         Output will be in generic format if not set.
 
-        :param builder: A builder for the output class.
-        :return:
+        Parameters
+        ----------
+        builder: CombinatorialClassBuilder
         """
-        self.builder = builder
+        self._builder = builder
 
     def get_children(self):
-        """Gets the samplers this sampler depends on (if any).
+        """Gets the samplers this _sampler depends on (if applicable).
 
-        :rtype: list
+        Applies to all samplers except atom samplers.
+
+        Returns
+        -------
+        iterator
+            An iterator over all samplers this _sampler depends on.
         """
         raise NotImplementedError
 
     def accept(self, visitor):
-        """Calls visitor.visit(self) and lets the children accept the visitor as well.
+        """Accepts a visitor.
 
+        Parameters
+        ----------
+        visitor: object
         """
         visitor.visit(self)
         for child in self.get_children():
@@ -104,347 +144,289 @@ class BoltzmannSampler:
     def __add__(self, other):
         """Sum construction of samplers.
 
-        Comes in very handy when writing the grammars.
+        Parameters
+        ----------
+        other: BoltzmannSamplerBase
+            The right hand side argument.
 
-        :param other: The right hand side argument.
-        :return: The sum-sampler resulting from this sampler and the given sampler.
-        :rtype BoltzmannSampler
+        Returns
+        -------
+        BoltzmannSamplerBase
+            The sum-_sampler resulting from this _sampler and the given _sampler.
         """
         return SumSampler(self, other)
 
     def __mul__(self, other):
         """Product construction of samplers.
 
-        Comes in very handy when writing the grammars.
+        Parameters
+        ----------
+        other: BoltzmannSamplerBase
+            The right hand side argument.
 
-        :param other: The right hand side argument.
-        :return: The product-sampler resulting from this sampler and the given sampler.
-        :rtype BoltzmannSampler
+        Returns
+        -------
+        BoltzmannSamplerBase
+            The product-_sampler resulting from this _sampler and the given _sampler.
         """
         return ProdSampler(self, other)
 
+    # todo Support all integers.
     def __rmul__(self, other):
-        """Adding a sampler to itself several times.
+        """Adds (sum construction) a _sampler to itself several times.
 
-        :param other: Only integers 2 and 3 supported.
-        :return:
+        Parameters
+        ----------
+        other: int
+            The left hand side argument, must be either 2 or 3.
+
+        Returns
+        -------
+        BoltzmannSamplerBase
+            The _sampler resulting from this operation.
+
+        Notes
+        -----
+        This only affects the generating function but not the outcome.
         """
         if other == 2:
             return self + self
         if other == 3:
             return self + self + self
         else:
-            raise NotImplementedError
+            raise ValueError("Multiplication with a constant only implemented for integers 2 and 3")
 
+    # todo Support all integers.
     def __pow__(self, power, modulo=None):
-        """Multiplies a sampler with itself.
+        """Multiplies a _sampler with itself.
 
-        :param power: Only integers 2 and 3 supported.
-        :param modulo: Don't use.
-        :return:
+        Parameters
+        ----------
+        power: int
+            The right hand side argument, must be either 2 or 3.
+
+        Returns
+        -------
+        BoltzmannSamplerBase
+            The _sampler resulting from this operation.
+
         """
         if power == 2:
             return self * self
         if power == 3:
             return self * self * self
         else:
-            raise NotImplementedError
+            raise ValueError("Power only implemented for integers 2 and 3")
 
 
-### Atom Samplers ###
-
-class AtomSampler(BoltzmannSampler):
-    """Abstract base class for atom samplers.
-
-    """
+class AtomSampler(BoltzmannSamplerBase):
+    """Abstract base class for atom samplers."""
 
     def __init__(self):
         super(AtomSampler, self).__init__()
 
+    @property
     def sampled_class(self):
         raise NotImplementedError
 
     def sample(self, x, y):
         raise NotImplementedError
 
-    def sample_dummy(self, x, y):
-        raise NotImplementedError
-
     def get_eval(self, x, y):
-        # see 3.2
         return self.oracle.get(self.oracle_query_string(x, y))
 
     def oracle_query_string(self, x, y):
         raise NotImplementedError
 
     def get_children(self):
-        # an atom does not have any children
+        # An atom does not have any children.
         return []
 
 
 class ZeroAtomSampler(AtomSampler):
-    """Sampler for the zero atom.
-
-    """
+    """Sampler for the zero atom."""
 
     def __init__(self):
         super(ZeroAtomSampler, self).__init__()
 
+    @property
     def sampled_class(self):
         return '1'
 
     def sample(self, x, y):
-        return self.builder.zero_atom()
-
-    def sample_dummy(self, x, y):
-        return DummyClass()
+        return self._builder.zero_atom()
 
     def get_eval(self, x, y):
-        # see 3.2, instead of querying '1' to the oracle we just return it.
+        # See 3.2, instead of querying '1' to the oracle we just return it.
         return 1
 
     def oracle_query_string(self, x, y):
-        # '1' is actually never an oracle query because it's trivial but anyway
         return '1'
 
 
 class LAtomSampler(AtomSampler):
-    """Sampler for the l-atom (labeled atom).
-
-    """
+    """Sampler for the l-atom (labeled atom)."""
 
     def __init__(self):
         super(LAtomSampler, self).__init__()
 
+    @property
     def sampled_class(self):
         return 'L'
 
     def sample(self, x, y):
-        return self.builder.l_atom()
-
-    def sample_dummy(self, x, y):
-        return DummyClass(l_size=1)
+        return self._builder.l_atom()
 
     def oracle_query_string(self, x, y):
-        # generating function of the l-atom is just x
+        # Generating function of the l-atom is just x.
         return x
 
 
 class UAtomSampler(AtomSampler):
-    """Sampler for the u-atom (unlabeled atom).
-
-    """
+    """Sampler for the u-atom (unlabeled atom)."""
 
     def __init__(self):
         super(UAtomSampler, self).__init__()
 
+    @property
     def sampled_class(self):
         return 'U'
 
     def sample(self, x, y):
-        return self.builder.u_atom()
-
-    def sample_dummy(self, x, y):
-        return DummyClass(u_size=1)
+        return self._builder.u_atom()
 
     def oracle_query_string(self, x, y):
-        # generating function of the u-atom is just y
+        # Generating function of the u-atom is just y.
         return y
 
 
-### Binary samplers - depend on two other samplers ###
+class BinarySampler(BoltzmannSamplerBase):
+    """Abstract base class for a _sampler that depends on exactly 2 other samplers.
 
-class BinarySampler(BoltzmannSampler):
-    """Abstract base class for a sampler that depends on exactly 2 other samplers.
-
+    Parameters
+    ----------
+    lhs: BoltzmannSamplerBase
+        The left hand side argument.
+    rhs: BoltzmannSamplerBase
+        The right hand side argument.
+    op_symbol: str
+        The string representation of the implemented operator.
     """
 
-    def __init__(self, lhs, rhs):
-        """
-
-        :param lhs: The first sampler.
-        :param rhs: The second sampler.
-        """
-
+    def __init__(self, lhs, rhs, op_symbol):
         super(BinarySampler, self).__init__()
-        self.lhs = lhs
-        self.rhs = rhs
+        self._lhs = lhs
+        self._rhs = rhs
+        self._op_symbol = op_symbol
 
+    @property
     def sampled_class(self):
-        raise NotImplementedError
+        return "({}{}{})".format(self._lhs.sampled_class, self._op_symbol, self._rhs.sampled_class)
 
     def sample(self, x, y):
-        raise NotImplementedError
-
-    def sample_dummy(self, x, y):
         raise NotImplementedError
 
     def get_eval(self, x, y):
         raise NotImplementedError
 
     def oracle_query_string(self, x, y):
-        raise NotImplementedError
+        return "({}{}{})".format(
+            self._lhs.oracle_query_string(x, y),
+            self._op_symbol,
+            self._rhs.oracle_query_string(x, y)
+        )
 
     def get_children(self):
-        return [self.lhs, self.rhs]
+        return [self._lhs, self._rhs]
 
 
 class SumSampler(BinarySampler):
-    """Samples from the disjoint union of the two underlying classes.
-
-    """
+    """Samples from the disjoint union of the two underlying classes."""
 
     def __init__(self, lhs, rhs):
-        super(SumSampler, self).__init__(lhs, rhs)
-
-    def sampled_class(self):
-        return '(' + self.lhs.sampled_class() + '+' + self.rhs.sampled_class() + ')'
+        super(SumSampler, self).__init__(lhs, rhs, '+')
 
     def sample(self, x, y):
-        if bern(self.lhs.get_eval(x, y) / self.get_eval(x, y)):
-            return self.lhs.sample(x, y)
+        if bern(self._lhs.get_eval(x, y) / self.get_eval(x, y)):
+            return self._lhs.sample(x, y)
         else:
-            return self.rhs.sample(x, y)
-
-    def sample_dummy(self, x, y):
-        if bern(self.lhs.get_eval(x, y) / self.get_eval(x, y)):
-            return self.lhs.sample_dummy(x, y)
-        else:
-            return self.rhs.sample_dummy(x, y)
+            return self._rhs.sample(x, y)
 
     def get_eval(self, x, y):
-        # see 3.2: for sum class (= disjoint union) the generating function is the sum of the 2 generating functions
-        return self.lhs.get_eval(x, y) + self.rhs.get_eval(x, y)
-
-    def oracle_query_string(self, x, y):
-        return '(' + self.lhs.oracle_query_string(x, y) + '+' + self.rhs.oracle_query_string(x, y) + ')'
+        # For the sum class (disjoint union) the generating function is the sum of the 2 generating functions.
+        return self._lhs.get_eval(x, y) + self._rhs.get_eval(x, y)
 
 
 class ProdSampler(BinarySampler):
-    """Samples from the cartesian product of the two underlying classes.
-
-    """
+    """Samples from the cartesian product of the two underlying classes."""
 
     def __init__(self, lhs, rhs):
-        super(ProdSampler, self).__init__(lhs, rhs)
-
-    def sampled_class(self):
-        return '(' + self.lhs.sampled_class() + '*' + self.rhs.sampled_class() + ')'
+        super(ProdSampler, self).__init__(lhs, rhs, '*')
 
     def sample(self, x, y):
-        return self.builder.product(self.lhs.sample(x, y), self.rhs.sample(x, y))
-
-    def sample_dummy(self, x, y):
-        dummy_lhs = self.lhs.sample_dummy(x, y)
-        dummy_rhs = self.rhs.sample_dummy(x, y)
-        l_size = dummy_lhs.get_l_size() + dummy_rhs.get_l_size()
-        u_size = dummy_lhs.get_u_size() + dummy_rhs.get_u_size()
-        return DummyClass(l_size, u_size)
+        return self._builder.product(self._lhs.sample(x, y), self._rhs.sample(x, y))
 
     def get_eval(self, x, y):
-        # see 3.2: for product class (= cartesian prod.) the generating function is the product of the 2 generating
-        # functions
-        return self.lhs.get_eval(x, y) * self.rhs.get_eval(x, y)
-
-    def oracle_query_string(self, x, y):
-        return self.lhs.oracle_query_string(x, y) + '*' + self.rhs.oracle_query_string(x, y)
+        # For the product class (cartesian prod.) the generating function is the product of the 2 generating functions.
+        return self._lhs.get_eval(x, y) * self._rhs.get_eval(x, y)
 
 
 class LSubsSampler(BinarySampler):
-    """Samples from the class resulting from substituting the l-atoms of the first class with objects of the second
-    class.
-
-    """
+    """Samples from the class resulting from substituting the l-atoms of lhs with objects of rhs."""
 
     def __init__(self, lhs, rhs):
-        super(LSubsSampler, self).__init__(lhs, rhs)
-
-    def sampled_class(self):
-        return '(' + self.lhs.sampled_class() + ' lsubs ' + self.rhs.sampled_class() + ')'
+        super(LSubsSampler, self).__init__(lhs, rhs, ' lsubs ')
 
     def sample(self, x, y):
-        gamma = self.lhs.sample(self.rhs.oracle_query_string(x, y), y)
-        # todo this is wrong, we must replace using different sample calls
-        gamma.replace_l_atoms(self.rhs, x, y)
+        gamma = self._lhs.sample(self._rhs.oracle_query_string(x, y), y)
+        gamma.replace_l_atoms(self._rhs, x, y)
         return gamma
 
-    def sample_dummy(self, x, y):
-        gamma = self.lhs.sample_dummy(self.rhs.oracle_query_string(x, y), y)
-        l_size = 0
-        u_size = gamma.get_u_size()
-        for _ in range(gamma.get_l_size()):
-            dummy = self.rhs.sample_dummy(x, y)
-            l_size += dummy.get_l_size()
-            u_size += dummy.get_u_size()
-        return DummyClass(l_size, u_size)
-
     def get_eval(self, x, y):
-        # return self.oracle.get(self.oracle_query_string(x, y))
-        return self.lhs.get_eval(self.rhs.oracle_query_string(x, y), y)
+        return self._lhs.get_eval(self._rhs.oracle_query_string(x, y), y)
 
     def oracle_query_string(self, x, y):
-        # see 3.2: A(B(x,y),y) where A = lhs and B = rhs
-        return self.lhs.oracle_query_string(self.rhs.oracle_query_string(x, y), y)
+        #  A(B(x,y),y) where A = lhs and B = rhs (see 3.2).
+        return self._lhs.oracle_query_string(self._rhs.oracle_query_string(x, y), y)
 
 
 class USubsSampler(BinarySampler):
-    """Samples from the class resulting from substituting the u-atoms of the first class with objects of the second
-    class.
-
-    """
+    """Samples from the class resulting from substituting the u-atoms of lhs with objects of rhs."""
 
     def __init__(self, lhs, rhs):
-        super(USubsSampler, self).__init__(lhs, rhs)
-
-    def sampled_class(self):
-        return '(' + self.lhs.sampled_class() + ' usubs ' + self.rhs.sampled_class() + ')'
+        super(USubsSampler, self).__init__(lhs, rhs, ' usubs ')
 
     def sample(self, x, y):
-        gamma = self.lhs.sample(x, self.rhs.oracle_query_string(x, y))
-        gamma.replace_u_atoms(self.rhs, x, y)
+        gamma = self._lhs.sample(x, self._rhs.oracle_query_string(x, y))
+        gamma.replace_u_atoms(self._rhs, x, y)
         return gamma
 
-    def sample_dummy(self, x, y):
-        gamma = self.lhs.sample_dummy(x, self.rhs.oracle_query_string(x, y))
-        l_size = gamma.get_l_size()
-        u_size = 0
-        for _ in range(gamma.get_u_size()):
-            dummy = self.rhs.sample_dummy(x, y)
-            l_size += dummy.get_l_size()
-            u_size += dummy.get_u_size()
-        return DummyClass(l_size, u_size)
-
     def get_eval(self, x, y):
-        # todo not 100% sure about this yet
-        return self.lhs.get_eval(x, self.rhs.oracle_query_string(x, y))
+        return self._lhs.get_eval(x, self._rhs.oracle_query_string(x, y))
 
     def oracle_query_string(self, x, y):
-        # see 3.2: A(x,B(x,y)) where A = lhs and B = rhs
-        return self.lhs.oracle_query_string(x, self.rhs.oracle_query_string(x, y))
+        # A(x,B(x,y)) where A = lhs and B = rhs (see 3.2).
+        return self._lhs.oracle_query_string(x, self._rhs.oracle_query_string(x, y))
 
 
-### Unary samplers - depend on one other sampler ###
+class UnarySampler(BoltzmannSamplerBase):
+    """Abstract base class for samplers that depend exactly on one other _sampler.
 
-class UnarySampler(BoltzmannSampler):
-    """Abstract base class for samplers that depend exactly on one other sampler.
-
+    Parameters
+    ----------
+    sampler: BoltzmannSamplerBase
+        The _sampler this _sampler depends on.
     """
 
     def __init__(self, sampler):
-        """
-
-        :param sampler: A sampler of the underlying class.
-        """
         super(UnarySampler, self).__init__()
-        self.sampler = sampler
+        self._sampler = sampler
 
+    @property
     def sampled_class(self):
         raise NotImplementedError
 
     def sample(self, x, y):
-        raise NotImplementedError
-
-    def sample_dummy(self, x, y):
         raise NotImplementedError
 
     def get_eval(self, x, y):
@@ -454,246 +436,237 @@ class UnarySampler(BoltzmannSampler):
         raise NotImplementedError
 
     def get_children(self):
-        return [self.sampler]
+        return [self._sampler]
 
 
 class SetSampler(UnarySampler):
     """Samples a set of elements from the underlying class.
 
+    A set has no order and no duplicate elements. The underlying class may not contain objects with l-size 0. Otherwise
+    this sampler will not output correct results.
+
+    Parameters
+    ----------
+    d: int
+        The minimum size of the set.
+    sampler: BoltzmannSamplerBase
+        The sampler that produces the elements in the set.
+
+    Notes
+    -----
+    It is not checked/ensured automatically that object from the underlying class do not have l-size 0.
     """
 
     def __init__(self, d, sampler):
-        """
-
-        :param d: The minimum size of the set.
-        :param sampler: A sampler of the underlying class.
-        """
         super(SetSampler, self).__init__(sampler)
-        self.d = d
+        self._d = d
 
+    @property
     def sampled_class(self):
-        return 'Set_' + str(self.d) + '(' + self.sampler.sampled_class() + ')'
+        return "Set_{}({})".format(self._d, self._sampler.sampled_class)
 
     def sample(self, x, y):
-        k = pois(self.d, self.sampler.get_eval(x, y))
-        return self.builder.set([self.sampler.sample(x, y) for _ in range(k)])
-
-    def sample_dummy(self, x, y):
-        k = pois(self.d, self.sampler.get_eval(x, y))
-        l_size = 0
-        u_size = 0
-        for _ in range(k):
-            dummy = self.sampler.sample_dummy(x, y)
-            l_size += dummy.get_l_size()
-            u_size += dummy.get_u_size()
-        return DummyClass(l_size, u_size)
+        k = pois(self._d, self._sampler.get_eval(x, y))
+        return self._builder.set([self._sampler.sample(x, y) for _ in range(k)])
 
     def get_eval(self, x, y):
-        # see 3.2
-        return exp_tail(self.d, self.sampler.get_eval(x, y))
+        # The generating function of a set class is a tail of the exponential row evaluated at the generating function
+        # of the underlying class (see 3.2).
+        return exp_tail(self._d, self._sampler.get_eval(x, y))
 
     def oracle_query_string(self, x, y):
-        return 'exp_' + str(self.d) + '(' + self.sampler.oracle_query_string(x, y) + ')'
+        return "exp_{}({})".format(self._d, self._sampler.oracle_query_string(x, y))
 
 
 class TransformationSampler(UnarySampler):
     """Generic sampler that transforms the the objects sampled from the base class to a new class.
+
     For bijections use the base class BijectionSampler.
 
+    Parameters
+    ----------
+    sampler: BoltzmannSamplerBase
+    f: transformation function, optional (default=id)
+    eval_transform: generating function transformation, optional (default=id)
+    target_class_label: str, optional (default=None)
     """
 
-    def __init__(self, sampler, f=lambda x: x, eval_transform=None, target_class_label=None):
-        """
-
-        :param sampler: Sampler of the underlying class.
-        :param f: Function from the underlying class to the target class.
-        :param eval_transform: Optional transformation of the evaluation of the generating function.
-        :param target_class_label: Optional label of the sampled class.
-        """
+    def __init__(self, sampler, f=None, eval_transform=None, target_class_label=None):
+        if type(self) is not BijectionSampler and f is None and eval_transform is None:
+            raise BoltzmannFrameworkError("Use an instance of BijectionSampler to realize an isomorphism")
         super(TransformationSampler, self).__init__(sampler)
-        self.f = f
-        self.eval_transform = eval_transform
+        self._f = f
+        self._eval_transform = eval_transform
         if target_class_label is None:
-            # set a default label for the target class based on the nume of the transformation function
-            self.target_class_label = f.__name__ + '(' + sampler.sampled_class() + ')'
+            # Set a default label for the target class based on the name of the transformation function.
+            if f is not None:
+                self._target_class_label = "{}({})".format(f.__name__, sampler.sampled_class)
         else:
-            self.target_class_label = target_class_label
+            self._target_class_label = target_class_label
 
+    @property
     def sampled_class(self):
-        return self.target_class_label
+        return self._target_class_label
+
+    @sampled_class.setter
+    def sampled_class(self, label):
+        self._target_class_label = label
 
     def sample(self, x, y):
-        # sample from the underlying class and apply the bijection
-        return self.f(self.sampler.sample(x, y))
-
-    def sample_dummy(self, x, y):
-        return self.sampler.sample_dummy(x, y)
+        if self._f is not None:
+            # Sample from the underlying class and apply the transformation.
+            return self._f(self._sampler.sample(x, y))
+        # Otherwise sample without transformation.
+        return self._sampler.sample(x, y)
 
     def get_eval(self, x, y):
-        # if a transformation is given, apply it here
-        if self.eval_transform is not None:
-            return self.eval_transform(self.sampler.get_eval(x, y), x, y)
-        # otherwise query the oracle because we cannot infer the evaluation in the case of a general transformation
+        # If a transformation of the generating function is given, apply it here.
+        if self._eval_transform is not None:
+            return self._eval_transform(self._sampler.get_eval(x, y), x, y)
+        # Otherwise query the oracle because we cannot infer the evaluation in the case of a general transformation.
         return self.oracle.get(self.oracle_query_string(x, y))
 
     def oracle_query_string(self, x, y):
-        return self.sampled_class() + '(' + x + ',' + y + ')'
-
-    def set_target_class_label(self, label):
-        """
-
-        :param label: Label of the target class.
-        """
-        self.target_class_label = label
+        try:
+            return "{}({},{})".format(self.sampled_class, x, y)
+        except AttributeError:
+            # self.sampled_class might be None
+            raise BoltzmannFrameworkError("No target class label was given or could be inferred")
 
 
 class BijectionSampler(TransformationSampler):
     """Samples a class that is isomorphic to the underlying class.
 
+    Parameters
+    ----------
+    sampler: BoltzmannSamplerBase
+    f: transformation function
+    target_class_label: str, optional (default=None)
     """
 
     def __init__(self, sampler, f, target_class_label=None):
-        """
-
-        :param sampler: Sampler of the underlying class.
-        :param f: Bijection from the underlying class to the target class.
-        :param target_class_label: Optional label of the sampled class.
-        """
         super(BijectionSampler, self).__init__(sampler, f, None, target_class_label)
 
     def sample(self, x, y):
-        # sample from the underlying class and apply the bijection
-        if BoltzmannSampler.debug_mode:
-            # l_size/u_size may be not implemented on some classes.
+        # Sample from the underlying class and apply the bijection.
+        # In debug_mode check the sizes before and after applying the bijection.
+        if BoltzmannSamplerBase.debug_mode:
+            # l_size/u_size may be not implemented on some classes, in this case the check is ignored.
             try:
-                gamma = self.sampler.sample(x, y)
-                l_size_before = gamma.get_l_size()
-                u_size_before = gamma.get_u_size()
-                gamma = self.f(gamma)
-                l_size_after = gamma.get_l_size()
-                u_size_after = gamma.get_u_size()
+                gamma = self._sampler.sample(x, y)
+                l_size_before = gamma.l_size
+                u_size_before = gamma.u_size
+                gamma = self._f(gamma)
+                l_size_after = gamma.l_size
+                u_size_after = gamma.u_size
                 assert l_size_before == l_size_after and u_size_before == u_size_after
                 return gamma
             except NotImplementedError:
-                return self.f(self.sampler.sample(x, y))
+                return self._f(self._sampler.sample(x, y))
         else:
-            return self.f(self.sampler.sample(x, y))
+            return self._f(self._sampler.sample(x, y))
 
     def get_eval(self, x, y):
-        # since the target class is isomorphic to the underlying class, the evaluation is also the same
-        return self.sampler.get_eval(x, y)
+        # Since the target class is isomorphic to the underlying class, the evaluation is also the same.
+        return self._sampler.get_eval(x, y)
 
     def oracle_query_string(self, x, y):
-        # here we can also take the underlying class
-        return self.sampler.oracle_query_string(x, y)
+        return self._sampler.oracle_query_string(x, y)
 
 
 class RejectionSampler(TransformationSampler):
     """Generic rejection sampler, special case of transformation.
 
+    Parameters
+    ----------
+    sampler: BoltzmannSamplerBase
+        Sampler of the underlying class.
+    is_acceptable: function
+        Criterion for accepting an object from the underlying class.
+    eval_transform: function, optional (default=None)
+        Optional transformation of the evaluation function.
+    target_class_label: str, optional (default=None)
+        Optional label of the sampled class.
     """
 
     def __init__(self, sampler, is_acceptable, eval_transform=None, target_class_label=None):
-        """
-
-        :param sampler: Sampler of the underlying class.
-        :param is_acceptable: Criterion for accepting an object from the underlying class.
-        :param eval_transform: Optional transformation of the evaluation function.
-        :param target_class_label: Optional label of the sampled class.
-        """
         super(RejectionSampler, self).__init__(sampler, is_acceptable, eval_transform, target_class_label)
-        self.rejections_count = 0
+        self._rejections_count = 0
+
+    @property
+    def rejections_count(self):
+        """Counts the number of unsuccessful sampling operations.
+
+        Returns
+        -------
+        rejections_count: int
+            Number of rejections in the last sampling operation.
+        """
+        return self._rejections_count
 
     def sample(self, x, y):
-        self.rejections_count = 0
-        gamma = self.sampler.sample(x, y)
-        while not self.f(gamma):
-            self.rejections_count += 1
-            gamma = self.sampler.sample(x, y)
+        self._rejections_count = 0
+        gamma = self._sampler.sample(x, y)
+        is_acceptable = self._f
+        while not is_acceptable(gamma):
+            self._rejections_count += 1
+            gamma = self._sampler.sample(x, y)
         return gamma
-
-    def sample_dummy(self, x, y):
-        self.rejections_count = 0
-        gamma = self.sampler.sample_dummy(x, y)
-        while not self.f(gamma):
-            self.rejections_count += 1
-            gamma = self.sampler.sample_dummy(x, y)
-        return gamma
-
-    def get_rejections_count(self):
-        return self.rejections_count
 
 
 class UDerFromLDerSampler(TransformationSampler):
     """Samples the u-derived (dy) class of the given l-derived (dx) class sampler.
 
+    Parameters
+    ----------
+    sampler: BoltzmannSamplerBase
+        A sampler of the l-derived class. Must sample an LDerivedClass.
+    alpha_u_l: float
+        Limit value of u-size/l-size of the underlying class.
     """
 
     def __init__(self, sampler, alpha_u_l):
-        """
-
-        :param sampler: A sampler of the l-derived class. Must sample an LDerivedClass.
-        :param alpha_u_l: Limit value of u-size/l-size of the underlying class.
-        """
-        super(UDerFromLDerSampler, self).__init__(sampler, None, None,
-                                                  sampler.sampled_class()[0:len(sampler.sampled_class()) - 2] + 'dy')
-        self.alpha_u_l = alpha_u_l
+        # Try to infer a label that makes sense.
+        if sampler.sampled_class[-2:] is 'dx':
+            label = "{}dy".format(sampler.sampled_class[:-2])
+        else:
+            label = "{}_dy_from_dx".format(sampler.sampled_class)
+        super(UDerFromLDerSampler, self).__init__(sampler, None, None, label)
+        self._alpha_u_l = alpha_u_l
 
     def sample(self, x, y):
-        # see lemma 6
+        # See lemma 6 for this rejection technique.
         while True:
-            gamma = self.sampler.sample(x, y)
-            p = (1 / self.alpha_u_l) * (gamma.get_u_size() / (gamma.get_l_size() + 1))
+            gamma = self._sampler.sample(x, y)
+            p = (1 / self._alpha_u_l) * (gamma.u_size / (gamma.l_size + 1))
             if bern(p):
-                # TODO check this
-                #gamma = gamma.get_base_class_object()
-                #rand_u_atom = gamma.random_u_atom()
-                #return UDerivedClass(gamma, rand_u_atom)
-                return gamma
-
-    def sample_dummy(self, x, y):
-        while True:
-            gamma = self.sampler.sample_dummy(x, y)
-            p = (1 / self.alpha_u_l) * (gamma.get_u_size() / (gamma.get_l_size() + 1))
-            if bern(p):
-                gamma.l_size += 1
-                gamma.u_size -= 1
-                assert gamma.get_u_size() >= 0
-                return gamma
+                return UDerivedClass(gamma.base_class_object)
 
 
 class LDerFromUDerSampler(TransformationSampler):
     """Samples the l-derived (dx) class of the given u-derived (dy) class.
 
-   """
+    Parameters
+    ----------
+    sampler: BoltzmannSamplerBase
+        A sampler of the u-derived class. Must sample a UDerivedClass.
+    alpha_l_u: float
+        Limit value of l-size/u-size of the underlying class.
+
+    """
 
     def __init__(self, sampler, alpha_l_u):
-        """
-
-        :param sampler: A sampler of the u-derived class. Must sample a UDerivedClass.
-        :param alpha_l_u: Limit value of l-size/u-size of the underlying class.
-        """
-        super(LDerFromUDerSampler, self).__init__(sampler, None, None,
-                                                  sampler.sampled_class()[0:len(sampler.sampled_class()) - 2] + 'dx')
-        self.alpha_l_u = alpha_l_u
+        # Try to infer a label that makes sense.
+        if sampler.sampled_class[-2:] is 'dy':
+            label = "{}dx".format(sampler.sampled_class[:-2])
+        else:
+            label = "{}_dx_from_dy".format(sampler.sampled_class)
+        super(LDerFromUDerSampler, self).__init__(sampler, None, None, label)
+        self._alpha_l_u = alpha_l_u
 
     def sample(self, x, y):
         while True:
-            gamma = self.sampler.sample(x, y)
-            p = (1 / self.alpha_l_u) * (gamma.get_l_size() / (gamma.get_u_size() + 1))
+            gamma = self._sampler.sample(x, y)
+            p = (1 / self._alpha_l_u) * (gamma.l_size() / (gamma.u_size() + 1))
             if bern(p):
-                # TODO check this
-                # gamma = gamma.get_base_class_object()
-                # rand_l_atom = gamma.random_l_atom()
-                # return LDerivedClass(gamma, rand_l_atom)
-                return gamma
-
-    def sample_dummy(self, x, y):
-        while True:
-            gamma = self.sampler.sample_dummy(x, y)
-            p = (1 / self.alpha_l_u) * (gamma.get_l_size() / (gamma.get_u_size() + 1))
-            if bern(p):
-                gamma.l_size -= 1
-                gamma.u_size += 1
-                assert gamma.get_l_size() >= 0
-                return gamma
+                return LDerivedClass(gamma.base_class_object)

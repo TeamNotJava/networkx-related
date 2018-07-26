@@ -55,15 +55,15 @@ class WhitneyBijection:
         if id(first_half_edge) in visited_half_edges:
             return
 
-        # Mark the first half edge and the ones with which it shares a vertex to visited.
+        # Mark the _first half edge and the ones with which it shares a vertex to visited.
         visited_half_edges.add(id(first_half_edge))
         walker_half_edge = first_half_edge.next
         while walker_half_edge != first_half_edge:
             visited_half_edges.add(id(walker_half_edge))
             walker_half_edge = walker_half_edge.next
 
-        # Check if the first half edge is different from the root and root.opposite. If this is true,
-        # than the first half edge is added to a vertices list.
+        # Check if the _first half edge is different from the root and root.opposite. If this is true,
+        # than the _first half edge is added to a vertices list.
         walker_half_edge = first_half_edge
         if walker_half_edge.node_nr != root_half_edge.node_nr and walker_half_edge.node_nr != root_half_edge.opposite.node_nr:
             # print(walker_half_edge)

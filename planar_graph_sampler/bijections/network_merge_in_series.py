@@ -25,12 +25,12 @@ class NetworkMergeInSeries:
         Merges the network for plugging into netwrok in a serial manner which means that the infinite pole from the
         network is identified with the 0-pole from network_for_plugging.
 
-        :param network: first network which will result in merged networks
-        :param network_for_plugging: second network which will be plugged in the first one
+        :param network: _first network which will result in merged networks
+        :param network_for_plugging: _second network which will be plugged in the _first one
         """
 
-        new_l_size = network.get_l_size() + network_for_plugging.get_l_size() + 1
-        new_u_size = network.get_u_size() + network_for_plugging.get_u_size()
+        new_l_size = network.l_size() + network_for_plugging.l_size() + 1
+        new_u_size = network.u_size() + network_for_plugging.u_size()
 
         # Extract the poles from both networks
         first_net_zero_pole_edge = network.get_zero_pole()
@@ -66,7 +66,7 @@ class NetworkMergeInSeries:
         first_net_inf_pole_prior = first_net_inf_pole_edge.prior
         second_net_zero_pole_edge_prior = second_net_zero_pole_edge.prior
 
-        # Merge the both networks so that the inf-pole from the first network is identified with the zero-pole from the second one
+        # Merge the both networks so that the inf-pole from the _first network is identified with the zero-pole from the _second one
         # Handling different while merging the two networks.
         first_net_inf_pole_edge.prior = second_net_zero_pole_edge_prior
         second_net_zero_pole_edge_prior.next = first_net_inf_pole_edge
@@ -74,17 +74,17 @@ class NetworkMergeInSeries:
         first_net_inf_pole_prior.next = second_net_zero_pole_edge
         second_net_zero_pole_edge.prior = first_net_inf_pole_prior
 
-        # Update the node numbers in the second network zero-pole edges
+        # Update the node numbers in the _second network zero-pole edges
         half_edge_walker = first_net_inf_pole_prior.next
         while half_edge_walker != first_net_inf_pole_prior:
             half_edge_walker.node_nr = first_net_inf_pole_edge.node_nr
             half_edge_walker = half_edge_walker.next
 
-        # Add the vertices list from the second network into the first one
+        # Add the vertices list from the _second network into the _first one
         #network.vertices_list += network_for_plugging.vertices_list
         #network.vertices_list.append(first_net_inf_pole_edge)
 
-        # Add the edges from the second network into the first one
+        # Add the edges from the _second network into the _first one
 
         #network.edges_list += network_for_plugging.edges_list
 

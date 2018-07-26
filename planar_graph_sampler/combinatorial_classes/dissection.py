@@ -48,14 +48,14 @@ class IrreducibleDissection(HalfEdgeGraph):
         """
         self.half_edge = rnd.choice(self.get_hexagonal_edges())
 
-    def get_u_size(self):
+    def u_size(self):
         """
         The u-size is the number of inner faces.
         :return: Number of faces.
         """
         return (self.number_of_half_edges() - 6) / 4
 
-    def get_l_size(self):
+    def l_size(self):
         """
         The l-size is the number of black inner vertices.
         :return:
@@ -83,7 +83,7 @@ class IrreducibleDissection(HalfEdgeGraph):
         queue.append((self.half_edge, 0, False, set()))
 
         while len(queue) != 0:
-            # Pop the first element from the FIFO queue.
+            # Pop the _first element from the FIFO queue.
             top_element = queue.pop(0)
 
             # Extract the components from the top element

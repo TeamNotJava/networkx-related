@@ -84,10 +84,10 @@ class HalfEdgeGraph(CombinatorialClass):
 
     # CombinatorialClass interface.
 
-    def get_u_size(self):
+    def u_size(self):
         return self.number_of_edges()
 
-    def get_l_size(self):
+    def l_size(self):
         return self.number_of_nodes()
 
     def replace_u_atoms(self, sampler, x, y):
@@ -106,11 +106,11 @@ class HalfEdgeGraph(CombinatorialClass):
     def __str__(self):
         repr = ""
         try:
-            repr += "L-size: {0}\n".format(self.get_l_size())
+            repr += "L-size: {0}\n".format(self.l_size())
         except NotImplementedError:
             pass
         try:
-            repr += "U-size: {0}\n".format(self.get_u_size())
+            repr += "U-size: {0}\n".format(self.u_size())
         except NotImplementedError:
             pass
         return repr

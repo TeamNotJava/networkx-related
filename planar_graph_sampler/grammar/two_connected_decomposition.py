@@ -2,15 +2,15 @@ from framework.class_builder import CombinatorialClassBuilder
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
+from framework.generic_samplers import BoltzmannSamplerBase
 from framework.utils import Counter
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.combinatorial_classes.two_connected_graph import EdgeRootedTwoConnectedPlanarGraph, \
     UDerivedTwoConnectedPlanarGraph, LDerivedTwoConnectedPlanarGraph, ULDerivedTwoConnectedPlanarGraph, \
     BiLDerivedTwoConnectedPlanarGraph
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n1000, planar_graph_evals_n100
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 from planar_graph_sampler.grammar.network_decomposition import network_grammar
-from planar_graph_sampler.combinatorial_classes import UDerivedClass
 
 
 def to_G_2_dy(decomp):
@@ -72,7 +72,7 @@ def two_connected_graph_grammar():
         # two connected
 
         'G_2_arrow': Trans(Z() + D,
-                           eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),  # see 5.5
+                           eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSamplerBase.oracle.get(y))),  # see 5.5
 
         'F': Bij(L() ** 2 * G_2_arrow, to_G_2_dy),
 
@@ -82,7 +82,7 @@ def two_connected_graph_grammar():
 
         # l-derived two connected
 
-        'G_2_arrow_dx': Trans(D_dx, eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSampler.oracle.get(y))),
+        'G_2_arrow_dx': Trans(D_dx, eval_transform=lambda evl, x, y: evl / (1 + BoltzmannSamplerBase.oracle.get(y))),
 
         'F_dx': Bij(L() ** 2 * G_2_arrow_dx + 2 * L() * G_2_arrow, to_G_2_dx_dy),
 
@@ -102,8 +102,8 @@ if __name__ == '__main__':
     grammar = two_connected_graph_grammar()
     grammar.init()
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
-    BoltzmannSampler.debug_mode = False
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.debug_mode = False
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
@@ -115,7 +115,7 @@ if __name__ == '__main__':
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
         except RecursionError:
             pass
-        if g.get_l_size() > 10:
+        if g.l_size() > 10:
             print(g)
             assert g.is_consistent()
 

@@ -1,6 +1,7 @@
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
+from framework.generic_samplers import BoltzmannSamplerBase
 from framework.utils import Counter
 
 from planar_graph_sampler.bijections.networks import merge_networks_in_parallel, merge_networks_in_series
@@ -51,7 +52,7 @@ class SNetworkBuilder(NetworkBuilder):
         if isinstance(lhs, Network) and isinstance(rhs, Network):
             return merge_networks_in_series(lhs, rhs)
         if isinstance(lhs, Network):
-            # rhs is an l-atom.
+            # _rhs is an l-atom.
             assert isinstance(rhs, LAtomClass)
             return lhs
         # Other case is symmetric.
@@ -91,8 +92,8 @@ class PNetworkBuilder(NetworkBuilder):
 
 def g_3_arrow_to_network(decomp):
     if isinstance(decomp, ProdClass):
-        network = decomp.first
-        graph = decomp.second
+        network = decomp._first
+        graph = decomp._second
         graph.replace_random_edge(network)
         return Network(graph.get_half_edge(), is_linked=False)
     else:
@@ -165,25 +166,41 @@ if __name__ == '__main__':
     grammar = network_grammar()
     grammar.init()
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
-    BoltzmannSampler.debug_mode = False
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
+    BoltzmannSamplerBase.debug_mode = False
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
 
-    sampled_class = 'H_dx'
+    sampled_class = 'D'
 
-    while True:
+
+
+    # while True:
+    #     try:
+    #         g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+    #         if g.l_size() == 2:
+    #             print(g)
+    #             assert g.is_consistent()
+    #
+    #             import matplotlib.pyplot as plt
+    #
+    #             g.plot(with_labels=False)
+    #             plt.show()
+    #     except RecursionError:
+    #         pass
+
+    c = [0, 0, 0, 0, 0, 0, 0, 0]
+    samples = 1000
+    i = 0
+    while i < samples:
         try:
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.get_l_size() > 800:
-                print(g)
-                # assert g.is_consistent()
-
-                import matplotlib.pyplot as plt
-
-                g.plot(with_labels=False)
-                plt.show()
-                break
+            if g.l_size() == 2:
+                assert g.is_consistent()
+                c[g.u_size()] += 1
+                i += 1
         except RecursionError:
             pass
+
+    print(c)

@@ -12,8 +12,8 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-"""This class is needed for transformation of a Boltzmann sampler for bicolored binary trees
-into a Boltzmann sampler for 3-connected planar graphs.
+"""This class is needed for transformation of a Boltzmann _sampler for bicolored binary trees
+into a Boltzmann _sampler for 3-connected planar graphs.
 """
 
 import sys
@@ -66,7 +66,7 @@ class Closure:
                         stack.append(top_half_edge)
 
         if init_half_edge.opposite is not None:
-            # Iterate to first stem
+            # Iterate to _first stem
             half_edge_list = init_half_edge.list_half_edges([])
             for edge in half_edge_list:
                 if edge.opposite is None:
@@ -85,7 +85,7 @@ class Closure:
         hexagon = [ClosureHalfEdge() for i in range(12)]
         hexagon_start_half_edge = self.___construct_hexagon(hexagon, starting_half_edge)
 
-        # Connect the starting half-edge of our planar map with the first node of the hexagon
+        # Connect the starting half-edge of our planar map with the _first node of the hexagon
         new_half_edge = ClosureHalfEdge()
         new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge)
 

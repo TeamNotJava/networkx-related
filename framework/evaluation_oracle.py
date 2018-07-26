@@ -1,4 +1,7 @@
+from __future__ import division
+
 import math
+
 
 class EvaluationOracle:
     """Maintains a table of evaluations used by the samplers.
@@ -42,3 +45,9 @@ class EvaluationOracle:
         l_term = math.pow(self.get(symbolic_x), l_size) / math.factorial(l_size)
         u_term = math.pow(self.get(symbolic_y), u_size)
         return (l_term * u_term) / self.get(query_string)
+
+    def get_expected_l_size(self, class_label, symbolic_x, symbolic_y):
+        query_string = '{}({},{})'.format(class_label, symbolic_x, symbolic_y)
+        query_string_dx = '{}_dx({},{})'.format(class_label, symbolic_x, symbolic_y)
+        return self.get(symbolic_x) * self.get(query_string_dx) / self.get(query_string)
+

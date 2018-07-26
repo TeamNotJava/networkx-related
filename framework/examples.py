@@ -1,7 +1,13 @@
+from __future__ import division, print_function
+import math
+
+from framework.class_builder import CombinatorialClassBuilder, DefaultBuilder
 from framework.decomposition_grammar import *
 from framework.evaluation_oracle import EvaluationOracle
 
 # TODO make some reasonable things here or delete
+from framework.generic_samplers import BoltzmannSamplerBase
+
 
 def test_dummy_size():
     L = LAtomSampler()
@@ -22,73 +28,203 @@ def test_dummy_size():
     })
 
     # inject the oracle into the samplers
-    BoltzmannSampler.oracle = tree_oracle
+    BoltzmannSamplerBase.oracle = tree_oracle
 
     print(tree_grammar.collect_oracle_queries('Tree', 'x', 'y'))
 
     trees = [tree_grammar.sample('Tree', 'x', 'y') for _ in range(100)]
-    print(sum([tree.get_l_size() for tree in trees]) / len(trees))
+    print(sum([tree.l_size() for tree in trees]) / len(trees))
 
-def coin():
-    Heads = LAtomSampler()
-    Tails = LAtomSampler()
-    Nothing = ZeroAtomSampler()
 
-    Throw = AliasSampler('Throw')
+def natural_numbers():
+    print("Natural numbers example.\n------------------------\n")
 
-    coin_grammar = DecompositionGrammar()
-    coin_grammar_rules = {
-        'Throw': Nothing + (Heads * Throw),
-        'Set_of_heads': SetSampler(0, Heads)
-    }
-    coin_grammar.add_rules(coin_grammar_rules)
-    coin_grammar.init()
+    # Define some shortcuts to make the grammar more readable.
+    One = UAtomSampler
+    Zero = ZeroAtomSampler
+    _ = AliasSampler
 
-    coin_oracle = EvaluationOracle({
-        'x': 10,
-        'Throw(x,y)': 1 / (1 - 0.975),
-        'y': 1.0
+    # Define the grammar and initialize.
+    grammar = DecompositionGrammar({
+        # A natural number is either zero or the successor (+1) of another natural number.
+        'N': Zero() + One() * _('N')
     })
-    BoltzmannSampler.oracle = coin_oracle
-    #[print(coin_grammar.sample('Throw', 'x', 'y')) for _ in range(10)]
+    grammar.init()
 
-    print(sum([coin_grammar.sample('Set_of_heads', 'x', 'y').get_l_size() for _ in range(1000)]) / 1000)
+    y = 0.95
+    N = 1 / (1 - y)
+    N_dy = 1 / (1 - y) ** 2
+    oracle = EvaluationOracle({
+        'y': y,
+        'N(x,y)': N
+    })
+    BoltzmannSamplerBase.oracle = oracle
+    print("expected number: {}".format(y * N_dy / N))
+    num_samples = 10
+    numbers = [grammar.sample('N', 'x', 'y') for _ in range(num_samples)]
+    avg_size = sum(n.u_size for n in numbers) / num_samples
+    print("average in {} trials: {}".format(num_samples, avg_size))
 
 
+def integer_partitions():
+    print("Integer partitions example.\n---------------------------\n")
 
-def tree():
+    # Define some shortcuts to make the grammar more readable.
+    U = UAtomSampler
+    Set = SetSampler
+    USubs = USubsSampler
+    Bij = BijectionSampler
+    Rule = AliasSampler
+
+    class Partition(SetClass):
+        def __init__(self, numbers):
+            super(Partition, self).__init__(numbers)
+
+        @property
+        def u_size(self):
+            return sum(iter(self))
+
+    def to_partition(p):
+        return Partition([n.u_size for n in p])
+
+    # Define the grammar and initialize.
+    grammar = DecompositionGrammar({
+        # A natural number is either zero or the successor (+1) of another natural number.
+        'N': U() + U() * Rule('N'),
+        'P': Bij(USubs(Set(1, U()), Rule('N')), to_partition)
+    })
+    grammar.init()
+    print("Needed oracle entries for sampling: {}\n".format(grammar.collect_oracle_queries('P', 'x', 'y')))
+
+    y = 0.56
+    N = y / (1 - y)
+    P = math.exp(N) - 1
+    P_dy = math.exp(N) / (1 - y) ** 2
+    oracle = EvaluationOracle({
+        'y': y,
+        'N(x,y)': N,
+    })
+    BoltzmannSamplerBase.oracle = oracle
+    print("expected number: {}\n".format(y * P_dy / P))
+    target_size = 4
+    num_samples = 100
+    partitions = []
+    while len(partitions) < num_samples:
+        p = grammar.sample('P', 'x', 'y')
+        if p.u_size == target_size:
+            partitions.append(p)
+
+    for i in range(1, 5):
+        print("number of partitions into {} numbers: {}".format(i, len([p for p in partitions if len(p) == i])))
+
+    # We can observe that the distribution is not uniform, thus we did *not* actually describe the class of integer
+    # partitions correctly (which is much more complicated).
+
+
+def set_partitions():
+    print("Set partitions example.\n---------------------------\n")
+
+    # In thie examples, we ...
+
     L = LAtomSampler()
-    U = UAtomSampler()
-    Z = ZeroAtomSampler()
+    Set = SetSampler
 
-    R_b = AliasSampler('R_b')
-    R_w = AliasSampler('R_w')
+    def eval_P(x):
+        return math.exp(math.exp(x) - 1)
 
-    tree_grammar = DecompositionGrammar()
-    tree_grammar_rules = {
-        #'R_b': (UAtomSampler() + AliasSampler('R_w')) * LAtomSampler() * (UAtomSampler() + AliasSampler('R_w')),
-        #'R_w': (UAtomSampler() + AliasSampler('R_b')) * (UAtomSampler() + AliasSampler('R_b')),
-        'R_b': (U + R_w)**2 * L,
-        'R_w': (U + R_b)**2,
+    def expected_size(x):
+        return x * math.exp(x)
 
-    }
-    tree_grammar.add_rules(tree_grammar_rules)
+    grammar = DecompositionGrammar({
+        'P': Set(0, Set(1, L))
+    })
+    grammar.init()
+
+    oracle = EvaluationOracle({
+        'x': 1.05
+    })
+    BoltzmannSamplerBase.oracle = oracle
+    partition = grammar.sample('P', 'x', 'y')
+    partition.assign_random_labels()
+
+    print("expected size of set: {}\n".format(expected_size(oracle.get('x'))))
+    print(partition)
+
+
+def binary_trees():
+    print("Binary tree example.\n--------------------\n")
+
+    def height(tree):
+        if isinstance(tree, LAtomClass):
+            return 1
+        else:
+            assert isinstance(tree, ProdClass)
+            return max(height(tree._second._first), height(tree._second._second)) + 1
+
+    # Define the grammar.
+
+    # Define some shortcuts for readability.
+    L = LAtomSampler
+    _ = AliasSampler
+
+    # Initialize a grammar object and set the sampling rules (in this case just one single rule).
+    tree_grammar = DecompositionGrammar({
+        # A binary tree is either a leaf or an inner node with two children that are binary trees.
+        'T': L() + L() * _('T') ** 2
+    })
+
+    # Set the builder information and initialize the grammar.
+    # tree_grammar.set_builder(['T'], BinaryTreeBuilder())
     tree_grammar.init()
 
-    conv_rad = 0.0475080992953792
+    # Do the mathematical stuff.
+
+    def get_x_for_size(n):
+        return math.sqrt(n ** 2 - 1) / (2 * n)
+
+    def eval_T(x):
+        return (math.sqrt(1 - 4 * x ** 2) + 1) / (2 * x)
+
+    def eval_T_dx(x):
+        return (1 / (math.sqrt(1 - 4 * x ** 2)) + 1) / (2 * x ** 2)
+
+    target_size = 10
+    x = get_x_for_size(target_size)
+    T = eval_T(x)
+    T_dx = eval_T_dx(x)
     tree_oracle = EvaluationOracle({
-        'x': conv_rad - 1/(2*1000),
-        'y': 1.0,
-        'R_b(x,y)': 0.467436,
-        'R_w(x,y)': 2.15337
+        'x': x,
+        'T(x,y)': T,
+        'T_dx(x,y)': T_dx
     })
-    BoltzmannSampler.oracle = tree_oracle
-    # [print(tree_grammar.sample('R_b', 'x', 'y').get_l_size()) for _ in range(100)]
+    # Set the newly created oracle as the active oracle.
+    BoltzmannSamplerBase.oracle = tree_oracle
 
-    print(sum([tree_grammar.sample('R_b', 'x', 'y').get_l_size() for _ in range(10000)]) / 10000)
+    print("expected size of the trees: {}\n".format(tree_oracle.get_expected_l_size('T', 'x', 'y')))
+    print("needed oracle entries for sampling: {}\n".format(tree_grammar.collect_oracle_queries('T', 'x', 'y')))
 
+    num_samples = 10
+    while True:
+        try:
+            trees = [tree_grammar.sample('T', 'x', 'y') for _ in range(num_samples)]
+            break
+        except RecursionError:
+            pass
+    avg_size = sum([tree.l_size for tree in trees]) / num_samples
+    print("average size in {} trials: {}".format(num_samples, avg_size))
+    avg_height = sum([height(tree) for tree in trees]) / num_samples
+    print("average height of trees: {}".format(avg_height))
+
+    print(2 * math.sqrt(math.pi * avg_size / 2))
 
 
 if __name__ == "__main__":
-    #test_dummy_size()
-    tree()
+    examples = [
+        #natural_numbers,
+        #binary_trees,
+        #integer_partitions,
+        set_partitions
+    ]
+    for example in examples:
+        example()
+        print('\n')

@@ -1,10 +1,10 @@
-import random 
-from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
-from framework.generic_samplers import *
 from framework.class_builder import CombinatorialClassBuilder
+from framework.decomposition_grammar import DecompositionGrammar
+from framework.generic_samplers import *
+
 
 class TestGrammar(object):
-    def setUp(self):
+    def setup(self):
         """Setup various shared variables and functionality
         """
         # Set a seed to get reproducible test runs.
@@ -22,7 +22,7 @@ class TestGrammar(object):
         
 
     def test_grammar_builder(self):
-        """Test if a builder is applied to all 
+        """Test if a _builder is applied to all
         """
         class GrammarBuilder(CombinatorialClassBuilder):
             def zero_atom(self):
@@ -34,4 +34,4 @@ class TestGrammar(object):
 
         self.grammar1.init()
 
-        # TODO check that each sampler has the correct builder set.
+        # TODO check that each _sampler has the correct _builder set.
