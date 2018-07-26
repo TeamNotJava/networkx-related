@@ -1,4 +1,6 @@
 import random
+
+from framework.settings_global import Settings
 from framework.utils import *
 
 
@@ -66,42 +68,11 @@ class CombinatorialClass(object):
         rand_index = random.randrange(self.u_size)
         return nth(self.u_atoms(), rand_index)
 
-    def replace_l_atom(self, atom, subs):
-        """Replaces the given atom.
-
-        Parameters
-        ----------
-        atom: l-atom
-            The l-atom to replace.
-        subs: CombinatorialClass
-            The object to be plugged in.
-
-        Raises
-        ------
-        SubstitutionError
-            If the atom does not exist or the object to be plugged in is invalid.
-        """
-        raise NotImplementedError
-
-    def replace_u_atom(self, atom, subs):
-        """Replaces the given atom.
-
-        Parameters
-        ----------
-        atom: u-atom
-            The u-atom to replace.
-        subs: CombinatorialClass
-            The object to be plugged in.
-
-        Raises
-        ------
-        BoltzmannFrameworkError
-            If the atom does not exist or the object to be plugged in is invalid.
-        """
-        raise NotImplementedError
-
     def replace_l_atoms(self, sampler, x, y, exceptions=None):
         """Replaces all l-atoms within this object.
+
+        Returns
+        -------
 
         Parameters
         ----------
@@ -110,19 +81,11 @@ class CombinatorialClass(object):
         y: str
         exceptions: list of CombinatorialClass
         """
-        if exceptions is None:
-            exceptions = []
-        for atom in self.l_atoms():
-            if atom not in exceptions:
-                self.replace_l_atom(atom, sampler.sample(x, y))
+        raise NotImplementedError
 
     def replace_u_atoms(self, sampler, x, y, exceptions=None):
         """Replaces all u-atoms."""
-        if exceptions is None:
-            exceptions = []
-        for atom in self.u_atoms():
-            if atom not in exceptions:
-                self.replace_u_atom(atom, sampler.sample(x, y))
+        raise NotImplementedError
 
     def assign_random_labels(self):
         """Assigns labels from [0, l-size) to all l-atoms in this object (including itself).
@@ -134,7 +97,6 @@ class CombinatorialClass(object):
         labels = random.sample(range(self.l_size), self.l_size)
         for atom in self.l_atoms():
             atom.label = labels.pop()
-
 
     def __str__(self):
         """Returns a string representation of this object."""
@@ -165,24 +127,40 @@ class DummyClass(CombinatorialClass):
         return self._u_size
 
     def l_atoms(self):
-        for _ in range(self.l_size):
-            yield LAtomClass()
+        raise BoltzmannFrameworkError("Cannot iterate over atoms from dummy class")
 
     def u_atoms(self):
-        for _ in range(self.u_size):
-            yield UAtomClass()
+        raise BoltzmannFrameworkError("Cannot iterate over atoms from dummy class")
 
-    def replace_l_atom(self, atom, subs):
-        if not (isinstance(atom, LAtomClass)) or self.l_size < 1:
-            raise BoltzmannFrameworkError("No such atom to replace.")
-        self._l_size += subs.l_size - 1
-        self._u_size += subs.u_size
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        if len(exceptions) > self.l_size:
+            raise BoltzmannFrameworkError("Too many exceptions for substitution")
+        l_growth = -(self.l_size - len(exceptions))
+        u_growth = 0
+        for _ in range(self.l_size - len(exceptions)):
+            gamma = sampler.sample(x, y)
+            if gamma.l_size <= 0:
+                raise BoltzmannFrameworkError("You may not use l-substitution when class contains objects of l-size 0")
+            l_growth += gamma.l_size
+            u_growth += gamma.u_size
+        self._l_size += l_growth
+        self._u_size += u_growth
+        return self
 
-    def replace_u_atom(self, atom, subs):
-        if not (isinstance(atom, UAtomClass)) or self.u_size < 1:
-            raise BoltzmannFrameworkError("No such atom to replace.")
-        self._l_size += subs.l_size
-        self._u_size += subs.u_size - 1
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        if len(exceptions) > self.u_size:
+            raise BoltzmannFrameworkError("Too many exceptions for substitution")
+        l_growth = 0
+        u_growth = -(self.u_size - len(exceptions))
+        for _ in range(self.u_size - len(exceptions)):
+            gamma = sampler.sample(x, y)
+            if gamma.u_size < 0:
+                raise BoltzmannFrameworkError("You may not use u-substitution when class contains objects of u-size 0")
+            l_growth += gamma.l_size
+            u_growth += gamma.u_size
+        self._l_size += l_growth
+        self._u_size += u_growth
+        return self
 
     def __str__(self):
         return "(l: {}, u: {}".format(self.l_size, self.u_size)
@@ -211,11 +189,11 @@ class ZeroAtomClass(CombinatorialClass):
         return
         yield
 
-    def replace_l_atom(self, atom, subs):
-        raise BoltzmannFrameworkError("Cannot replace anything inside an atom")
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        return self
 
-    def replace_u_atom(self, atom, subs):
-        raise BoltzmannFrameworkError("Cannot replace anything inside an atom")
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        return self
 
     def __str__(self):
         return '1'
@@ -230,6 +208,12 @@ class LAtomClass(ZeroAtomClass):
 
     def l_atoms(self):
         yield self
+
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        if exceptions is not None and self in exceptions:
+            return self
+        else:
+            return sampler.sample(x, y)
 
     def __str__(self):
         try:
@@ -247,6 +231,12 @@ class UAtomClass(ZeroAtomClass):
 
     def u_atoms(self):
         yield self
+
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        if exceptions is not None and self in exceptions:
+            return self
+        else:
+            return sampler.sample(x, y)
 
     def __str__(self):
         return 'U'
@@ -281,47 +271,15 @@ class ProdClass(CombinatorialClass):
         for atom in itertools.chain(self._first.u_atoms(), self._second.u_atoms()):
             yield atom
 
-    def replace_l_atom(self, atom, subs):
-        if self._first is atom:
-            self._first = subs
-        elif self._second is atom:
-            self._second = subs
-        else:
-            try:
-                self._first.replace_l_atom(atom, subs)
-            except SubstitutionError:
-                self._second.replace_l_atom(atom, subs)
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        self._first = self._first.replace_l_atoms(sampler, x, y, exceptions)
+        self._second = self._second.replace_l_atoms(sampler, x, y, exceptions)
+        return self
 
-    def replace_u_atom(self, atom, subs):
-        if self._first is atom:
-            self._first = subs
-        elif self._second is atom:
-            self._second = subs
-        else:
-            try:
-                self._first.replace_u_atom(atom, subs)
-            except SubstitutionError:
-                self._second.replace_u_atom(atom, subs)
-
-    def replace_l_atoms(self, sampler, x, y):
-        # More efficient than the function implemented in the base class.
-        children = [self._first, self._second]
-        for child in children:
-            try:
-                child.replace_l_atoms(sampler, x, y)
-            except BoltzmannFrameworkError:
-                if isinstance(child, LAtomClass):
-                    children[children.index(child)] = sampler.sample(x, y)
-
-    def replace_u_atoms(self, sampler, x, y):
-        # More efficient than the function implemented in the base class.
-        children = [self._first, self._second]
-        for child in children:
-            try:
-                child.replace_u_atoms(sampler, x, y)
-            except BoltzmannFrameworkError:
-                if isinstance(child, UAtomClass):
-                    children[children.index(child)] = sampler.sample(x, y)
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        self._first = self._first.replace_u_atoms(sampler, x, y, exceptions)
+        self._second = self._second.replace_u_atoms(sampler, x, y, exceptions)
+        return self
 
     def __str__(self):
         return "({},{})".format(self._first, self._second)
@@ -339,9 +297,11 @@ class SetClass(CombinatorialClass):
         self._elems = elems
 
     def __len__(self):
+        """Returns the number of elements in the set."""
         return len(self._elems)
 
     def __iter__(self):
+        """Returns an iterator over the set."""
         return iter(self._elems)
 
     @property
@@ -362,47 +322,15 @@ class SetClass(CombinatorialClass):
             for atom in elem.l_atoms():
                 yield atom
 
-    def replace_l_atom(self, atom, subs):
-        for i, elem in enumerate(self._elems):
-            if elem is atom:
-                self._elems[i] = subs
-                return
-        for elem in self._elems:
-            try:
-                elem.replace_l_atom(atom, subs)
-                return
-            except BoltzmannFrameworkError:
-                pass
-        raise BoltzmannFrameworkError("Could not find the given atom")
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        for index, child in enumerate(self._elems):
+            self._elems[index] = child.replace_l_atoms(sampler, x, y, exceptions)
+        return self
 
-    def replace_u_atom(self, atom, subs):
-        for i, elem in enumerate(self._elems):
-            if elem is atom:
-                self._elems[i] = subs
-                return
-        for elem in self._elems:
-            try:
-                elem.replace_u_atom(atom, subs)
-                return
-            except BoltzmannFrameworkError:
-                pass
-        raise BoltzmannFrameworkError("Could not find the given atom")
-
-    def replace_l_atoms(self, sampler, x, y):
-        for child in self._elems:
-            try:
-                child.replace_l_atoms(sampler, x, y)
-            except BoltzmannFrameworkError:
-                if isinstance(child, LAtomClass):
-                    self._elems[self._elems.index(child)] = sampler.sample(x, y)
-
-    def replace_u_atoms(self, sampler, x, y):
-        for child in self._elems:
-            try:
-                child.replace_u_atoms(sampler, x, y)
-            except BoltzmannFrameworkError:
-                if isinstance(child, UAtomClass):
-                    self._elems[self._elems.index(child)] = sampler.sample(x, y)
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        for index, child in enumerate(self._elems):
+            self._elems[index] = child.replace_u_atoms(sampler, x, y, exceptions)
+        return self
 
     def __str__(self):
         result = '['
@@ -434,36 +362,10 @@ class DerivedClass(CombinatorialClass):
     def __init__(self, base_class_object, marked_atom=None):
         if type(self) is DerivedClass:
             raise BoltzmannFrameworkError("Instantiate objects of LDerivedClass or UDerivedClass")
-        if marked_atom is not None:
-            atoms = itertools.chain(base_class_object.l_atoms(), base_class_object.u_atoms())
-            if marked_atom not in atoms:
-                raise BoltzmannFrameworkError("Given atom does not exist in base class object")
-        self._marked_atom = marked_atom
         self._base_class_object = base_class_object
-
-    @property
-    def l_size(self):
-        return self.base_class_object.l_size
-
-    @property
-    def u_size(self):
-        return self.base_class_object.u_size
-
-    def replace_l_atom(self, atom, subs):
-        if self.marked_atom is atom:
-            raise BoltzmannFrameworkError("In a derived class, the marked atom may not be replaced")
-        self._base_class_object.replace_l_atom(atom, subs)
-
-    def replace_u_atom(self, atom, subs):
-        if self.marked_atom is atom:
-            raise BoltzmannFrameworkError("In a derived class, the marked atom may not be replaced")
-        self._base_class_object.replace_u_atom(atom, subs)
-
-    def l_atoms(self):
-        return self._base_class_object.l_atoms()
-
-    def u_atoms(self):
-        return self._base_class_object.u_atoms()
+        if marked_atom is not None:
+            # Use the setter that checks if marked_atom is actually in the object
+            self.marked_atom = marked_atom
 
     @property
     def marked_atom(self):
@@ -472,11 +374,13 @@ class DerivedClass(CombinatorialClass):
 
     @marked_atom.setter
     def marked_atom(self, atom):
+        """Sets the marked atom."""
         if atom is not None:
+            # todo is the check expensive?
             atoms = itertools.chain(self.base_class_object.l_atoms(), self.base_class_object.u_atoms())
             if self.marked_atom not in atoms:
                 raise BoltzmannFrameworkError("Given atom does not exist in base class object")
-        self._marked_atom = atom
+            self._marked_atom = atom
 
     @property
     def base_class_object(self):
@@ -496,6 +400,26 @@ class DerivedClass(CombinatorialClass):
         if not isinstance(self.base_class_object, DerivedClass):
             raise BoltzmannFrameworkError("Base class object is not from a derived class")
         # todo
+
+    @property
+    def l_size(self):
+        return self.base_class_object.l_size
+
+    @property
+    def u_size(self):
+        return self.base_class_object.u_size
+
+    def l_atoms(self):
+        return self.base_class_object.l_atoms()
+
+    def u_atoms(self):
+        return self.base_class_object.u_atoms()
+
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        return self.base_class_object.replace_l_atoms(sampler, x, y, exceptions)
+
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        return self.base_class_object.replace_u_atoms(sampler, x, y, exceptions)
 
     def __str__(self):
         raise NotImplementedError
@@ -529,6 +453,14 @@ class LDerivedClass(DerivedClass):
             if l_atom != self.marked_atom:
                 yield l_atom
 
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        if exceptions is None:
+            exceptions = []
+        if self.marked_atom is None:
+            self._marked_atom = self.base_class_object.random_l_atom()
+        exceptions.append(self.marked_atom)
+        return self.base_class_object.replace_l_atoms(sampler, x, y, exceptions)
+
     def __str__(self):
         return "{}_dx".format(str(self.base_class_object))
 
@@ -552,6 +484,14 @@ class UDerivedClass(DerivedClass):
         for u_atom in self.base_class_object.u_atoms():
             if u_atom != self.marked_atom:
                 yield u_atom
+
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        if exceptions is None:
+            exceptions = []
+        if self.marked_atom is None:
+            self._marked_atom = self.base_class_object.random_u_atom()
+        exceptions.append(self.marked_atom)
+        return self.base_class_object.replace_u_atoms(sampler, x, y, exceptions)
 
     def __str__(self):
         return "{}_dy".format(str(self.base_class_object))

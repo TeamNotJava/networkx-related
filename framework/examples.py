@@ -124,7 +124,7 @@ def integer_partitions():
 def set_partitions():
     print("Set partitions example.\n---------------------------\n")
 
-    # In thie examples, we ...
+    # In this examples, we ...
 
     L = LAtomSampler()
     Set = SetSampler
@@ -220,9 +220,9 @@ def binary_trees():
 
 if __name__ == "__main__":
     examples = [
-        #natural_numbers,
-        #binary_trees,
-        #integer_partitions,
+        natural_numbers,
+        binary_trees,
+        integer_partitions,
         set_partitions
     ]
     for example in examples:

@@ -254,7 +254,10 @@ class ZeroAtomSampler(AtomSampler):
         return '1'
 
     def sample(self, x, y):
-        return self._builder.zero_atom()
+        if Settings.debug_mode:
+            return self._builder.zero_atom()
+        else:
+            return self._builder.zero_atom()
 
     def get_eval(self, x, y):
         # See 3.2, instead of querying '1' to the oracle we just return it.
@@ -550,10 +553,10 @@ class BijectionSampler(TransformationSampler):
     def sample(self, x, y):
         # Sample from the underlying class and apply the bijection.
         # In debug_mode check the sizes before and after applying the bijection.
-        if BoltzmannSamplerBase.debug_mode:
+        if Settings.debug_mode:
             # l_size/u_size may be not implemented on some classes, in this case the check is ignored.
+            gamma = self._sampler.sample(x, y)
             try:
-                gamma = self._sampler.sample(x, y)
                 l_size_before = gamma.l_size
                 u_size_before = gamma.u_size
                 gamma = self._f(gamma)
@@ -562,7 +565,7 @@ class BijectionSampler(TransformationSampler):
                 assert l_size_before == l_size_after and u_size_before == u_size_after
                 return gamma
             except NotImplementedError:
-                return self._f(self._sampler.sample(x, y))
+                return self._f(gamma)
         else:
             return self._f(self._sampler.sample(x, y))
 
@@ -667,6 +670,6 @@ class LDerFromUDerSampler(TransformationSampler):
     def sample(self, x, y):
         while True:
             gamma = self._sampler.sample(x, y)
-            p = (1 / self._alpha_l_u) * (gamma.l_size() / (gamma.u_size() + 1))
+            p = (1 / self._alpha_l_u) * (gamma.l_size / (gamma.u_size + 1))
             if bern(p):
                 return LDerivedClass(gamma.base_class_object)

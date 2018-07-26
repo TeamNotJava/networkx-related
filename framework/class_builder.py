@@ -1,3 +1,5 @@
+import warnings
+
 from framework.generic_classes import *
 
 
@@ -6,6 +8,26 @@ class CombinatorialClassBuilder:
     Interface for objects that build combinatorial classes.
     # TODO implement size checking mechanism.
     """
+
+    @staticmethod
+    def check_size_dec(condition):
+        def real_dec(func):
+            def wrapper(*args, **kwargs):
+                res = func(*args)
+                if not condition(res, *args):
+                    warnings.warn("Object returned by builder has inconsistent size")
+                return res
+            return wrapper
+        return real_dec
+
+    def is_consistent(self, res):
+        return res.l_size == 0 or res.u_size == 0
+
+    @check_size_dec(condition_zero_atom)
+    def zero_atom_checked(self):
+        res = self.zero_atom()
+        if res.l_size != 0 or res.u_size != 0:
+            warnings.warn("Object returned by builder has inconsistent size")
 
     def zero_atom(self):
         raise NotImplementedError
