@@ -104,9 +104,10 @@ class CombinatorialClass(object):
 
 
 class DummyClass(CombinatorialClass):
-    """An object without internal structure that only tracks sizes.
+    """
+    An object without internal structure that only tracks sizes.
 
-    Useful for more efficient testing of a _sampler's size distribution.
+    Useful for more efficient testing of a sampler's size distribution.
 
     Parameters
     ----------
@@ -243,7 +244,8 @@ class UAtomClass(ZeroAtomClass):
 
 
 class ProdClass(CombinatorialClass):
-    """Represents an object from a cartesian product of two combinatorial classes.
+    """
+    Represents an object from a cartesian product of two combinatorial classes.
 
     Parameters
     ----------
@@ -286,7 +288,8 @@ class ProdClass(CombinatorialClass):
 
 
 class SetClass(CombinatorialClass):
-    """An object from the class of sets of objects of a combinatorial class.
+    """
+    An object from the class of sets of objects of a combinatorial class.
 
     Parameters
     ----------
@@ -341,7 +344,8 @@ class SetClass(CombinatorialClass):
 
 
 class DerivedClass(CombinatorialClass):
-    """Base class for l-derived and u-derived classes.
+    """
+    Base class for l-derived and u-derived classes.
 
     A derived class is a combinatorial class where one atom is marked and does not count to the l-size/u-size.
     This class is not meant to be instantiated directly. Instantiate LDerivedClass or UDerivedClass instead.
@@ -363,9 +367,7 @@ class DerivedClass(CombinatorialClass):
         if type(self) is DerivedClass:
             raise BoltzmannFrameworkError("Instantiate objects of LDerivedClass or UDerivedClass")
         self._base_class_object = base_class_object
-        if marked_atom is not None:
-            # Use the setter that checks if marked_atom is actually in the object
-            self.marked_atom = marked_atom
+        self._marked_atom = marked_atom
 
     @property
     def marked_atom(self):
@@ -376,7 +378,7 @@ class DerivedClass(CombinatorialClass):
     def marked_atom(self, atom):
         """Sets the marked atom."""
         if atom is not None:
-            # todo is the check expensive?
+            # TODO is the check expensive?
             atoms = itertools.chain(self.base_class_object.l_atoms(), self.base_class_object.u_atoms())
             if self.marked_atom not in atoms:
                 raise BoltzmannFrameworkError("Given atom does not exist in base class object")
@@ -398,8 +400,12 @@ class DerivedClass(CombinatorialClass):
             If the underlying class is no derived class.
         """
         if not isinstance(self.base_class_object, DerivedClass):
-            raise BoltzmannFrameworkError("Base class object is not from a derived class")
-        # todo
+            msg = "Base class object not from derived class: {}".format(self.base_class_object)
+            raise BoltzmannFrameworkError(msg)
+        res = self.base_class_object
+        self._base_class_object = self.base_class_object.base_class_object
+        res._base_class_object = self
+        return res
 
     @property
     def l_size(self):
@@ -426,7 +432,8 @@ class DerivedClass(CombinatorialClass):
 
 
 class LDerivedClass(DerivedClass):
-    """Wrapper for an l-derived class.
+    """
+    Wrapper for an l-derived class.
 
     An l-derived class is a combinatorial class where one l-atom is marked and does not count to the l-size.
 
@@ -435,7 +442,7 @@ class LDerivedClass(DerivedClass):
     base_class_object: CombinatorialClass
         The object form the underlying underived class.
     marked_l_atom: CombinatorialClass, optional (default=None)
-        The distinguished l-atom. None stands for any random atom.
+        The distinguished l-atom (one stands for any random atom).
     """
 
     def __init__(self, base_class_object, marked_l_atom=None):
@@ -447,8 +454,8 @@ class LDerivedClass(DerivedClass):
 
     def l_atoms(self):
         if self.marked_atom is None:
-            # Select a random l-atom as the marked l-atom.
-            self._marked_atom = self.random_l_atom()
+            # Select a random l-atom as the marked l-atom (do not use the checking setter here).
+            self._marked_atom = self.base_class_object.random_l_atom()
         for l_atom in self.base_class_object.l_atoms():
             if l_atom != self.marked_atom:
                 yield l_atom
@@ -466,7 +473,17 @@ class LDerivedClass(DerivedClass):
 
 
 class UDerivedClass(DerivedClass):
-    """Wrapper for a u-derived class.
+    """
+    Wrapper for a u-derived class.
+
+    A u-derived class is a combinatorial class where one u-atom is marked and does not count to the u-size.
+
+    Parameters
+    ----------
+    base_class_object: CombinatorialClass
+        The object form the underlying underived class.
+    marked_u_atom: CombinatorialClass, optional (default=None)
+        The distinguished u-atom (one stands for any random atom).
 
     """
 
@@ -479,8 +496,8 @@ class UDerivedClass(DerivedClass):
 
     def u_atoms(self):
         if self.marked_atom is None:
-            # Select a random u-atom as the marked u-atom.
-            self._marked_atom = self.random_u_atom()
+            # Select a random u-atom as the marked u-atom (do not use the checking setter here).
+            self._marked_atom = self.base_class_object.random_u_atom()
         for u_atom in self.base_class_object.u_atoms():
             if u_atom != self.marked_atom:
                 yield u_atom

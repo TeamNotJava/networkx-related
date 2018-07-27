@@ -3,6 +3,15 @@ from framework.generic_classes import *
 from framework.utils import *
 
 
+def return_precomp(func):
+    def wrapper(self, *args, **kwargs):
+        if self._precomputed_eval is not None:
+            return self._precomputed_eval
+        return func(self, *args, **kwargs)
+
+    return wrapper
+
+
 class BoltzmannSamplerBase(object):
     """Abstract base class for Boltzmann samplers.
 
@@ -57,7 +66,7 @@ class BoltzmannSamplerBase(object):
         """
         raise NotImplementedError
 
-    def get_eval(self, x, y):
+    def eval(self, x, y):
         """Gets the evaluation of the generating function of the class being sampled.
 
         Possibly queries the oracle directly or indirectly.
@@ -86,7 +95,7 @@ class BoltzmannSamplerBase(object):
         y: str
             symbolic y argument
         """
-        self._precomputed_eval = self.get_eval(x, y)
+        self._precomputed_eval = self.eval(x, y)
 
     def oracle_query_string(self, x, y):
         """String used as key in oracle.
@@ -107,7 +116,19 @@ class BoltzmannSamplerBase(object):
         """
         raise NotImplementedError
 
-    def set_builder(self, builder):
+    @property
+    def builder(self):
+        """Returns the builder registered with this sampler or None.
+
+        Returns
+        -------
+        builder: CombinatorialClassBuilder
+            Builder registered with this sampler or None.
+        """
+        return self._builder
+
+    @builder.setter
+    def builder(self, builder):
         """Registers a builder for the output class.
 
         Output will be in generic format if not set.
@@ -119,7 +140,7 @@ class BoltzmannSamplerBase(object):
         self._builder = builder
 
     def get_children(self):
-        """Gets the samplers this _sampler depends on (if applicable).
+        """Gets the samplers this sampler depends on (if applicable).
 
         Applies to all samplers except atom samplers.
 
@@ -232,8 +253,9 @@ class AtomSampler(BoltzmannSamplerBase):
     def sample(self, x, y):
         raise NotImplementedError
 
-    def get_eval(self, x, y):
-        return self.oracle.get(self.oracle_query_string(x, y))
+    @return_precomp
+    def eval(self, x, y):
+        return self.oracle[self.oracle_query_string(x, y)]
 
     def oracle_query_string(self, x, y):
         raise NotImplementedError
@@ -255,11 +277,12 @@ class ZeroAtomSampler(AtomSampler):
 
     def sample(self, x, y):
         if Settings.debug_mode:
+            # todo
             return self._builder.zero_atom()
         else:
             return self._builder.zero_atom()
 
-    def get_eval(self, x, y):
+    def eval(self, x, y):
         # See 3.2, instead of querying '1' to the oracle we just return it.
         return 1
 
@@ -278,6 +301,7 @@ class LAtomSampler(AtomSampler):
         return 'L'
 
     def sample(self, x, y):
+        # todo
         return self._builder.l_atom()
 
     def oracle_query_string(self, x, y):
@@ -296,6 +320,7 @@ class UAtomSampler(AtomSampler):
         return 'U'
 
     def sample(self, x, y):
+        # todo
         return self._builder.u_atom()
 
     def oracle_query_string(self, x, y):
@@ -323,24 +348,34 @@ class BinarySampler(BoltzmannSamplerBase):
         self._op_symbol = op_symbol
 
     @property
+    def lhs(self):
+        """Returns the left argument of this sampler."""
+        return self._lhs
+
+    @property
+    def rhs(self):
+        """Returns the right argument of this sampler."""
+        return self._rhs
+
+    @property
     def sampled_class(self):
         return "({}{}{})".format(self._lhs.sampled_class, self._op_symbol, self._rhs.sampled_class)
 
     def sample(self, x, y):
         raise NotImplementedError
 
-    def get_eval(self, x, y):
+    def eval(self, x, y):
         raise NotImplementedError
 
     def oracle_query_string(self, x, y):
         return "({}{}{})".format(
-            self._lhs.oracle_query_string(x, y),
+            self.lhs.oracle_query_string(x, y),
             self._op_symbol,
-            self._rhs.oracle_query_string(x, y)
+            self.rhs.oracle_query_string(x, y)
         )
 
     def get_children(self):
-        return [self._lhs, self._rhs]
+        return [self.lhs, self.rhs]
 
 
 class SumSampler(BinarySampler):
@@ -350,14 +385,15 @@ class SumSampler(BinarySampler):
         super(SumSampler, self).__init__(lhs, rhs, '+')
 
     def sample(self, x, y):
-        if bern(self._lhs.get_eval(x, y) / self.get_eval(x, y)):
-            return self._lhs.sample(x, y)
+        if bern(self.lhs.eval(x, y) / self.eval(x, y)):
+            return self.lhs.sample(x, y)
         else:
-            return self._rhs.sample(x, y)
+            return self.rhs.sample(x, y)
 
-    def get_eval(self, x, y):
+    @return_precomp
+    def eval(self, x, y):
         # For the sum class (disjoint union) the generating function is the sum of the 2 generating functions.
-        return self._lhs.get_eval(x, y) + self._rhs.get_eval(x, y)
+        return self.lhs.eval(x, y) + self.rhs.eval(x, y)
 
 
 class ProdSampler(BinarySampler):
@@ -367,11 +403,13 @@ class ProdSampler(BinarySampler):
         super(ProdSampler, self).__init__(lhs, rhs, '*')
 
     def sample(self, x, y):
-        return self._builder.product(self._lhs.sample(x, y), self._rhs.sample(x, y))
+        # todo
+        return self._builder.product(self.lhs.sample(x, y), self.rhs.sample(x, y))
 
-    def get_eval(self, x, y):
+    @return_precomp
+    def eval(self, x, y):
         # For the product class (cartesian prod.) the generating function is the product of the 2 generating functions.
-        return self._lhs.get_eval(x, y) * self._rhs.get_eval(x, y)
+        return self.lhs.eval(x, y) * self.rhs.eval(x, y)
 
 
 class LSubsSampler(BinarySampler):
@@ -381,16 +419,17 @@ class LSubsSampler(BinarySampler):
         super(LSubsSampler, self).__init__(lhs, rhs, ' lsubs ')
 
     def sample(self, x, y):
-        gamma = self._lhs.sample(self._rhs.oracle_query_string(x, y), y)
-        gamma.replace_l_atoms(self._rhs, x, y)
+        gamma = self.lhs.sample(self.rhs.oracle_query_string(x, y), y)
+        gamma.replace_l_atoms(self.rhs, x, y)
         return gamma
 
-    def get_eval(self, x, y):
-        return self._lhs.get_eval(self._rhs.oracle_query_string(x, y), y)
+    @return_precomp
+    def eval(self, x, y):
+        return self.lhs.eval(self.rhs.oracle_query_string(x, y), y)
 
     def oracle_query_string(self, x, y):
         #  A(B(x,y),y) where A = lhs and B = rhs (see 3.2).
-        return self._lhs.oracle_query_string(self._rhs.oracle_query_string(x, y), y)
+        return self.lhs.oracle_query_string(self.rhs.oracle_query_string(x, y), y)
 
 
 class USubsSampler(BinarySampler):
@@ -400,16 +439,17 @@ class USubsSampler(BinarySampler):
         super(USubsSampler, self).__init__(lhs, rhs, ' usubs ')
 
     def sample(self, x, y):
-        gamma = self._lhs.sample(x, self._rhs.oracle_query_string(x, y))
-        gamma.replace_u_atoms(self._rhs, x, y)
+        gamma = self.lhs.sample(x, self.rhs.oracle_query_string(x, y))
+        gamma.replace_u_atoms(self.rhs, x, y)
         return gamma
 
-    def get_eval(self, x, y):
-        return self._lhs.get_eval(x, self._rhs.oracle_query_string(x, y))
+    @return_precomp
+    def eval(self, x, y):
+        return self._lhs.eval(x, self.rhs.oracle_query_string(x, y))
 
     def oracle_query_string(self, x, y):
         # A(x,B(x,y)) where A = lhs and B = rhs (see 3.2).
-        return self._lhs.oracle_query_string(x, self._rhs.oracle_query_string(x, y))
+        return self._lhs.oracle_query_string(x, self.rhs.oracle_query_string(x, y))
 
 
 class UnarySampler(BoltzmannSamplerBase):
@@ -432,7 +472,7 @@ class UnarySampler(BoltzmannSamplerBase):
     def sample(self, x, y):
         raise NotImplementedError
 
-    def get_eval(self, x, y):
+    def eval(self, x, y):
         raise NotImplementedError
 
     def oracle_query_string(self, x, y):
@@ -469,13 +509,15 @@ class SetSampler(UnarySampler):
         return "Set_{}({})".format(self._d, self._sampler.sampled_class)
 
     def sample(self, x, y):
-        k = pois(self._d, self._sampler.get_eval(x, y))
+        # todo
+        k = pois(self._d, self._sampler.eval(x, y))
         return self._builder.set([self._sampler.sample(x, y) for _ in range(k)])
 
-    def get_eval(self, x, y):
+    @return_precomp
+    def eval(self, x, y):
         # The generating function of a set class is a tail of the exponential row evaluated at the generating function
         # of the underlying class (see 3.2).
-        return exp_tail(self._d, self._sampler.get_eval(x, y))
+        return exp_tail(self._d, self._sampler.eval(x, y))
 
     def oracle_query_string(self, x, y):
         return "exp_{}({})".format(self._d, self._sampler.oracle_query_string(x, y))
@@ -522,10 +564,11 @@ class TransformationSampler(UnarySampler):
         # Otherwise sample without transformation.
         return self._sampler.sample(x, y)
 
-    def get_eval(self, x, y):
+    @return_precomp
+    def eval(self, x, y):
         # If a transformation of the generating function is given, apply it here.
         if self._eval_transform is not None:
-            return self._eval_transform(self._sampler.get_eval(x, y), x, y)
+            return self._eval_transform(self._sampler.eval(x, y), x, y)
         # Otherwise query the oracle because we cannot infer the evaluation in the case of a general transformation.
         return self.oracle.get(self.oracle_query_string(x, y))
 
@@ -533,7 +576,7 @@ class TransformationSampler(UnarySampler):
         try:
             return "{}({},{})".format(self.sampled_class, x, y)
         except AttributeError:
-            # self.sampled_class might be None
+            # self.sampled_class might be None.
             raise BoltzmannFrameworkError("No target class label was given or could be inferred")
 
 
@@ -569,9 +612,10 @@ class BijectionSampler(TransformationSampler):
         else:
             return self._f(self._sampler.sample(x, y))
 
-    def get_eval(self, x, y):
+    @return_precomp
+    def eval(self, x, y):
         # Since the target class is isomorphic to the underlying class, the evaluation is also the same.
-        return self._sampler.get_eval(x, y)
+        return self._sampler.eval(x, y)
 
     def oracle_query_string(self, x, y):
         return self._sampler.oracle_query_string(x, y)

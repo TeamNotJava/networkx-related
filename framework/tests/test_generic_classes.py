@@ -93,10 +93,25 @@ class TestGenericClasses(object):
             gamma = deepcopy(obj)
             gamma.assign_random_labels()
 
+    def test_derived_class(self):
+        obj1_dx = LDerivedClass(self.obj1)
+        assert str(obj1_dx) == str(self.obj1) + '_dx'
+        assert obj1_dx.l_size == self.obj1.l_size - 1
+        obj1_dx_dy = UDerivedClass(obj1_dx)
+        assert obj1_dx_dy.l_size == self.obj1.l_size - 1
+        assert obj1_dx_dy.u_size == self.obj1.u_size - 1
+        assert str(obj1_dx_dy) == str(self.obj1) + '_dx_dy'
+        print(obj1_dx_dy)
+        obj1_dy_dx = obj1_dx_dy.invert_derivation_order()
+        assert str(obj1_dy_dx) == str(self.obj1) + '_dy_dx'
+        print(obj1_dy_dx)
+
+
 if __name__ == "__main__":
     test = TestGenericClasses()
     test.setUp()
-    test.test_dummy_class()
+    #test.test_dummy_class()
     test.test_prod_class()
     test.test_set_class()
     test.test_assign_random_labels()
+    test.test_derived_class()

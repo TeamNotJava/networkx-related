@@ -9,45 +9,67 @@ from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
 
 
+
 def test_dummy_size():
+    print("Dummy sampling example.\n-----------------------\n")
     L = LAtomSampler()
     Tree = AliasSampler('Tree')
 
     tree_grammar = DecompositionGrammar()
-    tree_grammar.add_rules({
-        # tree is either a leaf or inner node with two children which are trees
-        'Tree': L + Tree * L * Tree,
-    })
+    tree_grammar.rules = {
+        # Tree is either a leaf or inner node with two children which are trees.
+        'Tree': L + L * Tree ** 2,
+    }
     # init the grammar
     tree_grammar.init()
+    tree_grammar.dummy_sampling_mode()
 
+    def get_x_for_size(n):
+        return math.sqrt(n ** 2 - 1) / (2 * n)
+
+    def eval_T(x):
+        return (math.sqrt(1 - 4 * x ** 2) + 1) / (2 * x)
+
+    def eval_T_dx(x):
+        return (1 / (math.sqrt(1 - 4 * x ** 2)) + 1) / (2 * x ** 2)
+
+    target_size = 10
+    x = get_x_for_size(target_size)
+    T = eval_T(x)
+    T_dx = eval_T_dx(x)
     tree_oracle = EvaluationOracle({
-        'x': 0.4999749994,
-        'y': 1.0,  # this is not needed here
-        'Tree(x,y)': 0.99005
+        'x': x,
+        'Tree(x,y)': T,
+        'Tree_dx(x,y)': T_dx
     })
 
-    # inject the oracle into the samplers
+    # Inject the oracle into the samplers.
     BoltzmannSamplerBase.oracle = tree_oracle
 
     print(tree_grammar.collect_oracle_queries('Tree', 'x', 'y'))
 
-    trees = [tree_grammar.sample('Tree', 'x', 'y') for _ in range(100)]
-    print(sum([tree.l_size() for tree in trees]) / len(trees))
+    num_samples = 10
+    while True:
+        try:
+            trees = [tree_grammar.sample('Tree', 'x', 'y') for _ in range(num_samples)]
+            break
+        except RecursionError:
+            pass
+    print(sum([tree.l_size for tree in trees]) / len(trees))
 
 
 def natural_numbers():
     print("Natural numbers example.\n------------------------\n")
 
     # Define some shortcuts to make the grammar more readable.
-    One = UAtomSampler
-    Zero = ZeroAtomSampler
-    _ = AliasSampler
+    One = UAtomSampler()
+    Zero = ZeroAtomSampler()
+    N = AliasSampler('N')
 
     # Define the grammar and initialize.
     grammar = DecompositionGrammar({
         # A natural number is either zero or the successor (+1) of another natural number.
-        'N': Zero() + One() * _('N')
+        'N': Zero + One * N
     })
     grammar.init()
 
@@ -59,6 +81,7 @@ def natural_numbers():
         'N(x,y)': N
     })
     BoltzmannSamplerBase.oracle = oracle
+    grammar.precompute_evals('N', 'x', 'y')
     print("expected number: {}".format(y * N_dy / N))
     num_samples = 10
     numbers = [grammar.sample('N', 'x', 'y') for _ in range(num_samples)]
@@ -122,7 +145,7 @@ def integer_partitions():
 
 
 def set_partitions():
-    print("Set partitions example.\n---------------------------\n")
+    print("Set partitions example.\n-----------------------\n")
 
     # In this examples, we ...
 
@@ -218,13 +241,19 @@ def binary_trees():
     print(2 * math.sqrt(math.pi * avg_size / 2))
 
 
-if __name__ == "__main__":
+def test_examples():
     examples = [
         natural_numbers,
         binary_trees,
         integer_partitions,
-        set_partitions
+        set_partitions,
+        test_dummy_size
     ]
     for example in examples:
         example()
         print('\n')
+
+
+if __name__ == "__main__":
+    # random.seed(123456)
+    test_examples()
