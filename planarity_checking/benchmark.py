@@ -1,7 +1,7 @@
 import networkx as nx
 import urllib
 import tarfile
-import os
+import os, sys
 from timeit import default_timer as timer
 
 links = [
@@ -14,7 +14,7 @@ links = [
     ('https://users.dcc.uchile.cl/~jfuentess/datasets/files/g/worldcities.tar.gz', 'worldcitiespop.pg')
 ]
 
-graph_num = 1
+graph_num = int(sys.argv[1])
 
 graph_link = links[graph_num][0]
 graph_tar = graph_link.split("/")[-1]
