@@ -1,3 +1,17 @@
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2018 by
+#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#    Petre Petrov <petrepp4@gmail.com>
+#    Rudi Floren <rudi.floren@gmail.com>
+#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+#    All rights reserved.
+#    BSD license.
+#
+# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#           Petre Petrov <petrepp4@gmail.com>
+#           Rudi Floren <rudi.floren@gmail.com>
+#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+
 from planar_graph_sampler.bijections.primal_map import primal_map
 from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
 from planar_graph_sampler.bijections.whitney_3map_to_3graph import whitney

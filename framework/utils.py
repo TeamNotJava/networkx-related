@@ -1,11 +1,24 @@
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2018 by
+#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#    Petre Petrov <petrepp4@gmail.com>
+#    Rudi Floren <rudi.floren@gmail.com>
+#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+#    All rights reserved.
+#    BSD license.
+#
+# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#           Petre Petrov <petrepp4@gmail.com>
+#           Rudi Floren <rudi.floren@gmail.com>
+#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+
 import random as rnd
 from math import exp, pow, factorial
 import itertools
 
 
-# Returns the nth item or a default value
-# also works for a generator
 def nth(iterable, n, default=None):
+    """Returns the nth item or a default value, also works for a generator."""
     return next(itertools.islice(iterable, n, None), default)
 
 

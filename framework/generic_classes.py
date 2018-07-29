@@ -1,3 +1,17 @@
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2018 by
+#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#    Petre Petrov <petrepp4@gmail.com>
+#    Rudi Floren <rudi.floren@gmail.com>
+#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+#    All rights reserved.
+#    BSD license.
+#
+# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#           Petre Petrov <petrepp4@gmail.com>
+#           Rudi Floren <rudi.floren@gmail.com>
+#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+
 import random
 
 from framework.settings_global import Settings
@@ -6,18 +20,6 @@ from framework.utils import *
 
 class BoltzmannFrameworkError(Exception):
     """Base class for exceptions in the framework."""
-
-
-class SubstitutionError(BoltzmannFrameworkError):
-    """Raised when a substitution fails."""
-
-
-class InvertDerivationOrderError(BoltzmannFrameworkError):
-    """Raised when invert derivation order fails."""
-
-
-class DerivationError(BoltzmannFrameworkError):
-    """"""
 
 
 class CombinatorialClass(object):

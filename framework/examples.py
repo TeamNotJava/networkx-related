@@ -1,13 +1,25 @@
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2018 by
+#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#    Petre Petrov <petrepp4@gmail.com>
+#    Rudi Floren <rudi.floren@gmail.com>
+#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+#    All rights reserved.
+#    BSD license.
+#
+# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#           Petre Petrov <petrepp4@gmail.com>
+#           Rudi Floren <rudi.floren@gmail.com>
+#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+
 from __future__ import division, print_function
 import math
 
-from framework.class_builder import CombinatorialClassBuilder, DefaultBuilder
 from framework.decomposition_grammar import *
 from framework.evaluation_oracle import EvaluationOracle
 
 # TODO make some reasonable things here or delete
 from framework.generic_samplers import BoltzmannSamplerBase
-
 
 
 def test_dummy_size():
