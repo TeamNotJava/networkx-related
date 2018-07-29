@@ -12,26 +12,28 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-"""This class is needed for transformation of a Boltzmann _sampler for bicolored binary trees
-into a Boltzmann _sampler for 3-connected planar graphs.
-"""
 
-import sys
-import os
 from planar_graph_sampler.combinatorial_classes.halfedge import ClosureHalfEdge
-from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
+from planar_graph_sampler.combinatorial_classes.dissection import \
+    IrreducibleDissection
 from framework.utils import Counter
 
 counter = Counter()
 
 
 class Closure:
+    """
+    This class is needed for transformation of a Boltzmann sampler for
+    bicolored binary trees into a Boltzmann sampler for 3-connected planar
+    graphs.
+    """
 
-    # Performs bicolored partial closure on a binary tree. When possible add a
-    # new edge in order to get faces of degree four.
-    def ___bicolored_partial_closure(self, init_half_edge):
-        stack = []
-        stack.append(init_half_edge)
+    def _bicolored_partial_closure(self, init_half_edge):
+        """Performs bicolored partial closure on a binary tree.
+
+        When possible add a new edge to get faces of degree four.
+        """
+        stack = [init_half_edge]
         break_edge = init_half_edge
         current_half_edge = init_half_edge
 
@@ -52,14 +54,16 @@ class Closure:
 
                     if top_half_edge.number_proximate_inner_edges == 3:
                         new_half_edge = ClosureHalfEdge()
-                        # new_half_edge.add_to_closure(current_half_edge, current_half_edge.next, top_half_edge, False)
-                        current_half_edge.add_to_closure(top_half_edge, False, new_half_edge)
+                        # new_half_edge.add_to_closure(current_half_edge,
+                        # current_half_edge.next, top_half_edge, False)
+                        current_half_edge.add_to_closure(top_half_edge, False,
+                                                         new_half_edge)
                         current_half_edge = top_half_edge.prior
                     else:
                         stack.append(top_half_edge)
 
         if init_half_edge.opposite is not None:
-            # Iterate to _first stem
+            # Iterate to first stem
             half_edge_list = init_half_edge.list_half_edges([])
             for edge in half_edge_list:
                 if edge.opposite is None:
@@ -67,31 +71,43 @@ class Closure:
         else:
             return init_half_edge
 
-    # Performs bicolored complete closure on a planar map of a binary tree in order to obtain
-    # a irreducible dissection of the hexagon with quadrangular inner faces
-    # input: init_half_edge is the half-edge that we get when we convert a binary tree into
-    # a planar map
-    def ___bicolored_complete_closure(self, init_half_edge):
-        starting_half_edge = self.___bicolored_partial_closure(init_half_edge)
+    def _bicolored_complete_closure(self, init_half_edge):
+        """Performs bicolored complete closure on a planar map of a binary
+        tree in order to obtain an irreducible dissection of the hexagon with
+        quadrangular inner faces.
+
+        Parameters
+        ----------
+        init_half_edge: ClosureHalfEdge
+            The half-edge that we get when we convert a binary tree into a
+            planar map.
+        """
+        starting_half_edge = self._bicolored_partial_closure(init_half_edge)
 
         # Construct hexagon
-        hexagon = [ClosureHalfEdge() for i in range(12)]
-        hexagon_start_half_edge = self.___construct_hexagon(hexagon, starting_half_edge)
+        hexagon = [ClosureHalfEdge() for _ in range(12)]
+        hexagon_start_half_edge = self._construct_hexagon(hexagon,
+                                                          starting_half_edge)
 
-        # Connect the starting half-edge of our planar map with the _first node of the hexagon
+        # Connect the starting half-edge of our planar map with the _first
+        # node of the hexagon
         new_half_edge = ClosureHalfEdge()
-        # new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge, True)
-        hexagon_start_half_edge.add_to_closure(starting_half_edge, True, new_half_edge)
+        # new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11],
+        # starting_half_edge, True)
+        hexagon_start_half_edge.add_to_closure(starting_half_edge, True,
+                                               new_half_edge)
 
         connecting_half_edge = new_half_edge
 
-        # Now traverse the planar map. Depending on the distance between a new inner edge and
-        # the next half-edge one can assign the new half edge to a certain hexagon node
+        # Now traverse the planar map. Depending on the distance between a
+        # new inner edge and the next half-edge one can assign the new half
+        # edge to a certain hexagon node
         distance = 0
         hexagon_iter = hexagon_start_half_edge
         current_half_edge = starting_half_edge
         hexagon_iter_index = 0
-        # This variable is needed in order to check if we already visited more than one node of the hexagon
+        # This variable is needed in order to check if we already visited
+        # more than one node of the hexagon
         visited_more = False
         while True:
             current_half_edge = current_half_edge.next
@@ -99,7 +115,8 @@ class Closure:
             if current_half_edge is starting_half_edge:
                 break
 
-            # If the opposite is None then we have to assign it to one of the hexagon nodes
+            # If the opposite is None then we have to assign it to one of the
+            #  hexagon nodes
             if current_half_edge.opposite is None:
                 fresh_half_edge = ClosureHalfEdge()
                 fresh_half_edge.opposite = current_half_edge
@@ -123,13 +140,17 @@ class Closure:
                     visited_more = True
 
                 if visited_more and id(hexagon_iter) == id(hexagon[0]):
-                    last_added_edge = connecting_half_edge.next
-                    # fresh_half_edge.add_to_closure(connecting_half_edge, last_added_edge, current_half_edge, True)
-                    connecting_half_edge.add_to_closure(current_half_edge, True, fresh_half_edge)
+                    # last_added_edge = connecting_half_edge.next
+                    # fresh_half_edge.add_to_closure(connecting_half_edge,
+                    # last_added_edge, current_half_edge, True)
+                    connecting_half_edge.add_to_closure(current_half_edge,
+                                                        True, fresh_half_edge)
                 else:
-                    last_added_edge = hexagon_iter.next
-                    # fresh_half_edge.add_to_closure(hexagon_iter, last_added_edge, current_half_edge, True)
-                    hexagon_iter.add_to_closure(current_half_edge, True, fresh_half_edge)
+                    # last_added_edge = hexagon_iter.next
+                    # fresh_half_edge.add_to_closure(hexagon_iter,
+                    # last_added_edge, current_half_edge, True)
+                    hexagon_iter.add_to_closure(current_half_edge,
+                                                True, fresh_half_edge)
 
                 distance = 0
             else:
@@ -138,9 +159,8 @@ class Closure:
 
         return hexagon[0]
 
-    # Constructs a hexagon from a list of half_edges.
-    def ___construct_hexagon(self, hexagon_half_edges, partial_closure_edge):
-        inv_color = None
+    def _construct_hexagon(self, hexagon_half_edges, partial_closure_edge):
+        """Constructs a hexagon from a list of half_edges."""
         color = partial_closure_edge.color
         if color is 'white':
             inv_color = 'black'
@@ -152,20 +172,20 @@ class Closure:
             hexagon_half_edges[i].is_hexagonal = True
 
         # Set opposite edges
-        iter = 0
-        while iter < 11:
-            hexagon_half_edges[iter].opposite = hexagon_half_edges[iter + 1]
-            hexagon_half_edges[iter + 1].opposite = hexagon_half_edges[iter]
-            iter += 2
+        it = 0
+        while it < 11:
+            hexagon_half_edges[it].opposite = hexagon_half_edges[it + 1]
+            hexagon_half_edges[it + 1].opposite = hexagon_half_edges[it]
+            it += 2
 
         # Set next and prior half-edges. Here prior and next are the same
-        iter = 1
-        while iter < 12:
-            hexagon_half_edges[iter].next = hexagon_half_edges[(iter + 1) % 12]
-            hexagon_half_edges[iter].prior = hexagon_half_edges[(iter + 1) % 12]
-            hexagon_half_edges[(iter + 1) % 12].next = hexagon_half_edges[iter]
-            hexagon_half_edges[(iter + 1) % 12].prior = hexagon_half_edges[iter]
-            iter += 2
+        it = 1
+        while it < 12:
+            hexagon_half_edges[it].next = hexagon_half_edges[(it + 1) % 12]
+            hexagon_half_edges[it].prior = hexagon_half_edges[(it + 1) % 12]
+            hexagon_half_edges[(it + 1) % 12].next = hexagon_half_edges[it]
+            hexagon_half_edges[(it + 1) % 12].prior = hexagon_half_edges[it]
+            it += 2
 
         # Set node number.
         current_half_edge = hexagon_half_edges[11]
@@ -177,8 +197,6 @@ class Closure:
             if current_half_edge is hexagon_half_edges[11]:
                 break
 
-        even_color = None
-        odd_color = None
         if hexagon_half_edges[0].node_nr % 2 == 0:
             # Then all even nodes have to have the inverse color
             even_color = inv_color
@@ -224,8 +242,8 @@ class Closure:
 
         print("Partial closure is okay.")
 
-    # Check if the connections between the edges are correct
     def test_connections_between_half_edges(self, init_half_edge):
+        """Checks if the connections between the edges are correct."""
         edge_list = init_half_edge.list_half_edges([])
         node_dict = init_half_edge.get_node_list()
         hex_half_edge = None
@@ -233,30 +251,31 @@ class Closure:
         for edge in edge_list:
             if edge.is_hexagonal:
                 num_hex_half_edges += 1
-            if hex_half_edge is None and edge.is_hexagonal and edge.prior.is_hexagonal:
+            if hex_half_edge is None and edge.is_hexagonal \
+                    and edge.prior.is_hexagonal:
                 hex_half_edge = edge
-            assert (edge is edge.next.prior)
-            assert (edge is edge.prior.next)
-            assert (edge is edge.opposite.opposite)
-            assert (edge.opposite is not None)
+            assert edge is edge.next.prior
+            assert edge is edge.prior.next
+            assert edge is edge.opposite.opposite
+            assert edge.opposite is not None
 
-        assert (num_hex_half_edges == 12)
+        assert num_hex_half_edges == 12
 
         # Test if the outer face is a hexagon
         curr_half_edge = hex_half_edge
-        assert (curr_half_edge.is_hexagonal)
+        assert curr_half_edge.is_hexagonal
         hex_edges = 0
         while True:
             curr_half_edge = curr_half_edge.opposite
-            assert (curr_half_edge.is_hexagonal)
+            assert curr_half_edge.is_hexagonal
             if curr_half_edge == hex_half_edge:
                 break
             curr_half_edge = curr_half_edge.next
-            assert (curr_half_edge.is_hexagonal)
+            assert curr_half_edge.is_hexagonal
             if curr_half_edge == hex_half_edge:
                 break
             hex_edges += 1
-        assert (hex_edges == 5)
+        assert hex_edges == 5
 
         # Test if every node has at most two hexagonal edges
         for node in node_dict:
@@ -265,28 +284,32 @@ class Closure:
             for e in half_edges:
                 if e.is_hexagonal:
                     num_hex += 1
-            assert (num_hex < 3)
+            assert num_hex < 3
         print("Connections are okay.")
 
-    # Checks if half edges at every node are planar
     def test_planarity_of_embedding(self, init_half_edge):
+        """Checks if half edges at every node are planar."""
         edge_list = init_half_edge.list_half_edges([])
 
-        # Check if there are two different edges that have the same prior/next half-edge
+        # Check if there are two different edges that have the same
+        # prior/next half-edge
         for edge in edge_list:
             for i in edge_list:
-                if id(i) != id(edge) and (i.prior is edge.prior or i.next is edge.next):
-                    raise Exception("There are two different edges with the samp prior/next.")
+                if id(i) != id(edge) and \
+                        (i.prior is edge.prior or i.next is edge.next):
+                    raise Exception("There are two different edges with the "
+                                    "same prior/next.")
 
         print("Embedding is okay.")
 
     def closure(self, binary_tree):
-        """Implements the bijection between the binary trees and the irreducible
-        dissections of hexagon. 
+        """Implements the bijection between binary trees and irreducible
+        dissections of a hexagon.
 
         Parameters
         ----------
         binary_tree: BinaryTree
+            The binary tree to be closed.
 
         Returns
         -------
@@ -295,18 +318,18 @@ class Closure:
 
         Notes
         -----
-        The partial closure takes a binary tree as input and closes the tree, such that
-        every face in the resulting graph has degree four. Afterwards, the complete
-        closure is performed, where the partially closed binary tree is integrated into
-        a hexagon (irreducible dissection of hexagon) [1].
+        The partial closure takes a binary tree as input and
+        closes the tree, such that every face in the resulting graph has
+        degree four. Afterwards, the complete closure is performed,
+        where the partially closed binary tree is integrated into a hexagon
+        (irreducible dissection of hexagon) [1].
 
         References
         ----------
         .. [1] Eric Fusy:
             Uniform random sampling of planar graphs in linear time
         """
-
         init_half_edge = binary_tree.half_edge
-        # This edge is hexagonal and points in ccw direction
-        init_half_edge = self.___bicolored_complete_closure(init_half_edge)
+        # This edge is hexagonal and points in ccw direction.
+        init_half_edge = self._bicolored_complete_closure(init_half_edge)
         return IrreducibleDissection(init_half_edge)

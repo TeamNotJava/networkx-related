@@ -12,32 +12,31 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-"""Make a bijection between the irreducible quadrangulation to a 3-connected map.
-"""
-
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
-from planar_graph_sampler.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 
 class PrimalMap:
+    """
+    Make a bijection between the irreducible quadrangulation to a 3-connected map.
+    """
 
     def primal_map_bijection(self, init_half_edge):
-        ''' Given the irreducible quandrigulation returned from the Closure,
+        """ Given the irreducible quandragulation returned from the closure,
         this function extract the 3-connected map from it.
 
         See more in 4.1.3 where the bijection is described.
-
-        :return:
-        '''
+        """
         associated_half_edge_in_3_map = {}
         quad_half_edge = self.___quadrangulate(init_half_edge)
-        self.__primal_map_bijection_rec(quad_half_edge, associated_half_edge_in_3_map)
+        self._primal_map_bijection_rec(quad_half_edge, associated_half_edge_in_3_map)
         return associated_half_edge_in_3_map[init_half_edge]
 
-    # Recursively transforms the irreducible quandrigulation to the three conected map.
-    # The next and prev pointers are kept as before, but the opposite pointer in the
-    # half edge is pointing to the opposite half-edge in the face.
-    def __primal_map_bijection_rec(self, init_half_edge, associated_half_edges_in_3_map):
+    def _primal_map_bijection_rec(self, init_half_edge, associated_half_edges_in_3_map):
+        """Recursively transforms the irreducible quadrangulation to the three connected map.
+
+        The next and prev pointers are kept as before, but the opposite pointer in the half edge is pointing to the
+        opposite half-edge in the face.
+        """
         # Associate the initial half edge
         initial_half_edge_association = HalfEdge()
         initial_half_edge_association.node_nr = init_half_edge.node_nr
@@ -72,7 +71,7 @@ class PrimalMap:
             # Check for already processed half edges
             if opposite_half_edge_in_face not in associated_half_edges_in_3_map:
                 # Process the opposite half edge
-                self.__primal_map_bijection_rec(
+                self._primal_map_bijection_rec(
                     opposite_half_edge_in_face, associated_half_edges_in_3_map)
 
             # Make the actual opposite connection between the associations

@@ -12,6 +12,8 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+# TODO This code is no longer needed and should probably be deleted
+
 """Make a bijection between the irreducible quadrangulation to a 3-connected map.
 """
 

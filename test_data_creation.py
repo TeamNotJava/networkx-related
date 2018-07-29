@@ -23,7 +23,6 @@ from planar_graph_sampler.grammar.two_connected_decomposition import two_connect
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 from planar_graph_sampler.evaluations_planar_graph import *
 from planar_graph_sampler.grammar.two_connected_decomposition import two_connected_graph_grammar
-from planar_graph_sampler.bijections.block_decomposition import BlockDecomposition
 
 
 def ___sample_binary_tree(size):
