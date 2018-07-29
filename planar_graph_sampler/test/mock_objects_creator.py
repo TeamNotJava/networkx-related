@@ -17,11 +17,8 @@ from planar_graph_sampler.combinatorial_classes.three_connected_graph import Edg
 
 
 def create_sample_closure_output():
-    '''
-    Creates sample closure output used for testing the admissibility check, primal and whitney bijections.
-    :return: HalfEdge []
-    '''
-    half_edges = [ClosureHalfEdge() for i in range(65)]
+    """Creates sample closure output used for testing the admissibility check, primal and whitney bijections."""
+    half_edges = [ClosureHalfEdge() for _ in range(65)]
 
     # Set node_nrs
     for i in range(1, 5): half_edges[i].node_nr = 1
@@ -180,7 +177,7 @@ def create_sample_closure_output():
     half_edges[44].prior = half_edges[42]
     half_edges[42].next = half_edges[44]
 
-    # Mark the half edges from the haxagon
+    # Mark the half edges from the hexagon
     half_edges[3].is_hexagonal = True
     half_edges[19].is_hexagonal = True
     half_edges[20].is_hexagonal = True
@@ -197,12 +194,9 @@ def create_sample_closure_output():
     return half_edges
 
 
-
-def create_three_connected_graph(start_node_number = 0):
-    '''
-    Creates a three connected graph used for testing the network operations.
-    :return: EdgeRootedThreeConnectedPlanarGraph
-    '''
+def create_three_connected_graph(start_node_number=0):
+    """Creates a three connected graph used for testing the network operations."""
+    # TODO is broken
     first_net_vertices_list = []
     first_net_edges_list = []
 

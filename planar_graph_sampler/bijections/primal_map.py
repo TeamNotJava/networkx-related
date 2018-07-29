@@ -21,7 +21,7 @@ class PrimalMap:
     """
 
     def primal_map_bijection(self, init_half_edge):
-        """ Given the irreducible quandragulation returned from the closure,
+        """ Given the irreducible quadrangulation returned from the closure,
         this function extract the 3-connected map from it.
 
         See more in 4.1.3 where the bijection is described.
@@ -94,7 +94,7 @@ class PrimalMap:
         init_half_edge.prior = new_half_edge
 
         new_half_edge.node_nr = init_half_edge.node_nr
-        #new_half_edge.color = init_half_edge.color
+        # new_half_edge.color = init_half_edge.color
         return_edge = new_half_edge
 
         # Iterate to the opposite node of the hexagon node

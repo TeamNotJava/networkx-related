@@ -12,21 +12,18 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-from planar_graph_sampler.bijections.primal_map import primal_map
+from planar_graph_sampler.bijections.primal_map import PrimalMap
 from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
 from planar_graph_sampler.bijections.whitney_3map_to_3graph import whitney
-from planar_graph_sampler.rejections.admissibility_check import AdmissibilityChecker
 from planar_graph_sampler.test.mock_objects_creator import create_sample_closure_output
 
+
 def test_admissibility_check():
-    '''
-    Tests the admissibility check for a closure output.
-    :return:
-    '''
+    """Tests the admissibility check for a closure output."""
     half_edges_list = create_sample_closure_output()
 
-    is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[1])
-    assert False == is_admissible
+    dissection = IrreducibleDissection(half_edges_list[1])
+    assert not dissection.is_admissible
 
     # Test with removing edges
     half_edges_list[27].prior = half_edges_list[29]
@@ -35,8 +32,7 @@ def test_admissibility_check():
     half_edges_list[42].prior = half_edges_list[44]
     half_edges_list[44].next = half_edges_list[42]
 
-    is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[1])
-    assert True == is_admissible
+    assert dissection.is_admissible
 
     # Extend the test with adding edges
     half_edges_list[60].node_nr = 3
@@ -82,18 +78,15 @@ def test_admissibility_check():
     half_edges_list[55].opposite = half_edges_list[53]
     half_edges_list[53].opposite = half_edges_list[55]
 
-    is_admissible = AdmissibilityChecker().check_admissibility(half_edges_list[1])
-    assert True == is_admissible
+    assert dissection.is_admissible
+
 
 def test_primal_map():
-    '''
-    Test the primal map bijection.
-    :return:
-    '''
+    """Test the primal map bijection."""
     # print("Start test...")
     half_edges = create_sample_closure_output()
 
-    three_map = primal_map(IrreducibleDissection(half_edges[1]))
+    three_map = PrimalMap().primal_map_bijection(IrreducibleDissection(half_edges[1]).half_edge)
 
     # Check the opposites - third output
     assert three_map.opposite.node_nr == 5
@@ -115,10 +108,11 @@ def test_primal_map():
 
 
 def test_whitney_bijection():
-    '''
+    """
+    # TODO this can be removed or can we still reuse it?
     Tests the whitney bijection with the prepared output from the primal bijection.
     :return:
-    '''
+    """
     # print("Start test...")
     half_edges = create_sample_closure_output()
 
@@ -150,3 +144,7 @@ def test_whitney_bijection():
         edges_node_numbers.remove((from_vertex, to_vertex))
     assert len(edges_node_numbers) == 0
 
+
+if __name__ == "__main__":
+    test_admissibility_check()
+    test_primal_map()
