@@ -1,7 +1,7 @@
 import networkx as nx
 
 from framework.generic_classes import CombinatorialClass
-from framework.utils import Counter
+from planar_graph_sampler.grammar.grammar_utils import Counter
 
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 
@@ -46,7 +46,7 @@ class HalfEdgeGraph(CombinatorialClass):
     @property
     def is_consistent(self):
         """Checks invariants (for debugging)."""
-        return self._check_node_nr() and self._check_no_double_edges()
+        return self._check_node_nr() #and self._check_no_double_edges()
         # TODO make more checks here
 
     def _check_node_nr(self, visited=None):
@@ -65,10 +65,7 @@ class HalfEdgeGraph(CombinatorialClass):
         return True
 
     def _check_no_double_edges(self):
-        half_edges = self._half_edge.get_all_half_edges(include_opp=True, include_unpaired=False)
-        for he in half_edges:
-            if len(set([incident_he.opposite for incident_he in he.incident_half_edges()])) != len(he.incident_half_edges()):
-                return False
+        # TODO
         return True
 
     # CombinatorialClass interface.

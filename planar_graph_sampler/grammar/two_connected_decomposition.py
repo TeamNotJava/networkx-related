@@ -1,10 +1,11 @@
-from framework.class_builder import CombinatorialClassBuilder
+from __future__ import division
+
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.generic_samplers import BoltzmannSamplerBase
-from framework.utils import Counter
 
+from planar_graph_sampler.grammar.grammar_utils import Counter, divide_by_2, to_u_derived_class
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.combinatorial_classes.two_connected_graph import EdgeRootedTwoConnectedPlanarGraph, \
     TwoConnectedPlanarGraph
@@ -12,22 +13,20 @@ from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n10
 from planar_graph_sampler.grammar.network_decomposition import network_grammar
 
 
-class ZeroAtomGraphBuilder(CombinatorialClassBuilder):
+class ZeroAtomGraphBuilder(DefaultBuilder):
+    """Builds zero atoms of the class G_2_arrow (= link graphs)."""
+
     def __init__(self):
-        self.counter = Counter()
+        self._counter = Counter()
 
     def zero_atom(self):
         root_half_edge = HalfEdge(self_consistent=True)
-        root_half_edge.node_nr = next(self.counter)
+        root_half_edge.node_nr = next(self._counter)
         root_half_edge_opposite = HalfEdge(self_consistent=True)
-        root_half_edge_opposite.node_nr = next(self.counter)
+        root_half_edge_opposite.node_nr = next(self._counter)
         root_half_edge.opposite = root_half_edge_opposite
         root_half_edge_opposite.opposite = root_half_edge
         return EdgeRootedTwoConnectedPlanarGraph(root_half_edge)
-
-
-def to_u_derived_class(obj):
-    return UDerivedClass(obj)
 
 
 def to_G_2(decomp):
@@ -50,16 +49,9 @@ def to_G_2_arrow_dx(network):
     return LDerivedClass(EdgeRootedTwoConnectedPlanarGraph(network.half_edge))
 
 
-def change_deriv_order(obj):
-    return obj.invert_derivation_order()
-
-
 def divide_by_1_plus_y(evl, x, y):
+    """Needed as an eval-transform for rules G_2_arrow and G_2_arrow_dx."""
     return evl / (1 + BoltzmannSamplerBase.oracle.get(y))
-
-
-def divide_by_2(evl, x, y):
-    return 0.5 * evl
 
 
 def two_connected_graph_grammar():
@@ -78,7 +70,6 @@ def two_connected_graph_grammar():
     F = AliasSampler('F')
     F_dx = AliasSampler('F_dx')
     G_2_dy = AliasSampler('G_2_dy')
-    # G_2_dy_dx = AliasSampler('G_2_dy_dx')
     G_2_dx_dy = AliasSampler('G_2_dx_dy')
     G_2_arrow = AliasSampler('G_2_arrow')
     G_2_arrow_dx = AliasSampler('G_2_arrow_dx')
@@ -108,8 +99,6 @@ def two_connected_graph_grammar():
         'F_dx': Bij(L() ** 2 * G_2_arrow_dx + 2 * L() * G_2_arrow, to_G_2_dx),
 
         'G_2_dx_dy': Trans(F_dx, to_u_derived_class, eval_transform=divide_by_2),
-
-        # 'G_2_dy_dx': Bij(G_2_dx_dy, change_deriv_order),
 
         'G_2_dx_dx': DxFromDy(G_2_dx_dy, alpha_l_u=1.0),  # see 5.5
 

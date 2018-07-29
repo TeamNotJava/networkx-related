@@ -16,7 +16,7 @@
 from planar_graph_sampler.combinatorial_classes.halfedge import ClosureHalfEdge
 from planar_graph_sampler.combinatorial_classes.dissection import \
     IrreducibleDissection
-from framework.utils import Counter
+from planar_graph_sampler.grammar.grammar_utils import Counter
 
 counter = Counter()
 

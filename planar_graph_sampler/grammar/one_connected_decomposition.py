@@ -5,6 +5,7 @@ from framework.generic_samplers import BoltzmannSamplerBase
 
 from planar_graph_sampler.combinatorial_classes.one_connected_graph import OneConnectedPlanarGraph
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
+from planar_graph_sampler.grammar.grammar_utils import underive
 from planar_graph_sampler.grammar.two_connected_decomposition import two_connected_graph_grammar
 
 
@@ -46,10 +47,6 @@ def subs_marked_vertex(decomp):
 
 def rej_to_G_1(g):
     return bern(1 / (g.l_size + 1))
-
-
-def underive(g):
-    return g.base_class_object
 
 
 def one_connected_graph_grammar():
@@ -103,7 +100,7 @@ if __name__ == '__main__':
     symbolic_x = 'x'
     symbolic_y = 'y'
 
-    sampled_class = 'G_1'
+    sampled_class = 'G_1_dx_dx'
 
     try:
         print(BoltzmannSamplerBase.oracle.get_expected_l_size(sampled_class, symbolic_x, symbolic_y))
@@ -114,7 +111,7 @@ if __name__ == '__main__':
 
         try:
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 3:
+            if g.l_size > 50:
                 if isinstance(g, DerivedClass):
                     g = g.base_class_object
                 if isinstance(g, DerivedClass):
@@ -124,7 +121,7 @@ if __name__ == '__main__':
 
                 import matplotlib.pyplot as plt
 
-                g.plot(with_labels=False, node_size=25)
+                g.plot(with_labels=False, node_size=25, use_planar_drawer=True)
                 plt.show()
         except RecursionError:
             pass

@@ -2,7 +2,7 @@ from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.generic_samplers import BoltzmannSamplerBase
-from framework.utils import Counter
+from planar_graph_sampler.grammar.grammar_utils import Counter
 
 from planar_graph_sampler.bijections.networks import merge_networks_in_parallel, merge_networks_in_series, \
     substitute_edge_by_network
@@ -11,20 +11,21 @@ from planar_graph_sampler.combinatorial_classes.network import Network
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 
-counter = Counter()
-
 
 class NetworkBuilder(DefaultBuilder):
     """Builds u-atoms of networks."""
+
+    def __init__(self):
+        self._counter = Counter()
 
     def u_atom(self):
         """Constructs the trivial link network consisting of the poles and an edge between them."""
         # Create the zero-pole of the network.
         root_half_edge = HalfEdge(self_consistent=True)
-        root_half_edge.node_nr = next(counter)
+        root_half_edge.node_nr = next(self._counter)
         # Creates the inf-pole.
         root_half_edge_opposite = HalfEdge(self_consistent=True)
-        root_half_edge_opposite.node_nr = next(counter)
+        root_half_edge_opposite.node_nr = next(self._counter)
         # Link the poles.
         root_half_edge.opposite = root_half_edge_opposite
         root_half_edge_opposite.opposite = root_half_edge
@@ -70,6 +71,7 @@ class PNetworkBuilder(NetworkBuilder):
 
 
 def g_3_arrow_to_network(decomp):
+    """To be used as a bijection in the rules H and H_dx."""
     if isinstance(decomp, ProdClass):
         network = decomp.first
         u_der_graph = decomp.second
@@ -137,6 +139,7 @@ def network_grammar():
 
     }
 
+    # Set up builders.
     grammar.set_builder(['D', 'S', 'P', 'H', 'D_dx', 'S_dx', 'P_dx', 'H_dx'], NetworkBuilder())
     grammar.set_builder(['P', 'P_dx'], PNetworkBuilder())
     grammar.set_builder(['S', 'S_dx'], SNetworkBuilder())
@@ -147,7 +150,7 @@ def network_grammar():
 if __name__ == '__main__':
     grammar = network_grammar()
     grammar.init()
-    #grammar.dummy_sampling_mode()
+    # grammar.dummy_sampling_mode()
 
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = True
@@ -156,7 +159,6 @@ if __name__ == '__main__':
     symbolic_y = 'y'
 
     sampled_class = 'D_dx'
-
 
     while True:
         try:
@@ -168,7 +170,7 @@ if __name__ == '__main__':
                 import matplotlib.pyplot as plt
 
                 g.plot(with_labels=True, use_planar_drawer=False, node_size=10)
-                #plt.show()
+                plt.show()
         except RecursionError:
             pass
 

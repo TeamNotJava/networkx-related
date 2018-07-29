@@ -1,58 +1,60 @@
+from __future__ import division
+
 from framework.class_builder import CombinatorialClassBuilder
 from framework.evaluation_oracle import EvaluationOracle
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.generic_samplers import *
 from framework.generic_samplers import BoltzmannSamplerBase
-from framework.utils import bern, Counter
+from framework.utils import bern
 
+from planar_graph_sampler.grammar.grammar_utils import underive, to_u_derived_class, Counter
 from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.combinatorial_classes.binary_tree import Leaf
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
-counter = Counter()
 
-
-# noinspection PyAbstractClass
 class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     """
     Builds white-rooted binary trees (rules 'R_w', 'R_w_head', 'R_w_as').
     The builder is in the same file as the grammar it belongs to because it is quite closely connected.
     """
 
+    def __init__(self):
+        self._counter = Counter()
+
     def u_atom(self):
+        """A u-atom is a leaf."""
         return Leaf()
 
     def product(self, lhs, rhs):
         res = BinaryTree('white')
-        res.set_root_node_nr(next(counter))
+        res.set_root_node_nr(next(self._counter))
         res.add_left_child(lhs)
         res.add_right_child(rhs)
         return res
 
 
-# noinspection PyAbstractClass
 class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     """
     Builds black-rooted binary trees (rules 'R_b', 'R_b_head', 'R_b_head_help', 'R_b_as').
     The builder is in the same file as the grammar it belongs to because it is quite closely connected.
     """
 
+    def __init__(self):
+        self._counter = Counter()
+
     def l_atom(self):
+        """An l-atom is a black rooted tree without children."""
         res = BinaryTree('black')
-        res.set_root_node_nr(next(counter))
+        res.set_root_node_nr(next(self._counter))
         return res
 
     def u_atom(self):
+        """A u-atom is a leaf."""
         return Leaf()
 
     def product(self, lhs, rhs):
-        """
-
-        Parameters
-        ----------
-        lhs: BinaryTree
-        rhs: BinaryTree
-        """
+        """"""
         res = None
         if lhs.is_leaf:
             # rhs is not a leaf.
@@ -75,12 +77,8 @@ class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
         return res
 
 
-def to_u_derived_class(obj):
-    return UDerivedClass(obj)
-
-
-def get_base_class(obj):
-    return obj.base_class_object
+def rej_to_K(u_derived_tree):
+    return bern(2 / (u_derived_tree.u_size + 1))
 
 
 def binary_tree_grammar():
@@ -113,7 +111,7 @@ def binary_tree_grammar():
     grammar.rules = {
 
         # See section 4.1.6. for this rejection.
-        'K': Bij(Rej(K_dy, lambda gamma: bern(2 / (gamma.u_size + 1))), get_base_class),
+        'K': Bij(Rej(K_dy, rej_to_K), underive),
 
         'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),
 
@@ -148,7 +146,7 @@ if __name__ == '__main__':
 
     grammar = binary_tree_grammar()
     grammar.init()
-    #grammar.dummy_sampling_mode()
+    # grammar.dummy_sampling_mode()
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'

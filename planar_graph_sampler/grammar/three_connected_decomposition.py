@@ -3,25 +3,17 @@ from framework.generic_samplers import *
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
 
+from planar_graph_sampler.grammar.grammar_utils import to_l_derived_class, divide_by_2
 from planar_graph_sampler.grammar.irreducible_dissection_decomposition import irreducible_dissection_grammar
 from planar_graph_sampler.bijections.primal_map import PrimalMap
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
-from planar_graph_sampler.combinatorial_classes.three_connected_graph import \
-    UDerivedEdgeRootedThreeConnectedPlanarGraph, EdgeRootedThreeConnectedPlanarGraph
+from planar_graph_sampler.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 
 def primal_map(dissection):
     """Invokes the primal map bijection."""
     half_edge = PrimalMap().primal_map_bijection(dissection.half_edge)
     return EdgeRootedThreeConnectedPlanarGraph(half_edge)
-
-
-def to_G_3_arrow_dy(g):
-    return UDerivedEdgeRootedThreeConnectedPlanarGraph(g.half_edge())
-
-
-def to_l_derived_class(obj):
-    return LDerivedClass(obj)
 
 
 def three_connected_graph_grammar():
@@ -53,9 +45,9 @@ def three_connected_graph_grammar():
 
         'M_3_arrow_dx': Bij(J_a_dx, primal_map),
 
-        'G_3_arrow': Trans(M_3_arrow, eval_transform=lambda evl, x, y: 0.5 * evl),  # See 4.1.9.
+        'G_3_arrow': Trans(M_3_arrow, eval_transform=divide_by_2),  # See 4.1.9.
 
-        'G_3_arrow_dx': Trans(M_3_arrow_dx, to_l_derived_class, eval_transform=lambda evl, x, y: 0.5 * evl),
+        'G_3_arrow_dx': Trans(M_3_arrow_dx, to_l_derived_class, eval_transform=divide_by_2),
 
         'G_3_arrow_dy': DyFromDx(G_3_arrow_dx, alpha_u_l=3)  # See 5.3.3.
 
