@@ -218,11 +218,24 @@ class DecompositionGrammar(object):
         Parameters
         ----------
         alias: str
+
+        Returns
+        -------
+        BoltzmannSamplerBase
         """
         return self._rules[alias]
 
     def __getitem__(self, item):
-        """A shorthand for get_rule."""
+        """A shorthand for get_rule.
+
+        Parameters
+        ----------
+        item: str
+
+        Returns
+        -------
+        BoltzmannSamplerBase
+        """
         return self._rules[item]
 
     @property
@@ -339,6 +352,14 @@ class DecompositionGrammar(object):
         v = self.set_builder(builder=DummyBuilder())
         if v.overwrites_builder and Settings.debug_mode:
             warnings.warn("dummy_sampling_mode has overwritten existing builders")
+
+        def apply_to_each(sampler):
+            if isinstance(sampler, TransformationSampler) and not isinstance(sampler, RejectionSampler):
+                sampler.transformation = lambda x: x
+
+        for alias in self.rules:
+            v = self._DFSVisitor(apply_to_each)
+            self[alias].accept(v)
 
     class _DFSVisitor:
         """

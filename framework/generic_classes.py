@@ -258,33 +258,41 @@ class ProdClass(CombinatorialClass):
         self._second = second
 
     @property
+    def first(self):
+        return self._first
+
+    @property
+    def second(self):
+        return self._second
+
+    @property
     def l_size(self):
-        return self._first.l_size + self._second.l_size
+        return self.first.l_size + self.second.l_size
 
     @property
     def u_size(self):
-        return self._first.u_size + self._second.u_size
+        return self.first.u_size + self.second.u_size
 
     def l_atoms(self):
-        for atom in itertools.chain(self._first.l_atoms(), self._second.l_atoms()):
+        for atom in itertools.chain(self.first.l_atoms(), self.second.l_atoms()):
             yield atom
 
     def u_atoms(self):
-        for atom in itertools.chain(self._first.u_atoms(), self._second.u_atoms()):
+        for atom in itertools.chain(self.first.u_atoms(), self.second.u_atoms()):
             yield atom
 
     def replace_l_atoms(self, sampler, x, y, exceptions=None):
-        self._first = self._first.replace_l_atoms(sampler, x, y, exceptions)
-        self._second = self._second.replace_l_atoms(sampler, x, y, exceptions)
+        self._first = self.first.replace_l_atoms(sampler, x, y, exceptions)
+        self._second = self.second.replace_l_atoms(sampler, x, y, exceptions)
         return self
 
     def replace_u_atoms(self, sampler, x, y, exceptions=None):
-        self._first = self._first.replace_u_atoms(sampler, x, y, exceptions)
-        self._second = self._second.replace_u_atoms(sampler, x, y, exceptions)
+        self._first = self.first.replace_u_atoms(sampler, x, y, exceptions)
+        self._second = self.second.replace_u_atoms(sampler, x, y, exceptions)
         return self
 
     def __str__(self):
-        return "({},{})".format(self._first, self._second)
+        return "({},{})".format(self.first, self.second)
 
 
 class SetClass(CombinatorialClass):
@@ -422,10 +430,10 @@ class DerivedClass(CombinatorialClass):
         return self.base_class_object.u_atoms()
 
     def replace_l_atoms(self, sampler, x, y, exceptions=None):
-        return self.base_class_object.replace_l_atoms(sampler, x, y, exceptions)
+        raise NotImplementedError
 
     def replace_u_atoms(self, sampler, x, y, exceptions=None):
-        return self.base_class_object.replace_u_atoms(sampler, x, y, exceptions)
+        raise NotImplementedError
 
     def __str__(self):
         raise NotImplementedError
@@ -466,7 +474,12 @@ class LDerivedClass(DerivedClass):
         if self.marked_atom is None:
             self._marked_atom = self.base_class_object.random_l_atom()
         exceptions.append(self.marked_atom)
-        return self.base_class_object.replace_l_atoms(sampler, x, y, exceptions)
+        base_replaced = self.base_class_object.replace_l_atoms(sampler, x, y, exceptions)
+        return LDerivedClass(base_replaced, self.marked_atom)
+
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        base_replaced = self.base_class_object.replace_u_atoms(sampler, x, y, exceptions)
+        return LDerivedClass(base_replaced, self.marked_atom)
 
     def __str__(self):
         return "{}_dx".format(str(self.base_class_object))
@@ -502,13 +515,18 @@ class UDerivedClass(DerivedClass):
             if u_atom != self.marked_atom:
                 yield u_atom
 
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        base_replaced = self.base_class_object.replace_l_atoms(sampler, x, y, exceptions)
+        return UDerivedClass(base_replaced, self.marked_atom)
+
     def replace_u_atoms(self, sampler, x, y, exceptions=None):
         if exceptions is None:
             exceptions = []
         if self.marked_atom is None:
             self._marked_atom = self.base_class_object.random_u_atom()
         exceptions.append(self.marked_atom)
-        return self.base_class_object.replace_u_atoms(sampler, x, y, exceptions)
+        base_replaced = self.base_class_object.replace_u_atoms(sampler, x, y, exceptions)
+        return UDerivedClass(base_replaced, self.marked_atom)
 
     def __str__(self):
         return "{}_dy".format(str(self.base_class_object))

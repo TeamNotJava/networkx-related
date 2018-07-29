@@ -1,3 +1,5 @@
+from __future__ import division
+
 from framework.class_builder import DefaultBuilder
 from framework.generic_classes import *
 from framework.utils import *
@@ -13,7 +15,8 @@ def return_precomp(func):
 
 
 class BoltzmannSamplerBase(object):
-    """Abstract base class for Boltzmann samplers.
+    """
+    Abstract base class for Boltzmann samplers.
 
     Attributes
     ----------
@@ -329,7 +332,8 @@ class UAtomSampler(AtomSampler):
 
 
 class BinarySampler(BoltzmannSamplerBase):
-    """Abstract base class for a _sampler that depends on exactly 2 other samplers.
+    """
+    Abstract base class for a _sampler that depends on exactly 2 other samplers.
 
     Parameters
     ----------
@@ -411,6 +415,13 @@ class ProdSampler(BinarySampler):
         # For the product class (cartesian prod.) the generating function is the product of the 2 generating functions.
         return self.lhs.eval(x, y) * self.rhs.eval(x, y)
 
+    def oracle_query_string(self, x, y):
+        return "{}{}{}".format(
+            self.lhs.oracle_query_string(x, y),
+            self._op_symbol,
+            self.rhs.oracle_query_string(x, y)
+        )
+
 
 class LSubsSampler(BinarySampler):
     """Samples from the class resulting from substituting the l-atoms of lhs with objects of rhs."""
@@ -420,7 +431,7 @@ class LSubsSampler(BinarySampler):
 
     def sample(self, x, y):
         gamma = self.lhs.sample(self.rhs.oracle_query_string(x, y), y)
-        gamma.replace_l_atoms(self.rhs, x, y)
+        gamma = gamma.replace_l_atoms(self.rhs, x, y)
         return gamma
 
     @return_precomp
@@ -440,20 +451,21 @@ class USubsSampler(BinarySampler):
 
     def sample(self, x, y):
         gamma = self.lhs.sample(x, self.rhs.oracle_query_string(x, y))
-        gamma.replace_u_atoms(self.rhs, x, y)
+        gamma = gamma.replace_u_atoms(self.rhs, x, y)
         return gamma
 
     @return_precomp
     def eval(self, x, y):
-        return self._lhs.eval(x, self.rhs.oracle_query_string(x, y))
+        return self.lhs.eval(x, self.rhs.oracle_query_string(x, y))
 
     def oracle_query_string(self, x, y):
         # A(x,B(x,y)) where A = lhs and B = rhs (see 3.2).
-        return self._lhs.oracle_query_string(x, self.rhs.oracle_query_string(x, y))
+        return self.lhs.oracle_query_string(x, self.rhs.oracle_query_string(x, y))
 
 
 class UnarySampler(BoltzmannSamplerBase):
-    """Abstract base class for samplers that depend exactly on one other _sampler.
+    """
+    Abstract base class for samplers that depend exactly on one other _sampler.
 
     Parameters
     ----------
@@ -483,7 +495,8 @@ class UnarySampler(BoltzmannSamplerBase):
 
 
 class SetSampler(UnarySampler):
-    """Samples a set of elements from the underlying class.
+    """
+    Samples a set of elements from the underlying class.
 
     A set has no order and no duplicate elements. The underlying class may not contain objects with l-size 0. Otherwise
     this sampler will not output correct results.
@@ -524,7 +537,8 @@ class SetSampler(UnarySampler):
 
 
 class TransformationSampler(UnarySampler):
-    """Generic sampler that transforms the the objects sampled from the base class to a new class.
+    """
+    Generic sampler that transforms the the objects sampled from the base class to a new class.
 
     For bijections use the base class BijectionSampler.
 
@@ -537,8 +551,6 @@ class TransformationSampler(UnarySampler):
     """
 
     def __init__(self, sampler, f=None, eval_transform=None, target_class_label=None):
-        if type(self) is not BijectionSampler and f is None and eval_transform is None:
-            raise BoltzmannFrameworkError("Use an instance of BijectionSampler to realize an isomorphism")
         super(TransformationSampler, self).__init__(sampler)
         self._f = f
         self._eval_transform = eval_transform
@@ -548,6 +560,16 @@ class TransformationSampler(UnarySampler):
                 self._target_class_label = "{}({})".format(f.__name__, sampler.sampled_class)
         else:
             self._target_class_label = target_class_label
+
+    @property
+    def transformation(self):
+        """Returns the transformation function."""
+        return self._f
+
+    @transformation.setter
+    def transformation(self, f):
+        """Sets the transformation function."""
+        self._f = f
 
     @property
     def sampled_class(self):
@@ -581,7 +603,8 @@ class TransformationSampler(UnarySampler):
 
 
 class BijectionSampler(TransformationSampler):
-    """Samples a class that is isomorphic to the underlying class.
+    """
+    Samples a class that is isomorphic to the underlying class.
 
     Parameters
     ----------
@@ -622,7 +645,8 @@ class BijectionSampler(TransformationSampler):
 
 
 class RejectionSampler(TransformationSampler):
-    """Generic rejection sampler, special case of transformation.
+    """
+    Generic rejection sampler, special case of transformation.
 
     Parameters
     ----------
@@ -662,7 +686,8 @@ class RejectionSampler(TransformationSampler):
 
 
 class UDerFromLDerSampler(TransformationSampler):
-    """Samples the u-derived (dy) class of the given l-derived (dx) class sampler.
+    """
+    Samples the u-derived (dy) class of the given l-derived (dx) class sampler.
 
     Parameters
     ----------
@@ -691,7 +716,8 @@ class UDerFromLDerSampler(TransformationSampler):
 
 
 class LDerFromUDerSampler(TransformationSampler):
-    """Samples the l-derived (dx) class of the given u-derived (dy) class.
+    """
+    Samples the l-derived (dx) class of the given u-derived (dy) class.
 
     Parameters
     ----------
