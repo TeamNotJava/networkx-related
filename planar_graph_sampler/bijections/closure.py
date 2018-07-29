@@ -268,7 +268,7 @@ class Closure:
         -----
         The partial closure takes a binary tree as input and closes the tree, such that
         every face in the resulting graph has degree four. Afterwards, the complete
-        closure is performed, where the partialy closed binary tree is intergrated into
+        closure is performed, where the partially closed binary tree is integrated into
         a hexagon (irreducible dissection of hexagon) [1].
 
         References
@@ -277,7 +277,7 @@ class Closure:
             Uniform random sampling of planar graphs in linear time
         """
 
-        init_half_edge = binary_tree.get_half_edge()
+        init_half_edge = binary_tree.half_edge
         # This edge is hexagonal and points in ccw direction
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
         return IrreducibleDissection(init_half_edge)

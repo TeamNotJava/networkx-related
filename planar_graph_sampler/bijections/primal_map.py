@@ -19,17 +19,6 @@ from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 
-def primal_map(dissection):
-    """
-    Used in the grammar
-
-    :param dissection:
-    :return:
-    """
-    half_edge = PrimalMap().primal_map_bijection(dissection.get_half_edge())
-    return EdgeRootedThreeConnectedPlanarGraph(half_edge)
-
-
 class PrimalMap:
 
     def primal_map_bijection(self, init_half_edge):
