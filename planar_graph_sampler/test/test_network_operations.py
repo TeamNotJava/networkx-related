@@ -1,14 +1,13 @@
-from planar_graph_sampler.combinatorial_classes.halfedge import  HalfEdge
-from planar_graph_sampler.combinatorial_classes.network import Network
+from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.test.mock_objects_creator import create_three_connected_graph
+from planar_graph_sampler.bijections.networks import *
 
 import matplotlib.pyplot as plt
 
+# TODO This test is broken, there is no network_vertices_list, network_edges_list any more.
+
 def test_edge_by_netwrok_substitution():
-    '''
-    Tests the edge by network substitution operation.
-    :return:
-    '''
+    """Tests the edge by network substitution operation."""
     three_connected_graph = create_three_connected_graph()
     fifth = three_connected_graph.root_half_edge.next.opposite.next
     sixth = fifth.next
@@ -35,7 +34,7 @@ def test_edge_by_netwrok_substitution():
     network_edges_list.append(net_second)
 
     net_third = HalfEdge()
-    net_third.node_nr= 12
+    net_third.node_nr = 12
     net_second.opposite = net_third
     net_third.opposite = net_second
     network_vertices_list.append(net_third)
@@ -88,11 +87,10 @@ def test_edge_by_netwrok_substitution():
     net_tenth.opposite = net_nineth
     net_nineth.opposite = net_tenth
 
-
     network = Network(network_vertices_list, network_edges_list, network_root_edge)
 
     edge_for_substitution = fifth
-    EdgeByNetworkSubstitution().substitute_edge_by_network(three_connected_graph, edge_for_substitution, network)
+    substitute_edge_by_network(three_connected_graph, edge_for_substitution, network)
 
     import matplotlib.pyplot as plt
     three_connected_graph.plot()
@@ -132,36 +130,27 @@ def test_edge_by_netwrok_substitution():
         assert half_edge_walker.node_nr == seventh.node_nr
         half_edge_walker = half_edge_walker.next
 
-<<<<<<< HEAD
 
-def create_sample_network(start_node_number = 0):
-    graph = create_three_connected_graph(start_node_number)
-    return NetworkClass(graph.vertices_list, graph.edges_list, graph.root_half_edge)
-=======
 def create_sample_network():
     graph = create_three_connected_graph()
     return Network(graph.vertices_list, graph.edges_list, graph.root_half_edge)
->>>>>>> tobias
 
 
 def test_series_merge_of_networks():
-    '''
-    Tests the merging of two networks in series.
-    :return:
-    '''
+    """Tests the merging of two networks in series."""
     first_network = create_sample_network(0)
-    first_net_inf_pole = first_network.root_half_edge.opposite
+    first_net_inf_pole = first_network.half_edge.opposite
     first_net_inf_pole_prior_initial = first_net_inf_pole.prior
 
     second_network = create_sample_network(10)
-    second_net_zero_pole = second_network.root_half_edge
+    second_net_zero_pole = second_network.half_edge
     second_net_zero_pole_edge_prior_initial = second_net_zero_pole.prior
 
-    merged = NetworkMergeInSeries().merge_networks_in_series(first_network, second_network)
+    merged = merge_networks_in_series(first_network, second_network)
 
     # Check the root edge
-    assert merged.root_half_edge == first_network.root_half_edge
-    assert merged.root_half_edge.opposite == second_network.root_half_edge.opposite.next
+    assert merged.root_half_edge == first_network.half_edge
+    assert merged.root_half_edge.opposite == second_network.half_edge.opposite.next
 
     # Check the number of elements in vertices and edges list
     assert len(merged.vertices_list) == 5
@@ -184,18 +173,15 @@ def test_series_merge_of_networks():
 
 
 def test_parallel_merge_of_networks():
-    '''
-    Tests the merging of two networks in parallel.
-    :return:
-    '''
+    """Tests the merging of two networks in parallel."""
     first_network = create_sample_network()
-    first_net_zero_pole = first_network.root_half_edge
+    first_net_zero_pole = first_network.half_edge
     first_net_zero_pole_prior_initial = first_net_zero_pole.prior
     first_net_inf_pole = first_net_zero_pole.opposite
     first_net_inf_pole_next_initial = first_net_inf_pole.next
 
     second_network = create_sample_network(10)
-    second_net_zero_pole = second_network.root_half_edge
+    second_net_zero_pole = second_network.half_edge
     second_net_inf_pole = second_net_zero_pole.opposite
     # Change the node numbers for testing
     second_net_zero_pole.node_nr = -1
@@ -207,7 +193,7 @@ def test_parallel_merge_of_networks():
     second_net_zero_pole_next_initial = second_net_zero_pole.next
     second_net_inf_pole_prior_initial = second_net_inf_pole.prior
 
-    result = NetworkMergeInParallel().merge_networks_in_parallel(first_network, second_network)
+    result = merge_networks_in_parallel(first_network, second_network)
 
     # Check the sizes of the resulted network
     assert len(result.vertices_list) == 4
