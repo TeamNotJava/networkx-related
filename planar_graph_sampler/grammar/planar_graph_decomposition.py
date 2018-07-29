@@ -1,5 +1,7 @@
+from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 from planar_graph_sampler.grammar.one_connected_decomposition import one_connected_graph_grammar
 
@@ -7,7 +9,6 @@ from planar_graph_sampler.grammar.one_connected_decomposition import one_connect
 def planar_graph_grammar():
     """
 
-    :return:
     """
 
     # Some shortcuts to make the grammar more readable.
@@ -19,8 +20,8 @@ def planar_graph_grammar():
     G_dx = AliasSampler('G_dx')
 
     grammar = DecompositionGrammar()
-    grammar.add_rules(one_connected_graph_grammar().get_rules())
-    grammar.add_rules({
+    grammar.rules = one_connected_graph_grammar().rules
+    grammar.rules = {
 
         # planar graphs
 
@@ -30,6 +31,35 @@ def planar_graph_grammar():
 
         'G_dx_dx': G_1_dx_dx * G + G_1_dx * G_dx,
 
-    })
+    }
 
     return grammar
+
+
+if __name__ == '__main__':
+    grammar = planar_graph_grammar()
+    grammar.init()
+
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.debug_mode = False
+
+    symbolic_x = 'x'
+    symbolic_y = 'y'
+
+    sampled_class = 'G_dx_dx'
+
+    try:
+        print(BoltzmannSamplerBase.oracle.get_expected_l_size(sampled_class, symbolic_x, symbolic_y))
+    except BoltzmannFrameworkError:
+        pass
+
+    while True:
+
+        try:
+            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size > 90:
+                print(g.l_size)
+
+        except RecursionError:
+            print("Recursion error occurred, continuing")
+            pass

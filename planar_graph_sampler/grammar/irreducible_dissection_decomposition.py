@@ -4,33 +4,39 @@ from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
 
 from planar_graph_sampler.bijections.closure import Closure
+from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 
 def closure(binary_tree):
-    """To be used as bijection in the grammar.
-
-    :param binary_tree: The binary tree of l-derived binary tree to be closed
-    :return: The closure/l-derived closure of the tree/l-derived tree
-    """
+    """To be used as bijection in the grammar."""
+    if isinstance(binary_tree, LDerivedClass):
+        binary_tree = binary_tree.base_class_object
+    assert isinstance(binary_tree, BinaryTree)
     dissection = Closure().closure(binary_tree)
     return dissection
 
 
 def add_random_root_edge(decomp):
-    """From ((L, U), dissection) or (U, dissection) to RootedIrreducibleDissection
-    """
+    """From ((L, U), dissection) or (U, dissection) to IrreducibleDissection."""
     dissection = decomp.second
     dissection.root_at_random_hexagonal_edge()
     return dissection
 
 
-def irreducible_dissection_grammar():
-    """
-    Builds the dissection grammar. Must still be initialized with init().
+def is_admissible(dissection):
+    """Admissibility check for usage in the grammar."""
+    return dissection.is_admissible
 
-    :return:
+
+def irreducible_dissection_grammar():
+    """Builds the dissection grammar. Must still be initialized with init().
+
+    Returns
+    -------
+    DecompositionGrammar
+        The grammar for sampling from J_a and J_a_dx.
     """
 
     # Some shorthands to keep the grammar readable.
@@ -47,9 +53,9 @@ def irreducible_dissection_grammar():
 
     grammar = DecompositionGrammar()
     # This grammar depends on the binary tree grammar so we add it.
-    grammar.add_rules(binary_tree_grammar().get_rules())
+    grammar.rules = binary_tree_grammar().rules
 
-    grammar.add_rules({
+    grammar.rules = {
 
         'I': Bij(K, closure),
 
@@ -59,11 +65,11 @@ def irreducible_dissection_grammar():
 
         'J_dx': Bij(3*U()*I + 3*L()*U()*I_dx, add_random_root_edge),
 
-        'J_a': Rej(J, lambda d: d.is_admissible()),
+        'J_a': Rej(J, is_admissible),
 
-        'J_a_dx': Rej(J_dx, lambda d: d.is_admissible()),
+        'J_a_dx': Rej(J_dx, is_admissible),
 
-    })
+    }
     return grammar
 
 
@@ -81,7 +87,7 @@ if __name__ == "__main__":
 
     diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
     print(diss)
-    assert diss.is_consistent()
+    assert diss.is_consistent
 
     import matplotlib.pyplot as plt
     diss.plot()
