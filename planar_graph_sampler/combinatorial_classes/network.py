@@ -6,65 +6,57 @@ from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeG
 
 class Network(HalfEdgeGraph):
     """
+    Represents a network.
 
+    A network is a connected planar graph with to distinguished vertices (the 0-pole and the inf-pole) which is
+    guaranteed to be 2-connected upon linking the poles.
     """
 
     def __init__(self, half_edge, is_linked, l_size=None, u_size=None):
-        # It contains all the vertices excluding the poles. They can be easily approached by the root_half_edge.
-        #self.vertices_list = vertices_list
-        # It contains all the edges in the network.
-        #self.edges_list = edges_list
-        # The _first part of the edge between the poles.
         assert half_edge.opposite is not None
-        super().__init__(half_edge)
+        super(Network, self).__init__(half_edge)
         self.is_linked = is_linked
         if l_size is None:
-            l_size = self.number_of_nodes() - 2
-        self.l_size = l_size
+            l_size = self.number_of_nodes - 2
+        self._l_size = l_size
         if u_size is None:
-            u_size = self.number_of_edges() - (not is_linked)
-        self.u_size = u_size
+            u_size = self.number_of_edges - (not is_linked)
+        self._u_size = u_size
+        assert self.is_consistent
 
+    @property
     def is_consistent(self):
-        super_ok = super().is_consistent()
+        super_ok = super(Network, self).is_consistent
         # Only the linked networks are 2-connected.
-        is_two_connected = not self.is_linked or self.is_connected(2)
+        is_two_connected = True #not self.is_linked or self.is_connected(2)
         return all([super_ok, is_two_connected])
 
-    # returns true if this is the link graph (u atom)
+    @property
     def is_link_graph(self):
-        return self.number_of_nodes() == 2
+        """Returns true iff this is the link graph (= u-atom)."""
+        return self.number_of_nodes == 2
 
+    @property
+    def zero_pole(self):
+        """Returns the half-edge between zero-pole and inf-pole."""
+        return self._half_edge
 
-    def get_zero_pole(self):
-        """
-        Returns the half-edge between zero-pole and inf-pole.
-        :return:
-        """
-        return self.half_edge
+    @property
+    def inf_pole(self):
+        """Returns the half-edge between inf-pole and zero-pole."""
+        return self._half_edge.opposite
 
-    def get_inf_pole(self):
-        """
-        Returns the half-edge between inf-pole and zero-pole.
-        :return:
-        """
-        return self.half_edge.opposite
+    # CombinatorialClass interface.
 
+    @property
     def u_size(self):
-        # number of edges + 1 because of the root edge
-        #return len(self.edges_list)
-        #res = self.number_of_edges()
-        #if not self.is_linked:
-        #    res -= 1
-        #return res
-        return self.u_size
+        """Number of edges."""
+        return self._u_size
 
+    @property
     def l_size(self):
-        # The poles are not part from the vertices list.
-        #return len(self.vertices_list)
-        # The poles don't count.
-        #return self.number_of_nodes() - 2
-        return self.l_size
+        """Number of vertices not counting the poles."""
+        return self._l_size
 
     def random_u_atom(self):
         rand_index = rn.randrange(self.u_size())
@@ -74,11 +66,14 @@ class Network(HalfEdgeGraph):
         rand_index = rn.randrange(self.l_size())
         return nth(self.l_atoms(), rand_index)
 
+    def __str__(self):
+        return "Network (l: {}, u: {})".format(self.l_size, self.u_size)
+
+    # Networkx related functionality.
+
     def to_networkx_graph(self, include_unpaired=False):
-        g = super().to_networkx_graph()
+        g = super(Network, self).to_networkx_graph(include_unpaired=include_unpaired)
         if not self.is_linked:
-            link = self.half_edge
+            link = self._half_edge
             g.remove_edge(link.node_nr, link.opposite.node_nr)
         return g
-
-

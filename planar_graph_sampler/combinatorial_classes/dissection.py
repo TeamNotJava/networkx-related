@@ -7,31 +7,31 @@ class IrreducibleDissection(HalfEdgeGraph):
     """
     Represents the class 'I' of irreducible dissections from the paper.
     It is however also used for rooted and derived dissections (sizes are incorrect then).
+
+    Parameters
+    ----------
+    half_edge: ClosureHalfEdge
+        A half-edge on the hexagonal boundary of a closed binary tree.
     """
 
     def __init__(self, half_edge):
-        """
-
-        :param half_edge: Half-edge on hexagon boundary in ccw direction.
-        """
         assert half_edge.is_hexagonal
         if half_edge.color is not 'black':
             half_edge = half_edge.opposite.next
         assert half_edge.color is 'black'
-        super().__init__(half_edge)
+        super(IrreducibleDissection, self).__init__(half_edge)
 
+    @property
     def is_consistent(self):
-        super_ok = super().is_consistent()
+        super_ok = super(IrreducibleDissection, self).is_consistent
         root_is_black = self.half_edge.color is 'black'
         root_is_hex = self.half_edge.is_hexagonal
         twelve_hex_he = len([he for he in self.half_edge.get_all_half_edges() if he.is_hexagonal]) == 12
         return all([super_ok, root_is_black, root_is_hex, twelve_hex_he])
 
-    def get_hexagonal_edges(self):
-        """
-        Gets the three half-edges on the hexagonal boundary incident to a black node and point in ccw direction.
-        :return:
-        """
+    @property
+    def hexagonal_edges(self):
+        """Gets the three half-edges on the hexagonal boundary incident to a black node and point in ccw direction."""
         first = self.half_edge
         res = [first]
         second = first.opposite.next.opposite.next
@@ -43,35 +43,12 @@ class IrreducibleDissection(HalfEdgeGraph):
         return res
 
     def root_at_random_hexagonal_edge(self):
-        """
-        :return:
-        """
-        self.half_edge = rnd.choice(self.get_hexagonal_edges())
+        """Selects a random hexagonal half-edge and makes it the root."""
+        self._half_edge = rnd.choice(self.hexagonal_edges)
 
-    def u_size(self):
-        """
-        The u-size is the number of inner faces.
-        :return: Number of faces.
-        """
-        return (self.number_of_half_edges() - 6) / 4
-
-    def l_size(self):
-        """
-        The l-size is the number of black inner vertices.
-        :return:
-        """
-        node_dict = self.half_edge.get_node_list()
-        black_vertices = len([node_nr for node_nr in node_dict if node_dict[node_nr][0].color is 'black'])
-        # There are always 3 hexagonal outer black vertices.
-        return black_vertices - 3
-
+    @property
     def is_admissible(self):
-        """
-        Check whether there is a path of length three which include a inner edge from the root vertex
-        to the opposite outer vertex.
-
-        :return: True iff this dissection is admissible.
-        """
+        """Checks if there is a path of length 3 with an inner edge from the root to the opposite outer vertex."""
 
         # Will be used for checking in the bfs.
         outer_vertex_half_edge = self.half_edge.opposite.next.opposite.next.opposite.next
@@ -86,30 +63,30 @@ class IrreducibleDissection(HalfEdgeGraph):
             # Pop the _first element from the FIFO queue.
             top_element = queue.pop(0)
 
-            # Extract the components from the top element
+            # Extract the components from the top element.
             top_half_edge = top_element[0]
             distance = top_element[1]
             has_been_inner_edge_included = top_element[2]
             visited_nodes = top_element[3]
 
-            # updated the visited_nodes_set
+            # Updated the visited_nodes_set.
             visited_nodes.add(top_half_edge.node_nr)
 
-            # start BFS for its neighbours
+            # Start BFS for its neighbours.
             walker_half_edge = top_half_edge.next
             while walker_half_edge is not top_half_edge:
 
                 opposite = walker_half_edge.opposite
-                # Skipe the vertex if it was already visited.
+                # Skip the vertex if it was already visited.
                 if opposite in visited_nodes: continue
 
-                # Prepare the new components of the element
+                # Prepare the new components of the element.
                 updated_distance = distance + 1
                 new_visited_nodes = set()
                 new_visited_nodes.update(visited_nodes)
                 inner_edge_included = has_been_inner_edge_included or (opposite.is_hexagonal is False)
 
-                # If the distance is smaller than 3 then the element is added into the queue
+                # If the distance is smaller than 3 then the element is added into the queue.
                 if updated_distance < 3:
                     queue.append((opposite, updated_distance, inner_edge_included, new_visited_nodes))
                 else:
@@ -125,12 +102,28 @@ class IrreducibleDissection(HalfEdgeGraph):
         # A path has not been found, therefore the dissection is irreducible and we return True.
         return True
 
+    # CombinatorialClass interface.
+
+    def u_size(self):
+        """The u-size is the number of inner faces."""
+        return (self.number_of_half_edges - 6) / 4
+
+    def l_size(self):
+        """The l-size is the number of black inner vertices."""
+        node_dict = self.half_edge.get_node_list()
+        black_vertices = len([node_nr for node_nr in node_dict if node_dict[node_nr][0].color is 'black'])
+        # There are always 3 hexagonal outer black vertices.
+        return black_vertices - 3
+
+    # Networkx related functionality.
+
     def to_networkx_graph(self, include_unpaired=None):
+        """Converts to networkx graph, encodes hexagonal nodes with colors."""
         from planar_graph_sampler.combinatorial_classes.half_edge_graph import color_scale
         # Get dict of nodes.
         nodes = self.half_edge.get_node_list()
         # Include the leaves as well.
-        G = super().to_networkx_graph(include_unpaired=False)
+        G = super(IrreducibleDissection, self).to_networkx_graph(include_unpaired=False)
         for v in G:
             if any([he.is_hexagonal for he in nodes[v]]):
                 G.nodes[v]['color'] = '#e8f442'

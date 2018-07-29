@@ -14,102 +14,67 @@
 
 import random as rnd
 
+from framework.utils import nth
+
 from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
+from planar_graph_sampler.combinatorial_classes.one_connected_graph import OneConnectedPlanarGraph
 
 
 class TwoConnectedPlanarGraph(HalfEdgeGraph):
+    """
+    A two-connected planar graph in half-edge representation.
+    """
 
     def __init__(self, half_edge):
-        super().__init__(half_edge)
+        super(TwoConnectedPlanarGraph, self).__init__(half_edge)
 
+    @property
     def is_consistent(self):
-        super_ok = super().is_consistent()
-        two_connected = self.is_connected(2)
-        planar = self.is_planar()
-        return all([super_ok, True, planar])
+        super_ok = super(TwoConnectedPlanarGraph, self).is_consistent
+        # TODO
+        two_connected = True #self.is_connected(2)
+        planar = self.is_planar
+        return all([super_ok, two_connected, planar])
+
+    # CombinatorialClass interface.
+
+    def random_l_atom(self):
+        nodes = self.half_edge.get_node_list()
+        random_node = rnd.choice(list(nodes.keys()))
+        # Re-root this object.
+        self._half_edge = nodes[random_node][0]
+        return random_node
+
+    def l_atoms(self):
+        return iter(self.half_edge.get_node_list().keys())
+
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        nodes = self.half_edge.get_node_list()
+        # Sample a graph and merge it with all remaining nodes.
+        for node in nodes:
+            if node in exceptions:
+                continue
+            # Sampler is for L * G_1_dx
+            plug_in = sampler.sample(x, y).second.base_class_object.half_edge
+            if not plug_in.is_trivial:
+                # Get an arbitrary half-edge incident to the current node.
+                he = nodes[node][0]
+                he.insert_all(plug_in)
+        return OneConnectedPlanarGraph(self._half_edge)
+
+    def __str__(self):
+        return "2-connected planar graph (l: {}, u: {})".format(self.number_of_nodes, self.number_of_edges)
 
 
 class EdgeRootedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
 
     def __init__(self, root_half_edge):
-        super().__init__(root_half_edge)
+        super(EdgeRootedTwoConnectedPlanarGraph, self).__init__(root_half_edge)
 
+    @property
     def u_size(self):
-        return super().u_size() - 1
+        return super(EdgeRootedTwoConnectedPlanarGraph, self).u_size - 1
 
+    @property
     def l_size(self):
-        return super().l_size() - 2
-
-
-class UDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
-
-    def __init__(self, half_edge):
-        super().__init__(half_edge)
-
-    def u_size(self):
-        return super().u_size() - 1
-
-
-class ULDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
-
-    def __init__(self, half_edge):
-        super().__init__(half_edge)
-
-    def u_size(self):
-        return super().u_size() - 1
-
-    def l_size(self):
-        return super().l_size() - 1
-
-
-class LDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
-
-    def __init__(self, half_edge):
-        super().__init__(half_edge)
-
-    def l_size(self):
-        return super().l_size() - 1
-
-    def replace_l_atoms(self, sampler, x, y):
-        nodes = self.half_edge.get_node_list()
-        # Select a random node and save a half-edge incident to it.
-        random_node = rnd.choice(list(nodes.keys()))
-        self.half_edge = nodes[random_node][0]
-        # Remove the random node.
-        nodes.pop(random_node)
-        # Sample a graph and merge it with all remaining nodes.
-        for node in nodes:
-            # Sampler is for Z_L * G_1_dx
-            plug_in = sampler.sample(x, y).second.get_half_edge()
-            # Get any half-edge incident to the current node.
-            he = nodes[node][0]
-            he.insert_all(plug_in)
-
-
-class BiLDerivedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
-    def __init__(self, half_edge):
-        super().__init__(half_edge)
-        self.random_node_2 = None
-
-    def l_size(self):
-        return super().l_size() - 2
-
-    def replace_l_atoms(self, sampler, x, y):
-        nodes = self.half_edge.get_node_list()
-        # Select two random nodes and save a half-edge incident to them.
-        random_node_1 = rnd.choice(list(nodes.keys()))
-        self.half_edge = nodes[random_node_1][0]
-        # Remove the random node.
-        nodes.pop(random_node_1)
-        random_node_2 = rnd.choice(list(nodes.keys()))
-        self.random_node_2 = nodes[random_node_2][0]
-        # Remove the random node.
-        nodes.pop(random_node_2)
-        assert random_node_1 is not random_node_2
-        # Sample a graph and merge it with all remaining nodes.
-        for node in nodes:
-            # Sampler is for Z_L * G_1_dx
-            plug_in = sampler.sample(x, y).second.get_half_edge()
-            # Get any half-edge incident to the current node.
-            he = nodes[node][0]
-            he.insert_all(plug_in)
+        return super(EdgeRootedTwoConnectedPlanarGraph, self).l_size - 2
