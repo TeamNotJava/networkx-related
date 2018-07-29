@@ -29,7 +29,7 @@ from planar_graph_sampler.grammar.two_connected_decomposition import two_connect
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 
-def other_test():
+def other_oldtest():
     # some shortcuts to make the grammar more readable
     Z = ZeroAtomSampler()
     L = LAtomSampler()
@@ -73,7 +73,7 @@ def other_test():
     # sum(sizes) / len(sizes)
 
 
-def binary_tree_test():
+def binary_tree_oldtest():
     binary_tree_test_oracle = EvaluationOracle({
         'x': 0.0475080992953792,
         'y': 1.0,
@@ -149,7 +149,7 @@ def plot_binary_tree(tree):
     nx.draw(G, node_color=colors, node_size=sizes, with_labels=True)
 
 
-def binary_tree_test_V2():
+def binary_tree_oldtest_V2():
     binary_tree_test_oracle = EvaluationOracle({
         'x': 0.0475080992953792,
         'y': 1.0,
@@ -176,7 +176,7 @@ def binary_tree_test_V2():
     return tree.base_class_object()
 
 
-def closure_test():
+def closure_oldtest():
     c = Closure()
     tree = binary_tree_test()
     # Do a deep copy of the tree as we want to plot it later in its original state.
@@ -215,7 +215,7 @@ def save_closure(closure, tree, init_half_edge, path):
     nx.readwrite.gexf.write_gexf(G, path)
 
 
-def irreducible_dissection_test():
+def irreducible_dissection_oldtest():
     from planar_graph_sampler.grammar.irreducible_dissection_decomposition import irreducible_dissection_grammar
 
     symbolic_x = 'x*G_1_dx(x,y)'
@@ -233,7 +233,7 @@ def irreducible_dissection_test():
     # print(admissibe_dissection_dx)
 
 
-def one_connected_test():
+def one_connected_oldtest():
     from planar_graph_sampler.grammar.two_connected_decomposition import two_connected_graph_grammar
     from planar_graph_sampler.bijections.block_decomposition import BlockDecomposition
 
@@ -264,18 +264,18 @@ def plot_dissection(dissection):
 
 
 # Run the primal map test.
-def primal_map_test():
+def primal_map_oldtest():
     # Check the outputs with the comments next to print instruction
     PrimalMap().test_primal_map()
 
 
 # Run the whitney bijection test.
-def whiney_bijection_test():
+def whiney_bijection_oldtest():
     # Check the outputs with the comments next to print instruction
     WhitneyBijection().test_whitney_bijection()
 
 
-def network_test():
+def network_oldtest():
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     grammar = two_connected_graph_grammar()
     grammar.init()

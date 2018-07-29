@@ -157,7 +157,7 @@ class DummyClass(CombinatorialClass):
         u_growth = -(self.u_size - len(exceptions))
         for _ in range(self.u_size - len(exceptions)):
             gamma = sampler.sample(x, y)
-            if gamma.u_size < 0:
+            if gamma.u_size <= 0:
                 raise BoltzmannFrameworkError("You may not use u-substitution when class contains objects of u-size 0")
             l_growth += gamma.l_size
             u_growth += gamma.u_size

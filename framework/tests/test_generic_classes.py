@@ -3,7 +3,6 @@ from copy import deepcopy
 from framework.generic_samplers import *
 
 
-# noinspection PyAttributeOutsideInit
 class TestGenericClasses(object):
     def setUp(self):
         """Setup various shared variables and functionality"""
@@ -58,7 +57,7 @@ class TestGenericClasses(object):
                     dummy = DummyClass(l_size, u_size)
                     try:
                         dummy = dummy.replace_l_atoms(self.fake_sampler, 'x', 'y', excp)
-                        assert dummy.l_size == (l_size - len(excp)) * self.fake_sampler.l_size_sampled_object()
+                        assert dummy.l_size == (l_size - len(excp)) * self.fake_sampler.l_size_sampled_object() + len(excp)
                         assert dummy.u_size == u_size + (l_size - len(excp)) * self.fake_sampler.u_size_sampled_object()
                     except BoltzmannFrameworkError:
                         pass
@@ -67,7 +66,7 @@ class TestGenericClasses(object):
                     try:
                         dummy = dummy.replace_u_atoms(self.fake_sampler, 'x', 'y', excp)
                         assert dummy.l_size == l_size + (u_size - len(excp)) * self.fake_sampler.l_size_sampled_object()
-                        assert dummy.u_size == (u_size - len(excp)) * self.fake_sampler.u_size_sampled_object()
+                        assert dummy.u_size == (u_size - len(excp)) * self.fake_sampler.u_size_sampled_object() + len(excp)
                     except BoltzmannFrameworkError:
                         pass
 
@@ -110,7 +109,7 @@ class TestGenericClasses(object):
 if __name__ == "__main__":
     test = TestGenericClasses()
     test.setUp()
-    #test.test_dummy_class()
+    test.test_dummy_class()
     test.test_prod_class()
     test.test_set_class()
     test.test_assign_random_labels()

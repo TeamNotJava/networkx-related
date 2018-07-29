@@ -22,7 +22,7 @@ from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
 
 
-def test_dummy_size():
+def dummy_sampling():
     print("Dummy sampling example.\n-----------------------\n")
     L = LAtomSampler()
     Tree = AliasSampler('Tree')
@@ -259,7 +259,7 @@ def test_examples():
         binary_trees,
         integer_partitions,
         set_partitions,
-        test_dummy_size
+        dummy_sampling
     ]
     for example in examples:
         example()

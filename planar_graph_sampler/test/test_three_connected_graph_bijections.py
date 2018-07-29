@@ -107,7 +107,7 @@ def test_primal_map():
     assert three_map.next.next.opposite.next.opposite.next.next.opposite.opposite.node_nr == 10
 
 
-def test_whitney_bijection():
+def todotest_whitney_bijection():
     """
     # TODO this can be removed or can we still reuse it?
     Tests the whitney bijection with the prepared output from the primal bijection.
