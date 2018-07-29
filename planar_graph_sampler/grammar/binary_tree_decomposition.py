@@ -2,19 +2,21 @@ from framework.class_builder import CombinatorialClassBuilder
 from framework.evaluation_oracle import EvaluationOracle
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.generic_samplers import *
+from framework.generic_samplers import BoltzmannSamplerBase
 from framework.utils import bern, Counter
 
 from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.combinatorial_classes.binary_tree import Leaf
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
 counter = Counter()
 
 
+# noinspection PyAbstractClass
 class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     """
     Builds white-rooted binary trees (rules 'R_w', 'R_w_head', 'R_w_as').
-    The builder is in the same file as the gramamr it belongs to because it is quite closely connected.
+    The builder is in the same file as the grammar it belongs to because it is quite closely connected.
     """
 
     def u_atom(self):
@@ -28,10 +30,11 @@ class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
         return res
 
 
+# noinspection PyAbstractClass
 class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
     """
-    Builds black-rooted binary trees (rules 'R_b', 'R_b_head', 'R_b_as').
-    The builder is in the same file as the gramamr it belongs to because it is quite closely connected.
+    Builds black-rooted binary trees (rules 'R_b', 'R_b_head', 'R_b_head_help', 'R_b_as').
+    The builder is in the same file as the grammar it belongs to because it is quite closely connected.
     """
 
     def l_atom(self):
@@ -43,33 +46,51 @@ class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
         return Leaf()
 
     def product(self, lhs, rhs):
+        """
+
+        Parameters
+        ----------
+        lhs: BinaryTree
+        rhs: BinaryTree
+        """
         res = None
-        if lhs.is_leaf():
+        if lhs.is_leaf:
             # rhs is not a leaf.
-            assert rhs.is_black_rooted()
+            assert rhs.is_black_rooted
             rhs.add_left_child(lhs)
             res = rhs
-        elif rhs.is_leaf():
+        elif rhs.is_leaf:
             # lhs is not a leaf.
             res = self.product(rhs, lhs).flip()
-        elif lhs.is_white_rooted() and rhs.is_black_rooted():
+        elif lhs.is_white_rooted and rhs.is_black_rooted:
             # Both are not leaves.
             rhs.add_left_child(lhs)
             res = rhs
-        elif rhs.is_white_rooted() and lhs.is_black_rooted():
+        elif rhs.is_white_rooted and lhs.is_black_rooted:
             res = self.product(rhs, lhs).flip()
         # Notice that these are the only possible cases.
         # This is because of the way in which the grammar is written down.
         assert res is not None
-        assert res.get_root_color() is 'black'
+        assert res.root_color is 'black'
         return res
+
+
+def to_u_derived_class(obj):
+    return UDerivedClass(obj)
+
+
+def get_base_class(obj):
+    return obj.base_class_object
 
 
 def binary_tree_grammar():
     """
     Builds the bicolored binary tree grammar. Must still be initialized with init().
 
-    :return: The grammar for sampling K and K_dx.
+    Returns
+    -------
+    DecompositionGrammar
+        The grammar for sampling K and K_dx.
     """
 
     # Some shorthands to keep the grammar readable.
@@ -84,17 +105,19 @@ def binary_tree_grammar():
     R_b = AliasSampler('R_b')
     R_w = AliasSampler('R_w')
     Rej = RejectionSampler
+    Bij = BijectionSampler
     DxFromDy = LDerFromUDerSampler
 
     grammar = DecompositionGrammar()
     # Add the decomposition rules.
-    grammar.add_rules({
+    grammar.rules = {
 
-        'K': Rej(K_dy, lambda gamma: bern(2 / (gamma.get_u_size() + 1))),  # See section 4.1.6. for this rejection.
+        # See section 4.1.6. for this rejection.
+        'K': Bij(Rej(K_dy, lambda gamma: bern(2 / (gamma.u_size + 1))), get_base_class),
 
         'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),
 
-        'K_dy': R_b_as + R_w_as,
+        'K_dy': Bij(R_b_as + R_w_as, to_u_derived_class),
 
         'R_b_as': R_w * L() * U() + U() * L() * R_w + R_w * L() * R_w,
 
@@ -110,35 +133,57 @@ def binary_tree_grammar():
 
         'R_w': (U() + R_b) * (U() + R_b),
 
-    })
+    }
     # Set builder information.
     grammar.set_builder(['R_w', 'R_w_head', 'R_w_as', 'R_b_head_help'], WhiteRootedBinaryTreeBuilder())
     grammar.set_builder(['R_b', 'R_b_head', 'R_b_as'], BlackRootedBinaryTreeBuilder())
 
-    # Note that we do not init the grammar here.
+    # We do not init the grammar here.
     return grammar
 
 
 if __name__ == '__main__':
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
+    BoltzmannSamplerBase.debug_mode = True
+
     grammar = binary_tree_grammar()
     grammar.init()
+    #grammar.dummy_sampling_mode()
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'K'
 
-    print("Needed oracle entries:")
-    [print(query) for query in sorted(grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
+    print("Expected size of K: {}".format(BoltzmannSamplerBase.oracle.get_expected_l_size('K', symbolic_x, symbolic_y)))
 
-    tree = grammar.sample('K_dy', symbolic_x, symbolic_y)
+    while True:
+        try:
+            tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+        except RecursionError:
+            pass
+        if tree.l_size > 0:
+            print(tree)
+            assert tree.is_consistent
 
-    assert tree.is_tree()
+            import matplotlib.pyplot as plt
 
-    print("Black nodes: {}".format(tree.get_l_size()))
-    print("Total leaves: {}".format(tree.get_u_size()))
-    print("Root Node {}".format(tree))
+            tree.plot(draw_leaves=True, node_size=50)
+            plt.show()
 
-    import matplotlib.pyplot as plt
-
-    tree.plot()
-    plt.show()
+    c = [0, 0, 0, 0, 0, 0, 0]
+    samples = 100000
+    i = 0
+    while i < samples:
+        try:
+            tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+        except RecursionError:
+            pass
+        if tree.l_size() == l_size:
+            assert tree.is_consistent()
+            c[tree.u_size()] += 1
+            i += 1
+    print(c)
+    a = BoltzmannSampler.oracle.get_probability(sampled_class, symbolic_x, symbolic_y, l_size, 3)
+    b = BoltzmannSampler.oracle.get_probability(sampled_class, symbolic_x, symbolic_y, l_size, 4)
+    print(a / (a + b))
+    print(b / (a + b))

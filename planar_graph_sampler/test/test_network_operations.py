@@ -1,8 +1,5 @@
-from planar_graph_sampler.bijections.network_substitution import EdgeByNetworkSubstitution
-from planar_graph_sampler.bijections.network_merge_in_series import NetworkMergeInSeries
-from planar_graph_sampler.bijections.network_paralel_merge import NetworkMergeInParallel
 from planar_graph_sampler.combinatorial_classes.halfedge import  HalfEdge
-from planar_graph_sampler.combinatorial_classes.network import NetworkClass
+from planar_graph_sampler.combinatorial_classes.network import Network
 from planar_graph_sampler.test.mock_objects_creator import create_three_connected_graph
 
 import matplotlib.pyplot as plt
@@ -92,7 +89,7 @@ def test_edge_by_netwrok_substitution():
     net_nineth.opposite = net_tenth
 
 
-    network = NetworkClass(network_vertices_list, network_edges_list, network_root_edge)
+    network = Network(network_vertices_list, network_edges_list, network_root_edge)
 
     edge_for_substitution = fifth
     EdgeByNetworkSubstitution().substitute_edge_by_network(three_connected_graph, edge_for_substitution, network)
@@ -135,10 +132,16 @@ def test_edge_by_netwrok_substitution():
         assert half_edge_walker.node_nr == seventh.node_nr
         half_edge_walker = half_edge_walker.next
 
+<<<<<<< HEAD
 
 def create_sample_network(start_node_number = 0):
     graph = create_three_connected_graph(start_node_number)
     return NetworkClass(graph.vertices_list, graph.edges_list, graph.root_half_edge)
+=======
+def create_sample_network():
+    graph = create_three_connected_graph()
+    return Network(graph.vertices_list, graph.edges_list, graph.root_half_edge)
+>>>>>>> tobias
 
 
 def test_series_merge_of_networks():

@@ -12,68 +12,69 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-from framework.generic_classes import CombinatorialClass
+import random as rnd
 
-from planar_graph_sampler.bijections.block_decomposition import BlockDecomposition
+from framework.utils import nth
+
+from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
+from planar_graph_sampler.combinatorial_classes.one_connected_graph import OneConnectedPlanarGraph
 
 
-class EdgeRootedTwoConnectedPlanarGraph(CombinatorialClass):
+class TwoConnectedPlanarGraph(HalfEdgeGraph):
+    """
+    A two-connected planar graph in half-edge representation.
+    """
 
-    def __init__(self, vertices_list, edges_list, root_half_edge):
-        self.vertices_list = vertices_list
-        self.edges_list = edges_list
-        self.root_half_edge = root_half_edge
+    def __init__(self, half_edge):
+        super(TwoConnectedPlanarGraph, self).__init__(half_edge)
 
-    def get_u_size(self):
-        return len(self.edges_list)
+    @property
+    def is_consistent(self):
+        super_ok = super(TwoConnectedPlanarGraph, self).is_consistent
+        # TODO
+        two_connected = True #self.is_connected(2)
+        planar = self.is_planar
+        return all([super_ok, two_connected, planar])
 
-    def get_l_size(self):
-        return len(self.vertices_list)
-
-    def u_atoms(self):
-        raise NotImplementedError
-
-    def l_atoms(self):
-        raise NotImplementedError
-
-    def random_u_atom(self):
-        raise NotImplementedError
+    # CombinatorialClass interface.
 
     def random_l_atom(self):
-        raise NotImplementedError
+        nodes = self.half_edge.get_node_list()
+        random_node = rnd.choice(list(nodes.keys()))
+        # Re-root this object.
+        self._half_edge = nodes[random_node][0]
+        return random_node
 
-    # we don't need this.
-    def replace_u_atoms(self, sampler, x, y):
-        raise NotImplementedError
+    def l_atoms(self):
+        return iter(self.half_edge.get_node_list().keys())
 
-    # we need this as we replace every unmarked node (l-atom) with a l-der one-connected graph
-    def replace_l_atoms(self, sampler, x, y):
-        nodes_for_subs = self.vertices_list
-        # Switch to diconary representation of the nodes
-        nodes_for_subs = self.vertices_list[0].get_nodes_dictonary()
-
-        node_by_one_connected_subs = BlockDecomposition()
-
-        for node in nodes_for_subs:
-            node_half_edges = nodes_for_subs[node]
-            # Sample only for unmakred nodes
-            if not node_half_edges[0].marked_vertex:
-                # Sample a L-derived one-connected graph at the unmarked node
-                l_der_one_connected = sampler.sample(x, y)
-                node_by_one_connected_subs.replace_node_with_l_der_one_connected(node_half_edges, l_der_one_connected)
-        # Dummy
-        return self
-
-    # this is an ugly method to avoid using isinstance or similar
-    def is_l_atom(self):
-        raise NotImplementedError
-
-    # this is an ugly method to avoid using isinstance or similar
-    def is_u_atom(self):
-        raise NotImplementedError
+    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        nodes = self.half_edge.get_node_list()
+        # Sample a graph and merge it with all remaining nodes.
+        for node in nodes:
+            if node in exceptions:
+                continue
+            # Sampler is for L * G_1_dx
+            plug_in = sampler.sample(x, y).second.base_class_object.half_edge
+            if not plug_in.is_trivial:
+                # Get an arbitrary half-edge incident to the current node.
+                he = nodes[node][0]
+                he.insert_all(plug_in)
+        return OneConnectedPlanarGraph(self._half_edge)
 
     def __str__(self):
-        repr = 'Root Edge : %s \n' % self.root_half_edge.__repr__()
-        repr += 'Vertices : %s' % self.vertices_list.__repr__()
-        repr += 'Edges : %s' % self.edges_list.__repr__()
-        return repr
+        return "2-connected planar graph (l: {}, u: {})".format(self.number_of_nodes, self.number_of_edges)
+
+
+class EdgeRootedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
+
+    def __init__(self, root_half_edge):
+        super(EdgeRootedTwoConnectedPlanarGraph, self).__init__(root_half_edge)
+
+    @property
+    def u_size(self):
+        return super(EdgeRootedTwoConnectedPlanarGraph, self).u_size - 1
+
+    @property
+    def l_size(self):
+        return super(EdgeRootedTwoConnectedPlanarGraph, self).l_size - 2

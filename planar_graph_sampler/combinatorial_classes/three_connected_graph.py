@@ -1,74 +1,123 @@
-from framework.generic_classes import CombinatorialClass
+import random as rnd
 
-from planar_graph_sampler.bijections.network_substitution import EdgeByNetworkSubstitution
+from planar_graph_sampler.bijections.networks import substitute_edge_by_network
+from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 
 
-class EdgeRootedThreeConnectedPlanarGraph(CombinatorialClass):
-    def __init__(self, vertices, edges, root_half_edge):
-        # All of the vertices in the graph represented as half-edges.
-        # Do not contain the vertices which are part from the root edge.
-        self.vertices_list = list(vertices)
-        # the edges list not contain the root edge!
-        self.edges_list = list(edges)
-        # Only one part from the root edge. The other can be accessed through the opposite pointer.
-        self.root_half_edge = root_half_edge
+class EdgeRootedThreeConnectedPlanarGraph(HalfEdgeGraph):
+    """
+    A three connected planar graph where one distinguished edge is assumed to be directed.
+    This edge and its adjacent vertices do not count to the u-/l-size of the graph.
+    In the grammar, this class is referred to as G_3_arrow.
+    """
 
-    def get_u_size(self):
-        # root edge does not count
-        # see 3.4.2.
-        return len(self.edges_list)
+    def __init__(self, root_half_edge):
+        super(EdgeRootedThreeConnectedPlanarGraph, self).__init__(root_half_edge)
 
-    def get_l_size(self):
-        # The root vertices are not part from the vertices list, therefore we don't have to subtract 2.
-        # see 3.4.2.
-        return len(self.vertices_list)
+    def is_consistent(self):
+        super_ok = super(EdgeRootedThreeConnectedPlanarGraph, self).is_consistent
+        is_planar = self.is_planar
+        is_three_connected = self.is_connected(3)
+        return all([super_ok, is_planar, is_three_connected])
+
+    @property
+    def root_half_edge(self):
+        return self._half_edge
+
+    # CombinatorialClass interface.
+
+    @property
+    def u_size(self):
+        # Root edge does not count.
+        return self.number_of_edges - 1
+
+    @property
+    def l_size(self):
+        # The vertices adjacent to the root do not count.
+        return self.number_of_nodes - 2
 
     def u_atoms(self):
         raise NotImplementedError
 
-    def l_atoms(self):
-        raise NotImplementedError
-
     def random_u_atom(self):
-        raise NotImplementedError
+        possible_edges = self.root_half_edge.get_all_half_edges(include_unpaired=False) - {self.root_half_edge,
+                                                                                           self.root_half_edge.opposite}
+        return rnd.choice(list(possible_edges))
 
-    def random_l_atom(self):
-        raise NotImplementedError
-
-    # we need this. in the network decomposition we have to replace the u atoms with networks
-    def replace_u_atoms(self, sampler, x, y):
-        # Get the edges for substitution in a separate list
-        edges_for_subs = list(self.edges_list)
-
-        # Instantiate an object from the substitute worker class
-        edge_by_network_subs = EdgeByNetworkSubstitution()
-
-        # Substitute the edges with a newly sampled network one by one
+    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        """Needed in the u-substitution that occurs in the network decomposition."""
+        # Get the edges for substitution in a separate set.
+        edges_for_subs = self.half_edge.get_all_half_edges(include_opp=False, include_unpaired=False)
+        # Don't substitute the root edge.
+        assert self.half_edge in edges_for_subs and self.half_edge.opposite not in edges_for_subs
+        edges_for_subs.remove(self.half_edge)
+        # If an exception is given also do not substitute it.
+        if exceptions:
+            for excp in exceptions:
+                try:
+                    edges_for_subs.remove(excp)
+                except KeyError:
+                    edges_for_subs.remove(excp.opposite)
+        # Substitute the edges with a newly sampled network one by one.
         for edge_for_substitution in edges_for_subs:
-            # Sample a network for plugging in
-            network = sampler(x, y)
-            edge_by_network_subs.substitute_edge_by_network(self, edge_for_substitution, network)
-
-        # this is a dummy
+            network = sampler.sample(x, y)
+            substitute_edge_by_network(edge_for_substitution, network)
         return self
 
-    # not needed as we never have l substitution in EdgeRootedThreeConnectedPlanarGraphs
-    def replace_l_atoms(self, sampler, x, y):
-        raise NotImplementedError
 
-    # this is an ugly method to avoid using isinstance or similar
-    def is_l_atom(self):
-        raise NotImplementedError
+class UDerivedEdgeRootedThreeConnectedPlanarGraph(EdgeRootedThreeConnectedPlanarGraph):
+    """
+    Is like a normal edge rooted graph but has one additional random distinguished u-atom.
+    """
 
-    # this is an ugly method to avoid using isinstance or similar
-    def is_u_atom(self):
-        raise NotImplementedError
+    def __init__(self, root_half_edge, vertices=None, edges=None):
+        super().__init__(root_half_edge)
+        # Pick random edge, but not the root edge itself.
+        possible_edges = root_half_edge.get_all_half_edges(include_unpaired=False) - {root_half_edge,
+                                                                                      root_half_edge.opposite}
+        self.random_edge = rnd.choice(list(possible_edges))
 
-    def __str__(self):
-        repr = 'Root Edge : %s \n' % self.root_half_edge.__repr__()
-        repr += 'Vertices : %s\n' % self.vertices_list.__repr__()
-        repr += 'Edges : %s' % self.edges_list.__repr__()
-        return repr
+    def u_size(self):
+        # Root edge and random edge do not count.
+        return self.number_of_edges() - 2
 
-    def plot(self):
-        return self.root_half_edge.plot()
+    def replace_u_atoms(self, sampler, x, y):
+        """
+        Needed in the u-substitution that occurs in the network decomposition.
+
+        :param sampler:
+        :param x:
+        :param y:
+        :return:
+        """
+
+        # TODO git rid of code dup
+
+        # Get the edges for substitution in a separate set.
+        edges_for_subs = self._half_edge.get_all_half_edges(include_opp=False, include_unpaired=False)
+
+        # Don't substitute the root edge.
+        assert self._half_edge in edges_for_subs and self._half_edge.opposite not in edges_for_subs
+        edges_for_subs.remove(self._half_edge)
+
+        # Don't substitute the random edge.
+        try:
+            edges_for_subs.remove(self.random_edge)
+        except KeyError:
+            edges_for_subs.remove(self.random_edge.opposite)
+
+        # Substitute the edges with a newly sampled network one by one.
+        for edge_for_substitution in edges_for_subs:
+            network = sampler.sample(x, y)
+            substitute_edge_by_network(edge_for_substitution, network)
+
+        return self
+
+    def replace_random_edge(self, network):
+        """
+        Plugs network into the random edge.
+
+        :param network:
+        :return:
+        """
+        substitute_edge_by_network(self.random_edge, network)

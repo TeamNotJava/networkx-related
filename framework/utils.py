@@ -9,35 +9,53 @@ def nth(iterable, n, default=None):
     return next(itertools.islice(iterable, n, None), default)
 
 
-# Probability distributions
-
-
 def bern(p):
-    """
-    Bernoulli generator.
+    """Bernoulli generator.
 
-    :param p:
-    :return:
+    Parameters
+    ----------
+    p: float
+
+    Returns
+    -------
+    bool
     """
     return rnd.uniform(0, 1) <= p
 
 
 def exp_tail(d, x):
-    """
-    Tail of the exponential series starting at d. Needed in the set sampler.
-    :param d:
-    :param x:
-    :return:
+    """Tail of the exponential series starting at d. Needed in the set sampler.
+
+    Parameters
+    ----------
+    d: int
+    x: float
+
+    Returns
+    -------
+    float
     """
 
     result = exp(x)
-    # Subtract the first d terms.
+    # Subtract the _first _d terms.
     for i in range(d):
         result -= (pow(x, i) / factorial(i))
     return result
 
 
 def pois_prob(d, k, l):
+    """Poisson probability.
+
+    Parameters
+    ----------
+    d: int
+    k: int
+    l: float
+
+    Returns
+    -------
+    float
+    """
     return 1 / exp_tail(d, l) * pow(l, k) / factorial(k)
 
 
@@ -45,9 +63,14 @@ def pois(d, l):
     """
     Poisson generator.
 
-    :param d:
-    :param l:
-    :return:
+    Parameters
+    ----------
+    d: int
+    l: float
+
+    Returns
+    -------
+    int
     """
     u = rnd.uniform(0, 1)
     s = 0
@@ -74,6 +97,7 @@ def singleton(class_):
 
 @singleton
 class Counter(object):
+    # todo move to planar graph sampler folder
     """This Singleton Counter creates unique labels for combinatorial classes.
     This way we don't need to relabel the sampled elements for the product of two classes.
     """

@@ -12,16 +12,17 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-import networkx as nx
-
 from framework.generic_classes import CombinatorialClass
-from framework.utils import Counter
-counter = Counter()
 
 
 class HalfEdge(CombinatorialClass):
     """
     Generic class for half edge representation of a combinatorial planar embedding.
+
+    Parameters
+    ----------
+    self_consistent: bool
+        Makes a consistent one-node/zero edge graph.
     """
 
     def __init__(self, self_consistent=False):
@@ -38,19 +39,20 @@ class HalfEdge(CombinatorialClass):
         # Node the half-edge is  assigned to
         self.node_nr = -1
 
-    def get_l_size(self):
+    @property
+    def l_size(self):
         return self.get_number_of_nodes()
 
-    def get_u_size(self):
+    @property
+    def u_size(self):
         return self.get_number_of_edges()
 
+    @property
+    def is_trivial(self):
+        return self.next == self and self.opposite is None
 
     def insert_after(self, new=None):
-        """
-        Inserts a half that follows this half edge in ccw order.
-        :param new:
-        :return:
-        """
+        """Inserts a half-edge that follows this half-edge in ccw order."""
         if new is None:
             new = HalfEdge()
         new.node_nr = self.node_nr
@@ -59,13 +61,10 @@ class HalfEdge(CombinatorialClass):
         new.prior = self
         new.next = old_next
         old_next.prior = new
+        return new
 
     def insert_before(self, new=None):
-        """
-
-        :param new:
-        :return:
-        """
+        """Inserts a half-edge that follows this half-edge in cw order."""
         if new is None:
             new = HalfEdge()
         new.node_nr = self.node_nr
@@ -74,27 +73,58 @@ class HalfEdge(CombinatorialClass):
         new.next = self
         new.prior = old_prior
         old_prior.next = new
+        return new
+
+    def remove(self):
+        """Removes the half-edge and and its connections.
+
+        There is no a half-edge which has connection to it after the removal.
+        """
+        # Connect corresponding next and prior half edges.
+        self._connect_next_and_prior()
+        # Clear the half edge object.
+        self.clear()
+
+    def _connect_next_and_prior(self):
+        self.next.prior = self.prior
+        self.prior.next = self.next
+
+    def clear(self):
+        """Clear all the half_edge connections and data from it."""
+        self.opposite = None
+        self.prior = None
+        self.next = None
+        self.node_nr = -1
+
+    def insert_all(self, other):
+        """Inserts the given half-edge and all its incident half-edge after this half-edge."""
+        # Set node numbers.
+        for he in other.incident_half_edges():
+            he.node_nr = self.node_nr
+        other_degree = other.degree()
+        old_degree = self.degree()
+        old_next = self.next
+        self.next = other
+        old_other_prior = other.prior
+        other.prior = self
+        old_next.prior = old_other_prior
+        old_other_prior.next = old_next
+        assert self.degree() == other_degree + old_degree
 
     def invert(self):
-        """
-        Inverts order.
-        :return:
-        """
+        """Inverts order."""
         for h in self.incident_half_edges():
             # Swap pointers.
             h.next, h.prior = h.prior, h.next
 
     def degree(self):
-        """
-        Number of outgoing half edges of the incident node.
-        :return:
-        """
+        """Number of outgoing half edges of the incident node."""
         return len(self.incident_half_edges())
 
     def incident_half_edges(self):
-        """
+        """Returns all half-edges incident to this half-edge, including itself.
 
-        :return:
+        Two half-edges are incident if they start in the same vertex.
         """
         res = [self]
         curr = self
@@ -103,28 +133,28 @@ class HalfEdge(CombinatorialClass):
             curr = curr.next
         return res
 
+    def set_node_nr(self, node_nr):
+        for he in self.incident_half_edges():
+            he.node_nr = node_nr
+
     # TODO hack hack
     def __str__(self):
         return self.__repr__()
 
     def __repr__(self):
-        """
-        Represents a half-edge as a tuple (index, node_nr, opposite, next, prior)
-        :return:
-        """
+        """Represents a half-edge as a tuple (index, node_nr, opposite, next, prior)."""
         repr = "(edge_id: {0}\tnode_nr: {1}\topposite_id: {2}\tnext: {3}\tprior: {4})".format(
             id(self), self.node_nr, id(self.opposite), id(self.next), id(self.prior))
         return repr
 
-    def list_half_edges(self, edge_list=[]):
-        """
-        Returns a list with half-edges.
-        :param edge_list:
-        :return:
-        """
+
+    def list_half_edges(self, edge_list=None):
+        """Returns a list with half-edges."""
+        # TODO Deprecated?
+        if edge_list is None:
+            edge_list = []
         edge_list.append(self)
         current_half_edge = self
-        assert (current_half_edge is not None)
         while True:
             if current_half_edge.next is not None:
                 current_half_edge = current_half_edge.next
@@ -139,38 +169,38 @@ class HalfEdge(CombinatorialClass):
                 break
         return edge_list
 
+    def get_all_half_edges(self, edge_set=None, include_opp=True, include_unpaired=True):
+        """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False."""
+        if edge_set is None:
+            edge_set = set()
+        for he in self.incident_half_edges():
+            if he not in edge_set:
+                if he.opposite is None and include_unpaired:
+                    edge_set.add(he)
+                elif include_opp or (he.opposite is not None and he.opposite not in edge_set):
+                    edge_set.add(he)
+                    if he.opposite is not None:
+                        he.opposite.get_all_half_edges(edge_set, include_opp, include_unpaired)
+        return edge_set
+
     def get_number_of_nodes(self):
-        """
-        Returns the number of nodes in the graph
-        :return:
-        """
-        edge_list = self.list_half_edges([])
-        nodes = []
+        """Returns the number of nodes in the graph."""
+        edge_list = self.get_all_half_edges()
+        nodes = set()
         for edge in edge_list:
-            if edge.node_nr not in nodes:
-                nodes.append(edge.node_nr)
+            nodes.add(edge.node_nr)
         return len(nodes)
 
     def get_number_of_edges(self):
-        """
-        Returns the number of edges (NOT half-edges!) in the graph.
-        :return:
-        """
-        edge_list = self.list_half_edges([])
-        num_edges = 0
-        for edge in edge_list:
-            if edge.opposite is not None:
-                num_edges += 1
-                edge_list.remove(edge.opposite)
-        return num_edges
+        """Returns the number of edges (NOT half-edges!) in the graph."""
+        return len(self.get_all_half_edges(include_opp=False, include_unpaired=False))
 
     def get_node_list(self):
+        """Returns a dictionary of nodes.
+
+        The key is node number and the value is a list of half-edges belonging to the node number.
         """
-        Returns a dictionary of nodes. The key is node number and the value is a list of
-        half-edges belonging to the node number.
-        :return:
-        """
-        edge_list = self.list_half_edges([])
+        edge_list = self.get_all_half_edges()
         node_list = {}
         for edge in edge_list:
             if edge.node_nr in node_list:
@@ -181,57 +211,6 @@ class HalfEdge(CombinatorialClass):
                 node_list[edge.node_nr] = [edge]
         return node_list
 
-    def is_tree(self):
-        return nx.is_tree(self.to_networkx_graph())
-
-    def is_planar(self):
-        return nx.check_planarity(self.to_networkx_graph())
-
-    def to_networkx_graph(self):
-        """
-        Transforms a list of planar map half-edged into a networkx graph.
-        :return:
-        """
-        half_edge_list = self.list_half_edges([])
-
-        # Remove all unpaired half-edges
-        half_edge_list = [x for x in half_edge_list if not x.opposite is None]
-        G = nx.Graph()
-        while len(half_edge_list) > 0:
-            half_edge = half_edge_list.pop()
-            G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
-            G.nodes[half_edge.node_nr]['color'] = half_edge.color
-        return G
-
-    def get_edge_list(self):
-        half_edge_list = self.list_half_edges()
-        # Remove all unpaired half-edges
-        half_edge_list = [x for x in half_edge_list if not x.opposite is None]
-        edge_list = set()
-
-        for h in half_edge_list:
-            print(h)
-
-        for half_edge in half_edge_list:
-            t = (half_edge.node_nr, half_edge.opposite.node_nr)
-            edge_list.add(t)
-            half_edge_list.remove(half_edge)
-            half_edge_list.remove(half_edge.opposite)
-            
-            print(t)
-
-        return edge_list
-
-
-    def plot(self):
-        """
-
-        :param colors:
-        :return:
-        """
-        G = self.to_networkx_graph()
-        nx.draw(G, with_labels=True)
-
 
 class ClosureHalfEdge(HalfEdge):
     """
@@ -239,58 +218,23 @@ class ClosureHalfEdge(HalfEdge):
     """
 
     def __init__(self, self_consistent=False):
-        super().__init__(self_consistent)
-        # Number of inner edges following after the stem
+        super(ClosureHalfEdge, self).__init__(self_consistent)
+        # Number of inner edges following after the stem.
         self.number_proximate_inner_edges = 0
-        # Color that indicates what color the incident node has (0 - black, 1 -white)
+        # Color that indicates what color the incident node has (0 - black, 1 -white).
         self.color = None
-        # Indicates if the half-edge belongs to the hexagon
+        # Indicates if the half-edge belongs to the hexagon.
         self.is_hexagonal = False
-        # Indicates if the half-edge is an edge added by the complete closure
+        # Indicates if the half-edge is an edge added by the complete closure.
         self.added_by_comp_clsr = False
-    
+
     def __repr__(self):
-        """
-        Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)
-        :return:
-        """
+        """Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)"""
         repr = "(edge_id: {0}\tnode_nr: {1}\topposite_id: {2}\tnext: {3}\tprior: {4}\tcolor: {5}\tinner_edges: {6}\thex: {7}\tadded by clsr: {8})".format(
             id(self), self.node_nr, id(self.opposite), id(self.next), id(self.prior), self.color,
             self.number_proximate_inner_edges, self.is_hexagonal, self.added_by_comp_clsr)
         return repr
 
-    # TODO Get rid of this basically duplicated code from superclass.
-
-    def to_networkx_graph(self):
-        """
-        Transforms a list of planar map half-edged into a networkx graph.
-        :return:
-        """
-        half_edge_list = self.list_half_edges([])
-        # Remove all unpaired half-edges
-        half_edge_list = [x for x in half_edge_list if not x.opposite is None]
-        G = nx.Graph()
-        while len(half_edge_list) > 0:
-            half_edge = half_edge_list.pop()
-            G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
-            G.nodes[half_edge.node_nr]['color'] = half_edge.color
-            G.nodes[half_edge.node_nr]['is_hexagonal'] = half_edge.is_hexagonal
-        return G
-
-    def plot(self):
-        """
-        # TODO plot hexagonal nodes in different color or similar.
-        :return:
-        """
-        G = self.to_networkx_graph()
-        colors = []
-        for x in nx.get_node_attributes(G, 'color').values():
-            if x is 'black':
-                colors.append('#333333')
-            if x is 'white':
-                colors.append('#999999')
-        nx.draw(G, with_labels=True, node_color=colors)
-    
     # Adds the fresh half edge to the closure between the prior and the next half-edge
     # def add_to_closure(self, prior_half_edge, next_half_edge, opposite_half_edge, compl_closure):
     #     self.opposite = opposite_half_edge

@@ -46,7 +46,7 @@ class AdmissibilityChecker:
         queue.append((init_half_edge, 0, False, set()))
 
         while len(queue) != 0:
-            # Pop the first element from the FIFO queue.
+            # Pop the _first element from the FIFO queue.
             top_element = queue.pop(0)
 
             # Extract the components from the top element

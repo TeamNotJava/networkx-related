@@ -1,139 +1,96 @@
-from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
+from framework.generic_samplers import *
+from framework.generic_samplers import BoltzmannSamplerBase
 from framework.utils import Counter
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
-from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
-from planar_graph_sampler.combinatorial_classes.network import NetworkClass
+from planar_graph_sampler.bijections.networks import merge_networks_in_parallel, merge_networks_in_series, \
+    substitute_edge_by_network
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
-from planar_graph_sampler.bijections.network_merge_in_series import NetworkMergeInSeries
-from planar_graph_sampler.bijections.network_paralel_merge import NetworkMergeInParallel
+from planar_graph_sampler.combinatorial_classes.network import Network
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
+from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 
-counter = Counter()  # TODO does this work?
-
-
-def _create_root_network_edge():
-    # Create the zero-pole of the network
-    root_half_edge = HalfEdge()
-    root_half_edge.next = root_half_edge
-    root_half_edge.prior = root_half_edge
-    root_half_edge.node_nr = next(counter)
-
-    # Creates the inf-pole
-    root_half_edge_opposite = HalfEdge()
-    root_half_edge_opposite.next = root_half_edge_opposite
-    root_half_edge_opposite.prior = root_half_edge_opposite
-    root_half_edge_opposite.node_nr = next(counter)
-
-    # Link the poles
-    root_half_edge.opposite = root_half_edge_opposite
-    root_half_edge_opposite.opposite = root_half_edge
-
-    return root_half_edge
+counter = Counter()
 
 
-def bij_u_atom_to_network(decomp):
-    decomp_u_size = decomp.get_u_size()
-    decomp_l_size = decomp.get_l_size()
+class NetworkBuilder(DefaultBuilder):
+    """Builds u-atoms of networks."""
 
-    vertices_list = []
-    edges_list = []
-    root_half_edge = _create_root_network_edge()
-    # The root edge is part from the edges list.
-    edges_list.append(root_half_edge)
-    # The poles are part from the list of vertices.
-
-    result = NetworkClass(vertices_list, edges_list, root_half_edge)
-    print("Link-graph : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
-    # Check the properties
-    assert (decomp_u_size == result.get_u_size())
-    assert (decomp_l_size == result.get_l_size())
-    return result
-
-
-def bij_s_decomp_to_network(decomp):
-    # decomp has this structure: ((first_network, l_atom), second_network)
-    network = decomp.first.first
-    network_for_plugging = decomp.second
-
-    # It is important to check the size here because after in the merge the second network is merged in the first one
-    # without changing the objects
-    decomp_u_size = decomp.get_u_size()
-    decomp_l_size = decomp.get_l_size()
-
-    # Use the serial merge bijection to merge the networks
-    result = NetworkMergeInSeries().merge_networks_in_series(network, network_for_plugging)
-
-    print("S-network : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
-    # Check the properties
-    assert (decomp_u_size == result.get_u_size())
-    assert (decomp_l_size == result.get_l_size())
-    return result
+    def u_atom(self):
+        """Constructs the trivial link network consisting of the poles and an edge between them."""
+        # Create the zero-pole of the network.
+        root_half_edge = HalfEdge(self_consistent=True)
+        root_half_edge.node_nr = next(counter)
+        # Creates the inf-pole.
+        root_half_edge_opposite = HalfEdge(self_consistent=True)
+        root_half_edge_opposite.node_nr = next(counter)
+        # Link the poles.
+        root_half_edge.opposite = root_half_edge_opposite
+        root_half_edge_opposite.opposite = root_half_edge
+        res = Network(root_half_edge, is_linked=True, l_size=0, u_size=1)
+        return res
 
 
-def bij_p_decomp1_to_network(decomp):
-    # decomp has the structure: (link_graph, [set of networks])
+class SNetworkBuilder(NetworkBuilder):
+    """Builds S-networks."""
 
-    # It is important to check the size here because after in the merge the second network is merged in the first one
-    # without changing the objects
-    decomp_u_size = decomp.get_u_size()
-    decomp_l_size = decomp.get_l_size()
-
-    # get the parallel composition of the networks
-    result = bij_p_decomp2_to_network(decomp.second)
-    # add link between the poles
-    result.edges_list.append(result.root_half_edge)
-
-    print("P1-network : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
-    # Check the properties
-    assert (decomp_u_size == result.get_u_size())
-    assert (decomp_l_size == result.get_l_size())
-    return result
+    def product(self, lhs, rhs):
+        """Merges the given networks in series."""
+        if isinstance(lhs, Network) and isinstance(rhs, Network):
+            return merge_networks_in_series(lhs, rhs)
+        if isinstance(lhs, Network):
+            # rhs is an l-atom.
+            assert isinstance(rhs, LAtomClass)
+            return lhs
+        # Other case is symmetric.
+        return self.product(rhs, lhs)
 
 
-def bij_p_decomp2_to_network(decomp):
-    # decomp has the structure: [set of networks]
-    networks = decomp.elems
+class PNetworkBuilder(NetworkBuilder):
+    """Builds P-networks."""
 
-    decomp_u_size = decomp.get_u_size()
-    decomp_l_size = decomp.get_l_size()
+    def set(self, networks):
+        """Merges a set of networks in parallel."""
+        if len(networks) == 0:
+            return None
+        # TODO Without reversing the list of networks, weird things happen, find out why.
+        networks.reverse()
+        res = networks.pop()
+        for nw in networks:
+            res = merge_networks_in_parallel(res, nw)
+        return res
 
-    # Merge the netwowrks in parallel
-    result = networks[0]
-    for i in range(1, len(networks)):
-        result = NetworkMergeInParallel().merge_networks_in_parallel(result, networks[i])
-
-    print("P2-network : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
-
-    # Check the properties
-    assert (decomp_u_size == result.get_u_size())
-    assert (decomp_l_size == result.get_l_size())
-    return result
+    def product(self, n1, n2):
+        """Merges the set {n1, n2} of networks in parallel."""
+        if n2 is None:
+            return n1
+        assert isinstance(n1, Network) and isinstance(n2, Network)
+        return self.set([n1, n2])
 
 
-def bij_g_3_arrow_to_network(decomp):
-    three_connected_rooted_planar_graph = decomp
-    decomp_u_size = decomp.get_u_size()
-    decomp_l_size = decomp.get_l_size()
-    # Extract the components from the three connected rooted planar graph
-    vertices_list = list(three_connected_rooted_planar_graph.vertices_list)
-    edges_list = list(three_connected_rooted_planar_graph.edges_list)
-    root_half_edge = three_connected_rooted_planar_graph.root_half_edge
-    # Create and return the network.
-    result = NetworkClass(vertices_list, edges_list, root_half_edge)
-
-    print("H-network : usizes: %s %s       lsizes: %s %s" % (decomp_u_size, result.get_u_size(), decomp_l_size, result.get_l_size()))
-    # Check the properties
-    assert (decomp_u_size == result.get_u_size())
-    assert (decomp_l_size == result.get_l_size())
-    return result
+def g_3_arrow_to_network(decomp):
+    if isinstance(decomp, ProdClass):
+        network = decomp.first
+        u_der_graph = decomp.second
+        substitute_edge_by_network(u_der_graph.marked_atom, network)
+        return Network(u_der_graph.base_class_object.half_edge, is_linked=False)
+    else:
+        graph = decomp
+        if isinstance(decomp, LDerivedClass):
+            graph = decomp.base_class_object
+        link_edge = graph.half_edge
+        # Create and return the network.
+        return Network(link_edge, is_linked=False)
 
 
 def network_grammar():
-    """
+    """Constructs the grammar for networks.
 
-    :return:
+    Returns
+    -------
+    DecompositionGrammar
+        The grammar for sampling from D and D_dx.
     """
 
     L = LAtomSampler
@@ -141,7 +98,6 @@ def network_grammar():
     G_3_arrow = AliasSampler('G_3_arrow')
     G_3_arrow_dx = AliasSampler('G_3_arrow_dx')
     G_3_arrow_dy = AliasSampler('G_3_arrow_dy')
-    Link = AliasSampler('Link')
     D = AliasSampler('D')
     D_dx = AliasSampler('D_dx')
     S = AliasSampler('S')
@@ -151,36 +107,39 @@ def network_grammar():
     H = AliasSampler('H')
     H_dx = AliasSampler('H_dx')
     Bij = BijectionSampler
+    Set = SetSampler
+    USubs = USubsSampler
 
     grammar = DecompositionGrammar()
-    grammar.add_rules(three_connected_graph_grammar().get_rules())
+    grammar.rules = three_connected_graph_grammar().rules
 
-    grammar.add_rules({
+    grammar.rules = {
 
         # networks
 
-        'Link': Bij(U(), bij_u_atom_to_network),  # introduce this just for readability
+        'D': U() + S + P + H,
 
-        'D': Link + S + P + H,
+        'S': (U() + P + H) * L() * D,
 
-        'S': Bij((Link + P + H) * L() * D, bij_s_decomp_to_network),
+        'P': U() * Set(1, S + H) + Set(2, S + H),
 
-        'P': Bij((Link * SetSampler(1, S + H)), bij_p_decomp1_to_network)
-             + Bij(SetSampler(2, S + H), bij_p_decomp2_to_network),
-
-        'H': Bij(USubsSampler(G_3_arrow, D), bij_g_3_arrow_to_network),
+        'H': Bij(USubs(G_3_arrow, D), g_3_arrow_to_network),
 
         # l-derived networks
 
         'D_dx': S_dx + P_dx + H_dx,
 
-        'S_dx': (P_dx + H_dx) * L() * D + (U() + P + H) * (D + L() + D_dx),  # todo bijection
+        'S_dx': (P_dx + H_dx) * L() * D + (U() + P + H) * (D + L() * D_dx),
 
-        'P_dx': U() * (S_dx + H_dx) * SetSampler(0, S + H) + (S_dx + H_dx) * SetSampler(1, S + H),  # todo bijection
+        'P_dx': U() * (S_dx + H_dx) * Set(0, S + H) + (S_dx + H_dx) * Set(1, S + H),
 
-        'H_dx': USubsSampler(G_3_arrow_dx, D) + D_dx * USubsSampler(G_3_arrow_dy, D_dx),
+        'H_dx': Bij(USubs(G_3_arrow_dx, D) + D_dx * USubs(G_3_arrow_dy, D), g_3_arrow_to_network),
 
-    })
+    }
+
+    grammar.set_builder(['D', 'S', 'P', 'H', 'D_dx', 'S_dx', 'P_dx', 'H_dx'], NetworkBuilder())
+    grammar.set_builder(['P', 'P_dx'], PNetworkBuilder())
+    grammar.set_builder(['S', 'S_dx'], SNetworkBuilder())
 
     return grammar
 
@@ -188,16 +147,42 @@ def network_grammar():
 if __name__ == '__main__':
     grammar = network_grammar()
     grammar.init()
+    #grammar.dummy_sampling_mode()
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.debug_mode = True
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
 
-    sampled_class = 'H'
+    sampled_class = 'D_dx'
 
-    g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
 
-    import matplotlib.pyplot as plt
-    g.plot()
-    plt.show()
+    while True:
+        try:
+            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size > 0:
+                print(g)
+                assert g.is_consistent
+
+                import matplotlib.pyplot as plt
+
+                g.plot(with_labels=True, use_planar_drawer=False, node_size=10)
+                #plt.show()
+        except RecursionError:
+            pass
+
+    c = [0, 0, 0, 0, 0, 0, 0, 0]
+    samples = 1000
+    i = 0
+    while i < samples:
+        try:
+            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size() == 2:
+                assert g.is_consistent()
+                c[g.u_size()] += 1
+                i += 1
+        except RecursionError:
+            pass
+
+    print(c)

@@ -7,6 +7,7 @@ from collections import deque
 from framework.generic_samplers import *
 from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
 from framework.evaluation_oracle import EvaluationOracle
+from framework.generic_samplers import BoltzmannSamplerBase
 
 from planar_graph_sampler.bijections.closure import Closure
 from planar_graph_sampler.bijections.primal_map import PrimalMap
@@ -46,7 +47,7 @@ def other_test():
     })
 
     # inject the oracle into the samplers
-    BoltzmannSampler.oracle = other_test_oracle
+    BoltzmannSamplerBase.oracle = other_test_oracle
 
     print(test_grammar.recursive_rules)
     print()
@@ -56,7 +57,7 @@ def other_test():
     # for key in test_grammar.get_rules():
     # print(test_grammar.collect_oracle_queries(key, 'x', 'y'))
 
-    # sizes = [test_grammar.sample('Tree', 'x0', 'y0').get_l_size() for _ in range(1000)]
+    # sizes = [test_grammar.sample('Tree', 'x0', 'y0').l_size() for _ in range(1000)]
     # sum(sizes) / len(sizes)
 
 
@@ -73,7 +74,7 @@ def binary_tree_test():
     })
 
     # BoltzmannSampler.oracle = binary_tree_test_oracle
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     grammar = binary_tree_grammar()
     grammar.init()
 
@@ -148,7 +149,7 @@ def binary_tree_test_V2():
         # 'R_w_head(x,y)': 0.9
     })
 
-    BoltzmannSampler.oracle = binary_tree_test_oracle
+    BoltzmannSamplerBase.oracle = binary_tree_test_oracle
     # BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
     grammar = binary_tree_grammar()
     grammar.init()
@@ -157,10 +158,10 @@ def binary_tree_test_V2():
     # [print(query) for query in sorted(binary_tree_grammar.collect_oracle_queries('K_dy', symbolic_x, symbolic_y))]
     tree = grammar.sample('K_dy', symbolic_x, symbolic_y)
     # print(tree)
-    print(tree.get_base_class_object().get_attribute('numblacknodes'), end="\t")
-    print(tree.get_base_class_object().get_attribute('numwhitenodes'), end="\t")
-    print(tree.get_base_class_object().get_attribute('numtotal'), end="\t")
-    return tree.get_base_class_object()
+    print(tree.base_class_object().get_attribute('numblacknodes'), end="\t")
+    print(tree.base_class_object().get_attribute('numwhitenodes'), end="\t")
+    print(tree.base_class_object().get_attribute('numtotal'), end="\t")
+    return tree.base_class_object()
 
 
 def closure_test():
@@ -208,7 +209,7 @@ def irreducible_dissection_test():
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     grammar = irreducible_dissection_grammar()
     grammar.init()
 
@@ -227,7 +228,7 @@ def one_connected_test():
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     grammar = two_connected_graph_grammar()
     grammar.init()
 
@@ -263,7 +264,7 @@ def whiney_bijection_test():
 
 
 def network_test():
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     grammar = two_connected_graph_grammar()
     grammar.init()
 
@@ -290,7 +291,7 @@ def network_plot(network):
 
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
-    argparser.add_argument('-d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
+    argparser.add_argument('-_d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
     argparser.add_argument('-b', '--binary-tree', action='store_true', help='Run the binary_tree_test function')
     argparser.add_argument('--plot', action='store_true', help='Plot the binary_tree_test function result')
     argparser.add_argument('--print', action='store_true', help='print the binary_tree_test function result')

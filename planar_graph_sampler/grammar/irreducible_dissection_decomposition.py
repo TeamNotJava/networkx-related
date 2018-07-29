@@ -1,48 +1,42 @@
-import logging
-from random import choice
-import networkx as nx
-
 from framework.generic_samplers import *
-from framework.generic_classes import CombinatorialClass
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
+from framework.generic_samplers import BoltzmannSamplerBase
 
 from planar_graph_sampler.bijections.closure import Closure
+from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
-from planar_graph_sampler.rejections.admissibility_check import check_admissibility
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 
 def closure(binary_tree):
-    """To be used as bijection in the grammar.
-
-    :param binary_tree: The binary tree of l-derived binary tree to be closed
-    :return: The closure/l-derived closure of the tree/l-derived tree
-    """
-    half_edge = Closure().closure(binary_tree)
-    return half_edge
+    """To be used as bijection in the grammar."""
+    if isinstance(binary_tree, LDerivedClass):
+        binary_tree = binary_tree.base_class_object
+    assert isinstance(binary_tree, BinaryTree)
+    dissection = Closure().closure(binary_tree)
+    return dissection
 
 
 def add_random_root_edge(decomp):
-    """From ((L, U), dissection) or (U, dissection) to RootedIrreducibleDissection
-    """
+    """From ((L, U), dissection) or (U, dissection) to IrreducibleDissection."""
     dissection = decomp.second
     dissection.root_at_random_hexagonal_edge()
     return dissection
 
 
-def rej_admiss(dissection):
-    """Check if no internal 3 path exists from the root vertex to the opposite site vertex,
-    to avoid 4 cycles
-    """
-    return check_admissibility(dissection.get_root())
+def is_admissible(dissection):
+    """Admissibility check for usage in the grammar."""
+    return dissection.is_admissible
 
 
 def irreducible_dissection_grammar():
-    """
-    Builds the dissection grammar. Must still be initialized with init().
+    """Builds the dissection grammar. Must still be initialized with init().
 
-    :return:
+    Returns
+    -------
+    DecompositionGrammar
+        The grammar for sampling from J_a and J_a_dx.
     """
 
     # Some shorthands to keep the grammar readable.
@@ -59,9 +53,9 @@ def irreducible_dissection_grammar():
 
     grammar = DecompositionGrammar()
     # This grammar depends on the binary tree grammar so we add it.
-    grammar.add_rules(binary_tree_grammar().get_rules())
+    grammar.rules = binary_tree_grammar().rules
 
-    grammar.add_rules({
+    grammar.rules = {
 
         'I': Bij(K, closure),
 
@@ -71,11 +65,11 @@ def irreducible_dissection_grammar():
 
         'J_dx': Bij(3*U()*I + 3*L()*U()*I_dx, add_random_root_edge),
 
-        'J_a': Rej(J, rej_admiss),
+        'J_a': Rej(J, is_admissible),
 
-        'J_a_dx': Rej(J_dx, rej_admiss),
+        'J_a_dx': Rej(J_dx, is_admissible),
 
-    })
+    }
     return grammar
 
 
@@ -83,23 +77,17 @@ if __name__ == "__main__":
     grammar = irreducible_dissection_grammar()
     grammar.init()
 
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.debug_mode = False
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    sampled_class = 'J_a'
+    sampled_class = 'J_a_dx'
 
     diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-
-    assert diss.half_edge.color is 'black'
-    assert diss.half_edge.is_hexagonal
-
-    #print(diss.get_l_size())
-    #print(diss.get_u_size())
-    print(diss.half_edge.node_nr)
-    print(diss.half_edge.opposite.node_nr)
-    [print(he) for he in diss.get_hexagonal_edges()]
+    print(diss)
+    assert diss.is_consistent
 
     import matplotlib.pyplot as plt
     diss.plot()

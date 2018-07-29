@@ -12,8 +12,8 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-"""This class is needed for transformation of a Boltzmann sampler for bicolored binary trees
-into a Boltzmann sampler for 3-connected planar graphs.
+"""This class is needed for transformation of a Boltzmann _sampler for bicolored binary trees
+into a Boltzmann _sampler for 3-connected planar graphs.
 """
 
 import sys
@@ -21,7 +21,9 @@ import os
 from planar_graph_sampler.combinatorial_classes.halfedge import ClosureHalfEdge
 from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
 from framework.utils import Counter
+
 counter = Counter()
+
 
 class Closure:
 
@@ -50,14 +52,14 @@ class Closure:
 
                     if top_half_edge.number_proximate_inner_edges == 3:
                         new_half_edge = ClosureHalfEdge()
-                       # new_half_edge.add_to_closure(current_half_edge, current_half_edge.next, top_half_edge, False)
+                        # new_half_edge.add_to_closure(current_half_edge, current_half_edge.next, top_half_edge, False)
                         current_half_edge.add_to_closure(top_half_edge, False, new_half_edge)
                         current_half_edge = top_half_edge.prior
                     else:
                         stack.append(top_half_edge)
 
         if init_half_edge.opposite is not None:
-            # Iterate to first stem
+            # Iterate to _first stem
             half_edge_list = init_half_edge.list_half_edges([])
             for edge in half_edge_list:
                 if edge.opposite is None:
@@ -76,9 +78,9 @@ class Closure:
         hexagon = [ClosureHalfEdge() for i in range(12)]
         hexagon_start_half_edge = self.___construct_hexagon(hexagon, starting_half_edge)
 
-        # Connect the starting half-edge of our planar map with the first node of the hexagon
+        # Connect the starting half-edge of our planar map with the _first node of the hexagon
         new_half_edge = ClosureHalfEdge()
-        #new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge, True)
+        # new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11], starting_half_edge, True)
         hexagon_start_half_edge.add_to_closure(starting_half_edge, True, new_half_edge)
 
         connecting_half_edge = new_half_edge
@@ -122,7 +124,7 @@ class Closure:
 
                 if visited_more and id(hexagon_iter) == id(hexagon[0]):
                     last_added_edge = connecting_half_edge.next
-                    #fresh_half_edge.add_to_closure(connecting_half_edge, last_added_edge, current_half_edge, True)
+                    # fresh_half_edge.add_to_closure(connecting_half_edge, last_added_edge, current_half_edge, True)
                     connecting_half_edge.add_to_closure(current_half_edge, True, fresh_half_edge)
                 else:
                     last_added_edge = hexagon_iter.next
@@ -136,9 +138,7 @@ class Closure:
 
         return hexagon[0]
 
-
-
-    # Constructs a hexagon from a list of half_edges. 
+    # Constructs a hexagon from a list of half_edges.
     def ___construct_hexagon(self, hexagon_half_edges, partial_closure_edge):
         inv_color = None
         color = partial_closure_edge.color
@@ -244,7 +244,7 @@ class Closure:
 
         # Test if the outer face is a hexagon
         curr_half_edge = hex_half_edge
-        assert(curr_half_edge.is_hexagonal)
+        assert (curr_half_edge.is_hexagonal)
         hex_edges = 0
         while True:
             curr_half_edge = curr_half_edge.opposite
@@ -256,7 +256,7 @@ class Closure:
             if curr_half_edge == hex_half_edge:
                 break
             hex_edges += 1
-        assert(hex_edges == 5)
+        assert (hex_edges == 5)
 
         # Test if every node has at most two hexagonal edges
         for node in node_dict:
@@ -283,14 +283,30 @@ class Closure:
     def closure(self, binary_tree):
         """Implements the bijection between the binary trees and the irreducible
         dissections of hexagon. 
-        :param: binary_tree: BinaryTree
-        :return: IrreducibleDissection(init_half_edge): IrreducibleDissection
+
+        Parameters
+        ----------
+        binary_tree: BinaryTree
+
+        Returns
+        -------
+        IrreducibleDissection(init_half_edge): IrreducibleDissection
             Irreducible dissection of hexagon
+
+        Notes
+        -----
+        The partial closure takes a binary tree as input and closes the tree, such that
+        every face in the resulting graph has degree four. Afterwards, the complete
+        closure is performed, where the partially closed binary tree is integrated into
+        a hexagon (irreducible dissection of hexagon) [1].
+
+        References
+        ----------
+        .. [1] Eric Fusy:
+            Uniform random sampling of planar graphs in linear time
         """
-        init_half_edge = binary_tree
+
+        init_half_edge = binary_tree.half_edge
         # This edge is hexagonal and points in ccw direction
         init_half_edge = self.___bicolored_complete_closure(init_half_edge)
-        self.test_partial_closure(init_half_edge)
-        self.test_connections_between_half_edges(init_half_edge)
-        self.test_planarity_of_embedding(init_half_edge)
         return IrreducibleDissection(init_half_edge)

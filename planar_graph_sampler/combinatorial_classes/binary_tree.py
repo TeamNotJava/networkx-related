@@ -1,108 +1,157 @@
 import networkx as nx
 from framework.generic_classes import CombinatorialClass
+from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 
 from planar_graph_sampler.combinatorial_classes.halfedge import ClosureHalfEdge
 
 
-class BinaryTree(ClosureHalfEdge):
+class BinaryTree(HalfEdgeGraph):
     """
     Represents a bicolored binary tree in half-edge representation.
+
+    Parameters
+    ----------
+    root_color: str
+    root_half_edge: HalfEdge, optional (default=None)
     """
 
-    def __init__(self, root_color):
-        super(BinaryTree, self).__init__(self_consistent=True)
-        self.color = root_color
-        self.black_nodes_count = 0
-        self.white_nodes_count = 0
+    def __init__(self, root_color, root_half_edge=None):
+        if root_half_edge is None:
+            root_half_edge = ClosureHalfEdge(self_consistent=True)
+            root_half_edge.color = root_color
+        super(BinaryTree, self).__init__(root_half_edge)
+        self._black_nodes_count = 0
+        self._white_nodes_count = 0
         # The root leaf does not count.
-        self.leaves_count = 0
+        self._leaves_count = 0
         if root_color == 'black':
-            self.black_nodes_count = 1
+            self._black_nodes_count = 1
         elif root_color == 'white':
-            self.white_nodes_count = 1
+            self._white_nodes_count = 1
+
+    @property
+    def is_consistent(self):
+        """Checks invariants (for debugging)."""
+        super_ok = super(BinaryTree, self).is_consistent
+        node_count_ok = self.number_of_nodes == self._black_nodes_count + self._white_nodes_count
+        leaf_count_ok = self._leaves_count + 1 == self.number_of_nodes + 2
+        is_tree = self.is_tree
+        return super_ok and node_count_ok and leaf_count_ok and is_tree
 
     def flip(self):
-        """
-        Flips the children.
-        :return:
-        """
-        deg = self.degree()
+        """Flips the children."""
+        deg = self._half_edge.degree()
         assert deg <= 3
         # Both children present:
         if deg == 3:
-            self.invert()
+            self._half_edge.invert()
         # Otherwise don't do anything.
         return self
 
     def add_left_child(self, other):
+        """Adds left child to the root.
+
+        Only works if the tree does not have two children yet and the child root has the correct color.
         """
-        Adds left child to the root.
-        Only works if the tree does not have two children yet.
-        :param other:
-        :return:
-        """
-        assert self.degree() < 3
+        assert self._half_edge.degree() < 3
         # Add new half edge to root.
         new = ClosureHalfEdge()
-        new.color = self.get_root_color()
-        new.node_nr = self.node_nr
-        self.insert_after(new)
-        if not other.is_leaf():
-            assert other.opposite is None
-            assert other.color is not self.color
-            new.opposite = other
-            other.opposite = new
-            self.black_nodes_count += other.black_nodes_count
-            self.white_nodes_count += other.white_nodes_count
-            self.leaves_count += other.leaves_count
+        new.color = self.root_color
+        new.node_nr = self._half_edge.node_nr
+        self._half_edge.insert_after(new)
+        if not other.is_leaf:
+            assert other.half_edge.opposite is None
+            assert other.half_edge.color is not self._half_edge.color
+            new.opposite = other.half_edge
+            other.half_edge.opposite = new
+            self._black_nodes_count += other._black_nodes_count
+            self._white_nodes_count += other._white_nodes_count
+            self._leaves_count += other._leaves_count
         else:
             # Other is a leaf.
-            self.leaves_count += 1
+            self._leaves_count += 1
 
     def add_right_child(self, other):
-        """
-        Adds right child to the root.
-        Only works if the tree does not have two children yet.
-        :param other:
-        :return:
+        """Adds right child to the root.
+
+        Only works if the tree does not have two children yet and the child root has the correct color.
         """
         self.add_left_child(other)
         self.flip()
 
-    def get_root_color(self):
-        return self.color
+    @property
+    def root_color(self):
+        return self._half_edge.color
 
+    @property
     def is_white_rooted(self):
-        return self.get_root_color() is 'white'
+        return self.root_color is 'white'
 
+    @property
     def is_black_rooted(self):
-        return self.get_root_color() is 'black'
+        return self.root_color is 'black'
 
     def set_root_node_nr(self, node_nr):
-        for h in self.incident_half_edges():
+        for h in self._half_edge.incident_half_edges():
             h.node_nr = node_nr
 
+    @property
     def is_leaf(self):
         return False
 
-    def get_u_size(self):
-        return self.leaves_count
+    # CombinatorialClass interface.
 
-    def get_l_size(self):
-        return self.black_nodes_count
+    @property
+    def u_size(self):
+        return self._leaves_count
+
+    @property
+    def l_size(self):
+        return self._black_nodes_count
+
+    # Networkx related functionality.
+
+    def to_networkx_graph(self, include_unpaired=True):
+        # Get dict of nodes.
+        nodes = self._half_edge.get_node_list()
+        # Include the leaves as well.
+        G = super(BinaryTree, self).to_networkx_graph(include_unpaired=include_unpaired)
+        for v in G:
+            if v not in nodes:
+                # v is a leaf.
+                G.nodes[v]['color'] = '#229922'
+            else:
+                col = nodes[v][0].color
+                G.nodes[v]['color'] = '#333333' if col is 'black' else '#999999' if col is 'white' else '#990000'
+        return G
+
+    def plot(self, **kwargs):
+        """Plots the binary tree.
+
+        Parameters
+        ----------
+        draw_leaves: bool
+        """
+        draw_leaves = False
+        if 'draw_leaves' in kwargs:
+            draw_leaves = kwargs['draw_leaves']
+        kwargs['G'] = self.to_networkx_graph(include_unpaired=draw_leaves)
+        super(BinaryTree, self).plot(**kwargs)
 
 
 class Leaf(CombinatorialClass):
     """
-    Represents a leaf of a binary tree.
-    Doesn't hold any data.
+    Represents a leaf of a binary tree. Doesn't hold any data.
     """
 
+    @property
     def is_leaf(self):
         return True
 
-    def get_u_size(self):
+    @property
+    def u_size(self):
         return 1
 
-    def get_l_size(self):
+    @property
+    def l_size(self):
         return 0
