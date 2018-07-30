@@ -4,21 +4,14 @@ from framework.generic_classes import BoltzmannFrameworkError
 
 from planar_graph_sampler.grammar.planar_graph_decomposition import planar_graph_grammar
 from planar_graph_sampler.evaluations_planar_graph import all_evaluations
-
-
-class TestSampledSizes(object):
-    """
-
-    """
-
-    def setUp(self):
-        pass
+from planar_graph_sampler.test.dummy_grammar import dummy_sampling_grammar
 
 
 def test_sampled_sizes():
 
-    grammar = planar_graph_grammar()
+    grammar = dummy_sampling_grammar()
     grammar.init()
+    grammar.dummy_sampling_mode()
     #grammar.precompute_evals('G_dx_dx', 'x', 'y')
 
     for evaluations in all_evaluations:
@@ -110,12 +103,14 @@ def test_sampled_sizes():
             y = symbolic_y[index]
             expected_size = oracle.get_expected_l_size(label, symbolic_x[index], symbolic_y[index])
 
-            num_samples = 100
+            num_samples = 1000
+            count = 0
             sizes = []
             rec_errors = 0
-            for _ in range(num_samples):
+            while count < num_samples:
                 try:
                     sizes.append(grammar.sample(label, x, y).l_size)
+                    count += 1
                 except RecursionError:
                     rec_errors += 1
 

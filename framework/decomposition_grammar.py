@@ -354,7 +354,7 @@ class DecompositionGrammar(object):
             DecompositionGrammar._missing_rule_error(alias)
         return sampler.sample(x, y)
 
-    def dummy_sampling_mode(self):
+    def dummy_sampling_mode(self, delete_transformations=False):
         """Changes the state of the grammar to the dummy sampling mode.
 
         A dummy object only records its size but otherwise has no internal structure which is useful for testing sizes.
@@ -364,13 +364,14 @@ class DecompositionGrammar(object):
         if v.overwrites_builder and Settings.debug_mode:
             warnings.warn("dummy_sampling_mode has overwritten existing builders")
 
-        def apply_to_each(sampler):
-            if isinstance(sampler, TransformationSampler) and not isinstance(sampler, RejectionSampler):
-                sampler.transformation = lambda x: x
+        if delete_transformations:
+            def apply_to_each(sampler):
+                if isinstance(sampler, TransformationSampler) and not isinstance(sampler, RejectionSampler):
+                    sampler.transformation = lambda x: x
 
-        for alias in self.rules:
-            v = self._DFSVisitor(apply_to_each)
-            self[alias].accept(v)
+            for alias in self.rules:
+                v = self._DFSVisitor(apply_to_each)
+                self[alias].accept(v)
 
     class _DFSVisitor:
         """

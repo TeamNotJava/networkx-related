@@ -135,7 +135,15 @@ class DummyClass(CombinatorialClass):
     def u_atoms(self):
         raise BoltzmannFrameworkError("Cannot iterate over atoms from dummy class")
 
+    def random_l_atom(self):
+        return 0
+
+    def random_u_atom(self):
+        return 0
+
     def replace_l_atoms(self, sampler, x, y, exceptions=None):
+        if exceptions is None:
+            exceptions = []
         if len(exceptions) > self.l_size:
             raise BoltzmannFrameworkError("Too many exceptions for substitution")
         l_growth = -(self.l_size - len(exceptions))
@@ -151,6 +159,8 @@ class DummyClass(CombinatorialClass):
         return self
 
     def replace_u_atoms(self, sampler, x, y, exceptions=None):
+        if exceptions is None:
+            exceptions = []
         if len(exceptions) > self.u_size:
             raise BoltzmannFrameworkError("Too many exceptions for substitution")
         l_growth = 0
