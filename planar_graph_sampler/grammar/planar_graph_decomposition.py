@@ -15,7 +15,7 @@
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, reference_evals
 
 from planar_graph_sampler.grammar.one_connected_decomposition import one_connected_graph_grammar
 
@@ -51,11 +51,12 @@ def planar_graph_grammar():
 
 
 if __name__ == '__main__':
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    BoltzmannSamplerBase.debug_mode = False
+
     grammar = planar_graph_grammar()
     grammar.init()
-
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
-    BoltzmannSamplerBase.debug_mode = False
+    #grammar.precompute_evals('G_dx_dx', 'x', 'y')
 
     symbolic_x = 'x'
     symbolic_y = 'y'
@@ -71,7 +72,7 @@ if __name__ == '__main__':
 
         try:
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 90:
+            if g.l_size > 50:
                 print(g.l_size)
 
         except RecursionError:

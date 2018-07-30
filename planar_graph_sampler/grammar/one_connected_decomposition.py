@@ -92,9 +92,9 @@ def one_connected_graph_grammar():
 
         'G_1_dx': Set(0, LSubs(G_2_dx, L() * G_1_dx)),
 
-        'G_1_dx_dx_helper': Bij((G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx), subs_marked_vertex),
+        #'G_1_dx_dx_helper': Bij((G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx), subs_marked_vertex),
 
-        'G_1_dx_dx': Bij(G_1_dx_dx_helper * G_1_dx, merge),
+        'G_1_dx_dx': Bij(Bij((G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx), subs_marked_vertex) * G_1_dx, merge),
 
         'G_1': Bij(Rej(G_1_dx, rej_to_G_1), underive)  # See lemma 15.
 
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
         try:
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 50:
+            if g.l_size == 2:
                 if isinstance(g, DerivedClass):
                     g = g.base_class_object
                 if isinstance(g, DerivedClass):
@@ -135,7 +135,7 @@ if __name__ == '__main__':
 
                 import matplotlib.pyplot as plt
 
-                g.plot(with_labels=False, node_size=25, use_planar_drawer=True)
+                g.plot(with_labels=True, node_size=25, use_planar_drawer=False)
                 plt.show()
         except RecursionError:
             pass

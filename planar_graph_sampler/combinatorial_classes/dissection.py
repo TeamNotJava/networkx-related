@@ -118,10 +118,12 @@ class IrreducibleDissection(HalfEdgeGraph):
 
     # CombinatorialClass interface.
 
+    @property
     def u_size(self):
         """The u-size is the number of inner faces."""
         return (self.number_of_half_edges - 6) / 4
 
+    @property
     def l_size(self):
         """The l-size is the number of black inner vertices."""
         node_dict = self.half_edge.get_node_list()

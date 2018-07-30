@@ -168,6 +168,7 @@ class HalfEdgeGraph(CombinatorialClass):
                 G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
             else:
                 G.add_edge(half_edge.node_nr, next(counter))
+        # G = nx.relabel.convert_node_labels_to_integers(G)
         return G
 
     def plot(self, **kwargs):
