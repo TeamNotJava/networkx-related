@@ -129,11 +129,7 @@ def merge_networks_in_parallel(network, network_for_plugging):
     second_net_zero_pole_next.prior = first_net_zero_pole_prior
 
     # Update the node numbers in the zero pole.
-
-    # TODO Check these two lines.
-    half_edge_walker = second_net_zero_pole_edge.next
-    # half_edge_walker = second_net_zero_pole_next
-
+    half_edge_walker = first_net_zero_pole_edge.next
     while half_edge_walker != first_net_zero_pole_edge:
         half_edge_walker.node_nr = first_net_zero_pole_edge.node_nr
         half_edge_walker = half_edge_walker.next
@@ -148,8 +144,8 @@ def merge_networks_in_parallel(network, network_for_plugging):
     second_net_inf_pole_prior.next = first_net_inf_pole_next
 
     # Update the node numbers in the inf pole
-    half_edge_walker = second_net_inf_pole_next
-    while half_edge_walker != first_net_inf_pole_next:
+    half_edge_walker = first_net_inf_pole_edge.next
+    while half_edge_walker != first_net_inf_pole_edge:
         half_edge_walker.node_nr = first_net_inf_pole_edge.node_nr
         half_edge_walker = half_edge_walker.next
 
