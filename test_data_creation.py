@@ -32,7 +32,7 @@ def ___sample_binary_tree(size):
     #     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
     # else:
     #     BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
-    BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
 
     grammar = binary_tree_grammar()
     grammar.init()
@@ -64,9 +64,9 @@ def ___sample_three_connected(size):
     start_sampling = timer()
     number_trials = 0
     if size <= 100:
-        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+        BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     else:
-        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+        BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
 
     grammar = three_connected_graph_grammar()
     grammar.init()
@@ -79,12 +79,12 @@ def ___sample_three_connected(size):
             number_trials += 1
             try:
                 three_connected = grammar.sample('M_3_arrow', symbolic_x, symbolic_y)
-                node_num = three_connected.get_l_size()
+                node_num = three_connected.l_size
             except Exception:
                 number_trials += 1
     else:
         three_connected = grammar.sample('M_3_arrow', symbolic_x, symbolic_y)
-        node_num = three_connected.get_l_size()
+        node_num = three_connected.l_size
     
     end_sampling = timer()
     time_needed = end_sampling - start_sampling
@@ -97,9 +97,9 @@ def ___sample_two_connected(size):
     start_sampling = timer()
     number_trials = 0
     if size <= 100:
-        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+        BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     else:
-        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+        BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
 
     grammar = two_connected_graph_grammar()
     grammar.init()
@@ -112,14 +112,14 @@ def ___sample_two_connected(size):
             number_trials += 1
             try:
                 two_connectd = grammar.sample('G_2_arrow', symbolic_x, symbolic_y)
-                node_num = len(two_connectd.vertices_list)
+                node_num = two_connectd.number_of_nodes
             except Exception:
                 number_trials += 1
     else:
         two_connectd = grammar.sample('G_2_arrow', symbolic_x, symbolic_y)
-        node_num = len(two_connectd.vertices_list)
+        node_num = two_connectd.number_of_nodes
 
-    edge_num = len(two_connectd.edges_list)
+    edge_num = two_connectd.number_of_edges
 
     end_sampling = timer()
     time_needed = end_sampling - start_sampling
@@ -138,9 +138,9 @@ def ___sample_combinatorial_class(comb_class, symbolic_x, symbolic_y, size):
     start_sampling = timer()
     number_trials = 0
     if size == 100:
-        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+        BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     else:
-        BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+        BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
 
     grammar = two_connected_graph_grammar()
     grammar.init()
@@ -150,12 +150,12 @@ def ___sample_combinatorial_class(comb_class, symbolic_x, symbolic_y, size):
         while node_num != size:
             number_trials += 1
             graph = grammar.sample(comb_class, symbolic_x, symbolic_y)
-            node_num = graph.get_number_of_nodes()
+            node_num = graph.number_of_nodes
     else:
         graph = grammar.sample(comb_class, symbolic_x, symbolic_y)
-        node_num = graph.get_number_of_nodes()
+        node_num = graph.number_of_nodes
 
-    edge_num = graph.get_number_of_edges()
+    edge_num = graph.number_of_edges
 
     end_sampling = timer()
     time_needed = end_sampling - start_sampling

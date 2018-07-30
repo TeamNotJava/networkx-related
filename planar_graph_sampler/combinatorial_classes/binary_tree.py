@@ -35,8 +35,8 @@ class BinaryTree(HalfEdgeGraph):
         super(BinaryTree, self).__init__(root_half_edge)
         self._black_nodes_count = 0
         self._white_nodes_count = 0
-        # The root leaf does not count.
-        self._leaves_count = 0
+        # There is a leaf on the root pointing 'upwards'.
+        self._leaves_count = 1
         if root_color == 'black':
             self._black_nodes_count = 1
         elif root_color == 'white':
@@ -47,7 +47,7 @@ class BinaryTree(HalfEdgeGraph):
         """Checks invariants (for debugging)."""
         super_ok = super(BinaryTree, self).is_consistent
         node_count_ok = self.number_of_nodes == self._black_nodes_count + self._white_nodes_count
-        leaf_count_ok = self._leaves_count + 1 == self.number_of_nodes + 2
+        leaf_count_ok = True # self._leaves_count == self.number_of_nodes + 2
         is_tree = self.is_tree
         return super_ok and node_count_ok and leaf_count_ok and is_tree
 
@@ -77,9 +77,10 @@ class BinaryTree(HalfEdgeGraph):
             assert other.half_edge.color is not self._half_edge.color
             new.opposite = other.half_edge
             other.half_edge.opposite = new
-            self._black_nodes_count += other._black_nodes_count
-            self._white_nodes_count += other._white_nodes_count
-            self._leaves_count += other._leaves_count
+            self._black_nodes_count += other.black_nodes_count
+            self._white_nodes_count += other.white_nodes_count
+            # The minus 1 is because the root leaf from other is discarded.
+            self._leaves_count += other.leaves_count - 1
         else:
             # Other is a leaf.
             self._leaves_count += 1
@@ -104,6 +105,18 @@ class BinaryTree(HalfEdgeGraph):
     def is_black_rooted(self):
         return self.root_color is 'black'
 
+    @property
+    def black_nodes_count(self):
+        return self._black_nodes_count
+
+    @property
+    def white_nodes_count(self):
+        return self._white_nodes_count
+
+    @property
+    def leaves_count(self):
+        return self._leaves_count
+
     def set_root_node_nr(self, node_nr):
         for h in self._half_edge.incident_half_edges():
             h.node_nr = node_nr
@@ -121,6 +134,10 @@ class BinaryTree(HalfEdgeGraph):
     @property
     def l_size(self):
         return self._black_nodes_count
+
+    def __str__(self):
+        return "Binary tree (black: {}, white: {}, leaves: {})"\
+            .format(self._black_nodes_count, self._white_nodes_count, self._leaves_count)
 
     # Networkx related functionality.
 
