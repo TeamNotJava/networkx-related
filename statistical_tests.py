@@ -25,7 +25,7 @@ import networkx.algorithms.isomorphism as iso
 from networkx.algorithms import isomorphism
 from test_data_creation import create_data
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
-from framework.utils import Counter
+from planar_graph_sampler.grammar.grammar_utils import Counter
 counter = Counter()
 
 # Define colors for output
