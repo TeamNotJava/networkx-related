@@ -14,6 +14,8 @@
 
 import random as rnd
 
+import networkx as nx
+
 from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 
 
@@ -41,7 +43,7 @@ class IrreducibleDissection(HalfEdgeGraph):
         root_is_black = self.half_edge.color is 'black'
         root_is_hex = self.half_edge.is_hexagonal
         twelve_hex_he = len([he for he in self.half_edge.get_all_half_edges() if he.is_hexagonal]) == 12
-        return all([super_ok, root_is_black, root_is_hex, twelve_hex_he])
+        return all([super_ok, root_is_black, root_is_hex, twelve_hex_he, self.is_admissible])
 
     @property
     def hexagonal_edges(self):
@@ -64,57 +66,77 @@ class IrreducibleDissection(HalfEdgeGraph):
     def is_admissible(self):
         """Checks if there is a path of length 3 with an inner edge from the root to the opposite outer vertex."""
 
-        # Will be used for checking in the bfs.
-        outer_vertex_half_edge = self.half_edge.opposite.next.opposite.next.opposite.next
-        # print ('%s    %s' % (self.half_edge.node_nr, outer_vertex_half_edge.node_nr))
+        start_node = self.half_edge
+        assert start_node.color is 'black'
+        end_node = self.half_edge.opposite.next.opposite.next.opposite
+        assert end_node.color is 'white'
+        start_node = start_node.node_nr
+        end_node = end_node.node_nr
+        g = self.to_networkx_graph()
 
-        # Creates the queue for the BFS.
-        queue = list()
-        # Put the init half edge into the queue.
-        queue.append((self.half_edge, 0, False, set()))
+        # There are always 2 path of length 4 (meaning 4 nodes) from start to end (on the hexagon boundary).
+        # If there is one more, then this is a forbidden path!
+        paths = nx.shortest_simple_paths(g, start_node, end_node)
+        path_1 = next(paths)
+        assert len(path_1) == 4
+        path_2 = next(paths)
+        assert len(path_2) == 4
+        path_3 = next(paths)
+        return len(path_3) > 4
 
-        while len(queue) != 0:
-            # Pop the _first element from the FIFO queue.
-            top_element = queue.pop(0)
+        # TODO may the code below work because it's probably more efficient that the method above.
 
-            # Extract the components from the top element.
-            top_half_edge = top_element[0]
-            distance = top_element[1]
-            has_been_inner_edge_included = top_element[2]
-            visited_nodes = top_element[3]
-
-            # Updated the visited_nodes_set.
-            visited_nodes.add(top_half_edge.node_nr)
-
-            # Start BFS for its neighbours.
-            walker_half_edge = top_half_edge.next
-            while walker_half_edge is not top_half_edge:
-
-                opposite = walker_half_edge.opposite
-                # Skip the vertex if it was already visited.
-                if opposite in visited_nodes: continue
-
-                # Prepare the new components of the element.
-                updated_distance = distance + 1
-                new_visited_nodes = set()
-                new_visited_nodes.update(visited_nodes)
-                inner_edge_included = has_been_inner_edge_included or (opposite.is_hexagonal is False)
-
-                # If the distance is smaller than 3 then the element is added into the queue.
-                if updated_distance < 3:
-                    queue.append((opposite, updated_distance, inner_edge_included, new_visited_nodes))
-                else:
-                    # If the distance is equal to 3 than we check whether the new vertex is the outer one and
-                    # does an inner edge have been included in the path. If both conditions are True, then a path
-                    # has been found which means that the dissection is not irreducible. -> Return false.
-                    if opposite.node_nr == outer_vertex_half_edge.node_nr and inner_edge_included:
-                        return False
-
-                # Continue with the next half edge.
-                walker_half_edge = walker_half_edge.next
-
-        # A path has not been found, therefore the dissection is irreducible and we return True.
-        return True
+        # # Will be used for checking in the bfs.
+        # outer_vertex_half_edge = self.half_edge.opposite.next.opposite.next.opposite.next
+        # # print ('%s    %s' % (self.half_edge.node_nr, outer_vertex_half_edge.node_nr))
+        #
+        # # Creates the queue for the BFS.
+        # queue = list()
+        # # Put the init half edge into the queue.
+        # queue.append((self.half_edge, 0, False, set()))
+        #
+        # while len(queue) != 0:
+        #     # Pop the _first element from the FIFO queue.
+        #     top_element = queue.pop(0)
+        #
+        #     # Extract the components from the top element.
+        #     top_half_edge = top_element[0]
+        #     distance = top_element[1]
+        #     has_been_inner_edge_included = top_element[2]
+        #     visited_nodes = top_element[3]
+        #
+        #     # Updated the visited_nodes_set.
+        #     visited_nodes.add(top_half_edge.node_nr)
+        #
+        #     # Start BFS for its neighbours.
+        #     walker_half_edge = top_half_edge.next
+        #     while walker_half_edge is not top_half_edge:
+        #
+        #         opposite = walker_half_edge.opposite
+        #         # Skip the vertex if it was already visited.
+        #         if opposite in visited_nodes: continue
+        #
+        #         # Prepare the new components of the element.
+        #         updated_distance = distance + 1
+        #         new_visited_nodes = set()
+        #         new_visited_nodes.update(visited_nodes)
+        #         inner_edge_included = has_been_inner_edge_included or (opposite.is_hexagonal is False)
+        #
+        #         # If the distance is smaller than 3 then the element is added into the queue.
+        #         if updated_distance < 3:
+        #             queue.append((opposite, updated_distance, inner_edge_included, new_visited_nodes))
+        #         else:
+        #             # If the distance is equal to 3 than we check whether the new vertex is the outer one and
+        #             # does an inner edge have been included in the path. If both conditions are True, then a path
+        #             # has been found which means that the dissection is not irreducible. -> Return false.
+        #             if opposite.node_nr == outer_vertex_half_edge.node_nr and inner_edge_included:
+        #                 return False
+        #
+        #         # Continue with the next half edge.
+        #         walker_half_edge = walker_half_edge.next
+        #
+        # # A path has not been found, therefore the dissection is irreducible and we return True.
+        # return True
 
     # CombinatorialClass interface.
 

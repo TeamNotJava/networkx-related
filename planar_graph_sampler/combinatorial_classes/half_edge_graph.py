@@ -12,6 +12,8 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+import random
+
 import networkx as nx
 
 from framework.generic_classes import CombinatorialClass
@@ -56,6 +58,15 @@ class HalfEdgeGraph(CombinatorialClass):
     def number_of_half_edges(self):
         """Number of half-edges in the graph."""
         return len(self._half_edge.get_all_half_edges(include_unpaired=True, include_opp=True))
+
+    def random_node_half_edge(self):
+        """Returns a half-edge incident to a node chosen uniformly at random.
+
+        This is not the same as choosing a random half-edge!
+        """
+        nodes = self.half_edge.get_node_list()
+        random_node = random.choice(list(nodes.keys()))
+        return nodes[random_node][0]
 
     @property
     def is_consistent(self):
@@ -161,6 +172,10 @@ class HalfEdgeGraph(CombinatorialClass):
         counter = Counter()
         # Get all edges (one half-edge per edge).
         half_edges = self.half_edge.get_all_half_edges(include_opp=False, include_unpaired=include_unpaired)
+        if len(half_edges) == 0:
+            G = nx.Graph()
+            G.add_node(self.half_edge.node_nr)
+            return G
         G = nx.Graph()
         while len(half_edges) > 0:
             half_edge = half_edges.pop()

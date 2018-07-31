@@ -12,10 +12,6 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-import random as rnd
-
-from framework.utils import nth
-
 from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 from planar_graph_sampler.combinatorial_classes.one_connected_graph import OneConnectedPlanarGraph
 
@@ -39,23 +35,20 @@ class TwoConnectedPlanarGraph(HalfEdgeGraph):
     # CombinatorialClass interface.
 
     def random_l_atom(self):
-        nodes = self.half_edge.get_node_list()
-        random_node = rnd.choice(list(nodes.keys()))
-        # Re-root this object.
-        self._half_edge = nodes[random_node][0]
-        return random_node
+        return self.random_node_half_edge()
 
     def l_atoms(self):
-        return iter(self.half_edge.get_node_list().keys())
+        return iter([half_edge_list[0] for half_edge_list in self.half_edge.get_node_list().values()])
+        # return iter(self.half_edge.get_node_list().keys())
 
     def replace_l_atoms(self, sampler, x, y, exceptions=None):
         nodes = self.half_edge.get_node_list()
         # Sample a graph and merge it with all remaining nodes.
         for node in nodes:
-            if node in exceptions:
+            if node in [he.node_nr for he in exceptions]:
                 continue
             # Sampler is for L * G_1_dx
-            plug_in = sampler.sample(x, y).second.base_class_object.half_edge
+            plug_in = sampler.sample(x, y).second.marked_atom # base_class_object.half_edge
             if not plug_in.is_trivial:
                 # Get an arbitrary half-edge incident to the current node.
                 he = nodes[node][0]
