@@ -97,12 +97,17 @@ if __name__ == "__main__":
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    sampled_class = 'J_a_dx'
+    sampled_class = 'J_a'
 
-    diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-    print(diss)
-    assert diss.is_consistent
+    while True:
+        diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+        if True:
+            print(diss)
+            try:
+                assert diss.is_consistent
 
-    import matplotlib.pyplot as plt
-    diss.plot()
-    plt.show()
+                import matplotlib.pyplot as plt
+                diss.plot(with_labels=True, use_planar_drawer=True, node_size=50)
+                plt.show()
+            except AttributeError:
+                pass

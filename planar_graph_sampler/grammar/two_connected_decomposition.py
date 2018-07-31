@@ -131,14 +131,14 @@ if __name__ == '__main__':
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
 
-    sampled_class = 'G_2_dx_dx'
+    sampled_class = 'G_2_dx'
 
     while True:
         try:
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
         except RecursionError:
             pass
-        if g.u_size > 5:
+        if g.l_size == 4:
             if isinstance(g, DerivedClass):
                 g = g.base_class_object
             if isinstance(g, DerivedClass):
@@ -148,5 +148,5 @@ if __name__ == '__main__':
 
             import matplotlib.pyplot as plt
 
-            g.plot(with_labels=False, node_size=25, use_planar_drawer=True)
+            g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
             plt.show()
