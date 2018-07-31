@@ -1,48 +1,51 @@
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
 from framework.generic_classes import BoltzmannFrameworkError
+from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
 
 from planar_graph_sampler.grammar.planar_graph_decomposition import planar_graph_grammar
-from planar_graph_sampler.evaluations_planar_graph import all_evaluations
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000, reference_evals
 from planar_graph_sampler.test.dummy_grammar import dummy_sampling_grammar
 
 
 def test_sampled_sizes():
 
-    grammar = dummy_sampling_grammar()
-    grammar.init()
-    grammar.dummy_sampling_mode()
-    #grammar.precompute_evals('G_dx_dx', 'x', 'y')
+    all_evaluations = [planar_graph_evals_n100]
 
     for evaluations in all_evaluations:
         oracle = EvaluationOracle(evaluations)
         BoltzmannSamplerBase.oracle = oracle
+        grammar = binary_tree_grammar()
+        # grammar = dummy_sampling_grammar()
+        grammar.init()
+        # grammar.dummy_sampling_mode()
+        grammar.precompute_evals('K', 'x*G_1_dx(x,y)', 'D(x*G_1_dx(x,y),y)')
 
         classes_known_dx = [
             'K',
-            'K_dx',
-            'K_dy',
-            'J_a',
+            #'K_dx',
+            #'K_dy',
+            #'J_a',
 
-            'D',
-            'D_dx',
-            'S',
-            'S_dx',
-            'P',
-            'P_dx',
-            'H',
-            'H_dx',
+            #'D',
+            #'D_dx',
+            #'S',
+            #'S_dx',
+            #'P',
+            #'P_dx',
+            #'H',
+            #'H_dx',
 
-            'G_2_dx',
-            'G_2_dx_dx',
-            
-            'G_1_dx_dx',
-            'G_1',
-            'G_1_dx',
+            #'G_2_dx',
+            #'G_2_dx_dx',
 
-            'G',
-            'G_dx',
-            'G_dx_dx'
+            #'G_1_dx_dx',
+            #'G_1',
+            #'G_1_dx',
+
+            #'G',
+            #'G_dx',
+            #'G_dx_dx'
         ]
 
         symbolic_x = [
