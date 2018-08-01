@@ -12,17 +12,19 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+import networkx as nx
+
 from framework.generic_classes import CombinatorialClass
 
 
 class HalfEdge(CombinatorialClass):
     """
-    Generic class for half edge representation of a combinatorial planar embedding.
+    Generic class for half-edge representation of a combinatorial planar embedding.
 
     Parameters
     ----------
     self_consistent: bool
-        Makes a consistent one-node/zero edge graph.
+        Makes a consistent one-node/zero-edge graph.
     """
 
     def __init__(self, self_consistent=False):
@@ -168,6 +170,21 @@ class HalfEdge(CombinatorialClass):
                 break
         return edge_list
 
+    def node_dict(self, res=None):
+        """Returns a dictionary that maps nodes to a list of half-edges in ccw order around the node."""
+        if res is None:
+            res = {}
+        node_nr = self.node_nr
+        if node_nr in res:
+            # Current node was already visited.
+            return res
+        incident = self.incident_half_edges()
+        res[node_nr] = incident
+        for he in incident:
+            if he.opposite is not None:
+                res = he.opposite.node_dict(res)
+        return res
+
     def get_all_half_edges(self, edge_set=None, include_opp=True, include_unpaired=True):
         """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False."""
         if edge_set is None:
@@ -195,6 +212,7 @@ class HalfEdge(CombinatorialClass):
         return len(self.get_all_half_edges(include_opp=False, include_unpaired=False))
 
     def get_node_list(self):
+        # TODO probably replace by method that also gives right order of half edges
         """Returns a dictionary of nodes.
 
         The key is node number and the value is a list of half-edges belonging to the node number.
