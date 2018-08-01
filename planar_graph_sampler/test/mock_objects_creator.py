@@ -194,22 +194,21 @@ def create_sample_closure_output():
     return half_edges
 
 
-def create_three_connected_graph(start_node_number=0):
+def create_three_connected_graph(lowest_node_number=0):
     """Creates a three connected graph used for testing the network operations."""
-    # TODO is broken
     first_net_vertices_list = []
     first_net_edges_list = []
 
     first_net_root_edge = HalfEdge()
-    first_net_root_edge.node_nr = 1 + start_node_number
+    first_net_root_edge.node_nr = 1 + lowest_node_number
 
     first_net_root_edge_opposite = HalfEdge()
-    first_net_root_edge_opposite.node_nr = 2 + start_node_number
+    first_net_root_edge_opposite.node_nr = 2 + lowest_node_number
     first_net_root_edge.opposite = first_net_root_edge_opposite
     first_net_root_edge_opposite.opposite = first_net_root_edge
 
     third = HalfEdge()
-    third.node_nr = 1 + start_node_number
+    third.node_nr = 1 + lowest_node_number
     first_net_root_edge.next = third
     first_net_root_edge.prior = third
     third.prior = first_net_root_edge
@@ -217,19 +216,19 @@ def create_three_connected_graph(start_node_number=0):
     first_net_edges_list.append(third)
 
     fourth = HalfEdge()
-    fourth.node_nr = 3 + start_node_number
+    fourth.node_nr = 3 + lowest_node_number
     third.opposite = fourth
     fourth.opposite = third
     first_net_vertices_list.append(fourth)
 
     fifth = HalfEdge()
-    fifth.node_nr = 3 + start_node_number
+    fifth.node_nr = 3 + lowest_node_number
     fifth.prior = fourth
     fourth.next = fifth
     first_net_edges_list.append(fifth)
 
     sixth = HalfEdge()
-    sixth.node_nr = 3 + start_node_number
+    sixth.node_nr = 3 + lowest_node_number
     sixth.next = fourth
     fourth.prior = sixth
     sixth.prior = fifth
@@ -237,13 +236,13 @@ def create_three_connected_graph(start_node_number=0):
     first_net_edges_list.append(sixth)
 
     seventh = HalfEdge()
-    seventh.node_nr = 4 + start_node_number
+    seventh.node_nr = 4 + lowest_node_number
     seventh.opposite = fifth
     fifth.opposite = seventh
     first_net_vertices_list.append(seventh)
 
     eighth = HalfEdge()
-    eighth.node_nr = 4 + start_node_number
+    eighth.node_nr = 4 + lowest_node_number
     eighth.next = seventh
     eighth.prior = seventh
     seventh.next = eighth
@@ -251,14 +250,14 @@ def create_three_connected_graph(start_node_number=0):
     first_net_edges_list.append(eighth)
 
     ninth = HalfEdge()
-    ninth.node_nr = 2 + start_node_number
+    ninth.node_nr = 2 + lowest_node_number
     ninth.opposite = eighth
     eighth.opposite = ninth
     ninth.next = first_net_root_edge_opposite
     first_net_root_edge_opposite.prior = ninth
 
     tenth = HalfEdge()
-    tenth.node_nr = 2 + start_node_number
+    tenth.node_nr = 2 + lowest_node_number
     tenth.opposite = sixth
     sixth.opposite = tenth
     tenth.next = ninth
@@ -266,4 +265,4 @@ def create_three_connected_graph(start_node_number=0):
     tenth.prior = first_net_root_edge_opposite
     first_net_root_edge_opposite.next = tenth
 
-    return EdgeRootedThreeConnectedPlanarGraph(first_net_vertices_list, first_net_edges_list, first_net_root_edge)
+    return EdgeRootedThreeConnectedPlanarGraph(first_net_root_edge)
