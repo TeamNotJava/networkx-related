@@ -24,39 +24,40 @@ from planar_graph_sampler.grammar.two_connected_decomposition import two_connect
 
 
 class Merger(DefaultBuilder):
-    """Merges a set of l-derived graphs at their marked vertices."""
-
+    """
+    Merges a set of l-derived graphs at their marked vertices.
+    """
     def set(self, graphs):
+        # Merge a set of l-derived one-connected planar graphs at their marked vertices.
+        # If the set is empty, return a single-node graph.
         if len(graphs) is 0:
-            return LDerivedClass(OneConnectedPlanarGraph())
-        res = graphs.pop().base_class_object
+            g = OneConnectedPlanarGraph()
+            return LDerivedClass(OneConnectedPlanarGraph(), g.half_edge)
+        result = graphs.pop()
         for g in graphs:
-            res.half_edge.insert_all(g.base_class_object.half_edge)
-        return LDerivedClass(res)
+            result.marked_atom.insert_all(g.marked_atom)
+        return result
 
 
 def merge(prod):
-    """Merges derived one-connected graphs."""
+    """Merges l-derived one-connected graphs at their marked vertices"""
     # lhs is a bi-derived connected and rhs a derived connected.
     lhs = prod.first
     rhs = prod.second
-    g1 = lhs.base_class_object.base_class_object
-    g2 = rhs.base_class_object
-    if not g2.half_edge.is_trivial:
-        g1.half_edge.insert_all(g2.half_edge)
+    if not lhs.base_class_object.marked_atom.is_trivial:
+        rhs.marked_atom.insert_all(lhs.base_class_object.marked_atom)
     return lhs
 
 
 def subs_marked_vertex(decomp):
-    """Substitutes marked vertex."""
-    plug_in = decomp.first
-    if isinstance(decomp.first, ProdClass):
-        plug_in = decomp.first.second.base_class_object
-    assert isinstance(plug_in, LDerivedClass) and isinstance(plug_in.base_class_object, OneConnectedPlanarGraph)
-    plug_in = plug_in.base_class_object
-    g = decomp.second.base_class_object.base_class_object
-    g.half_edge.insert_all(plug_in.half_edge)
-    return LDerivedClass(LDerivedClass(OneConnectedPlanarGraph(g.half_edge)))
+    # decomp is of form (G_1_dx + L * G_1_dx_dx) * G_2_dx_dx.
+    if isinstance(decomp.first, LDerivedClass):
+        plug_in_he = decomp.first.marked_atom
+    else:
+        plug_in_he = decomp.first.second.base_class_object.marked_atom # or ... .base_class_object.marked_atom ?
+    if not plug_in_he.is_trivial:
+        decomp.second.marked_atom.insert_all(plug_in_he)
+    return decomp.second
 
 
 def rej_to_G_1(g):
@@ -78,7 +79,6 @@ def one_connected_graph_grammar():
     G_2_dx_dx = AliasSampler('G_2_dx_dx')
     G_1_dx = AliasSampler('G_1_dx')
     G_1_dx_dx = AliasSampler('G_1_dx_dx')
-    G_1_dx_dx_helper = AliasSampler('G_1_dx_dx_helper')
     Set = SetSampler
     LSubs = LSubsSampler
     Bij = BijectionSampler
@@ -92,9 +92,10 @@ def one_connected_graph_grammar():
 
         'G_1_dx': Set(0, LSubs(G_2_dx, L() * G_1_dx)),
 
-        #'G_1_dx_dx_helper': Bij((G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx), subs_marked_vertex),
-
-        'G_1_dx_dx': Bij(Bij((G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx), subs_marked_vertex) * G_1_dx, merge),
+        'G_1_dx_dx':
+            Bij(
+                Bij((G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx), subs_marked_vertex) * G_1_dx,
+            merge),
 
         'G_1': Bij(Rej(G_1_dx, rej_to_G_1), underive)  # See lemma 15.
 
@@ -135,7 +136,7 @@ if __name__ == '__main__':
 
                 import matplotlib.pyplot as plt
 
-                g.plot(with_labels=True, node_size=25, use_planar_drawer=False)
+                g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
                 plt.show()
         except RecursionError:
             pass

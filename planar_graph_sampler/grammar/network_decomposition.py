@@ -166,7 +166,7 @@ if __name__ == '__main__':
     grammar.init()
     # grammar.dummy_sampling_mode()
 
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
     BoltzmannSamplerBase.debug_mode = True
 
     symbolic_x = 'x*G_1_dx(x,y)'
@@ -177,28 +177,13 @@ if __name__ == '__main__':
     while True:
         try:
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 0:
+            if g.l_size > 5:
                 print(g)
                 assert g.is_consistent
 
                 import matplotlib.pyplot as plt
 
-                g.plot(with_labels=True, use_planar_drawer=False, node_size=10)
+                g.plot(with_labels=False, use_planar_drawer=False, node_size=10)
                 plt.show()
         except RecursionError:
-            pass
-
-    c = [0, 0, 0, 0, 0, 0, 0, 0]
-    samples = 1000
-    i = 0
-    while i < samples:
-        try:
-            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size() == 2:
-                assert g.is_consistent()
-                c[g.u_size()] += 1
-                i += 1
-        except RecursionError:
-            pass
-
-    print(c)
+            print("RecursionError")

@@ -78,15 +78,21 @@ if __name__ == "__main__":
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'G_3_arrow'
 
-    sampled_class = 'G_3_arrow_dy'
+    while True:
+        try:
+            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+        except RecursionError:
+            pass
+        if g.l_size == 4:
+            print(g)
+            try:
+                # tree = tree.base_class_object
+                assert g.is_consistent
+                import matplotlib.pyplot as plt
 
-    g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-    g = g.base_class_object
-    print(g)
-    assert g.is_consistent
-
-    import matplotlib.pyplot as plt
-
-    g.plot(node_size=50)
-    plt.show()
+                g.plot(draw_leaves=True, node_size=50, use_planar_drawer=False)
+                plt.show()
+            except AttributeError:
+                pass

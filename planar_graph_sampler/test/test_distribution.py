@@ -7,51 +7,371 @@ from framework.evaluation_oracle import EvaluationOracle
 
 from planar_graph_sampler.evaluations_planar_graph import \
     planar_graph_evals_n100, planar_graph_evals_n1000, reference_evals
+from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
 from planar_graph_sampler.grammar.one_connected_decomposition import one_connected_graph_grammar
 from planar_graph_sampler.grammar.one_connected_decomposition import two_connected_graph_grammar
+from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 
 
-def test_distribution(grammar, sampled_class, x, y, graphs_automs, num_samples=100):
-    # for g_aut in graphs_automs:
+def test_distribution_for_l_size(grammar, sampled_class, x, y, l_size, graphs_labs_u_size, num_samples=100, silent=False):
+    # for g_aut in graphs_labs_u_size:
     #     import matplotlib.pyplot as plt
     #     nx.draw(g_aut[0], with_labels=True)
     #     plt.show()
 
     def find_isomorphic_graph(g):
-        for index, gr_aut in enumerate(graphs_automs):
-            if nx.is_isomorphic(g, gr_aut[0]):
-                return index
+        for i, g_l_u in enumerate(graphs_labs_u_size):
+            if nx.is_isomorphic(g, g_l_u[0]):
+                return i
+        import matplotlib.pyplot as plt
+        nx.draw(g, with_labels=True)
+        plt.show()
         assert False
 
-    possible_graphs_count = sum([gr_aut[1] for gr_aut in graphs_automs])
-    expected_distribution = [gr_aut[1] / possible_graphs_count for gr_aut in graphs_automs]
+    for g1, _, _ in graphs_labs_u_size:
+        for g2, _, _ in graphs_labs_u_size:
+            if g1 != g2:
+                assert not nx.is_isomorphic(g1, g2)
+
+    oracle = BoltzmannSamplerBase.oracle
+    assert oracle is not None
+    expected_distribution = [
+        g_l_u[1] * oracle.get_probability(sampled_class, x, y, l_size, g_l_u[2]) for g_l_u in graphs_labs_u_size
+    ]
+    total_prob = sum(expected_distribution)
+
+    norm_factor = sum(expected_distribution)
+    expected_distribution = [x / norm_factor for x in expected_distribution]
 
     count = 0
-    result = [0 for _ in range(len(graphs_automs))]
+    fails = 0
+    absolute_frequencies = [0 for _ in range(len(graphs_labs_u_size))]
     while count < num_samples:
         try:
             g = grammar.sample(sampled_class, x, y)
-            if isinstance(g, DerivedClass):
-                g = g.base_class_object
-            if isinstance(g, DerivedClass):
-                g = g.base_class_object
-            if g.number_of_nodes == 4:
-                g = g.to_networkx_graph()
-                result[find_isomorphic_graph(g)] += 1
+            if g.l_size == l_size:
+                # Remove all wrapping derived classes if any (in our tests there are at most two).
+                g_base = g
+                if isinstance(g, DerivedClass):
+                    g_base = g.base_class_object
+                if isinstance(g_base, DerivedClass):
+                    g_base = g_base.base_class_object
+                assert g_base.is_consistent
+                # Convert to networkx graph to use the isomorphism test.
+                gnx = g_base.to_networkx_graph(include_unpaired=False)
+                index = find_isomorphic_graph(gnx)
+                # Assert that we provided the correct u-size.
+                assert graphs_labs_u_size[index][2] == g.u_size
+                # Count the observation.
+                absolute_frequencies[index] += 1
                 count += 1
+            else:
+                fails += 1
         except RecursionError:
-            print("RecursionError")
+            if not silent:
+                print("RecursionError")
 
-    assert sum(result) == num_samples
+    observed_prob = num_samples / (num_samples + fails)
+    prob_error = observed_prob / total_prob - 1
 
-    print("{} ({} samples):\n".format(sampled_class, num_samples))
-    print("Observed absolute frequencies:\n{}\n".format(result))
-    result = [x / num_samples for x in result]
-    print("Observed relative frequencies:\n{}\n".format(result))
-    print("Expected distribution:\n{}\n".format(expected_distribution))
+    relative_frequencies = [x / num_samples for x in absolute_frequencies]
+    errors = [obs / exp - 1 for obs, exp in zip(relative_frequencies, expected_distribution)]
+
+    if not silent:
+        print("{} ({} samples):\n".format(sampled_class, num_samples))
+        print("Probability for hitting object with l-size {}: {}".format(l_size, total_prob))
+        print("Observed probability: {} (Error: {})\n".format(observed_prob, prob_error))
+
+        # print("Observed absolute frequencies:\n{}\n".format(absolute_frequencies))
+        print("Observed relative frequencies:{}\n".format(relative_frequencies))
+        print("Expected distribution:{}\n".format(expected_distribution))
+        print("Errors:{}\n\n".format(errors))
+
+    return prob_error, errors
 
 
-def test_distribution_connected(num_samples=100):
+def test_distribution_R_w_l_1(num_samples=100):
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    grammar = binary_tree_grammar()
+    grammar.init()
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'R_w'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    # In this case the labs column does not correspond to actual labelings
+    # but to distinction because of the root.
+    graphs_labs_u_size = [
+        (nx.path_graph(2), 2, 3),
+        (nx.path_graph(3), 4, 4),
+        (nx.star_graph(3), 2, 5),
+    ]
+
+    test_distribution_for_l_size(
+        grammar,
+        sampled_class,
+        symbolic_x, symbolic_y,
+        1,  # l-size
+        graphs_labs_u_size,
+        num_samples
+    )
+
+
+def test_distribution_R_b_l_1(num_samples=100):
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    grammar = binary_tree_grammar()
+    grammar.init()
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'R_b'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    # In this case the labs column does not correspond to actual labelings
+    # but to distinction because of the root.
+    graphs_labs_u_size = [
+        (nx.path_graph(1), 1, 2),
+        (nx.path_graph(2), 2, 3),
+        (nx.path_graph(3), 1, 4),
+    ]
+
+    test_distribution_for_l_size(
+        grammar,
+        sampled_class,
+        symbolic_x, symbolic_y,
+        1,  # l-size
+        graphs_labs_u_size,
+        num_samples
+    )
+
+
+def test_distribution_K_dy_l_1(num_samples=100):
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = binary_tree_grammar()
+    grammar.init()
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'K_dy'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    # In this case the labs column does not correspond to actual labelings
+    # but to distinction because of the root.
+    graphs_labs_u_size = [
+        (nx.path_graph(2), 4, 3),
+        (nx.path_graph(3), 5, 4),
+    ]
+
+    test_distribution_for_l_size(
+        grammar,
+        sampled_class,
+        symbolic_x, symbolic_y,
+        1,  # l-size
+        graphs_labs_u_size,
+        num_samples
+    )
+
+
+def test_distribution_K_l_1(num_samples=100):
+    """Unrooted binary trees (class K) with one black node."""
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = binary_tree_grammar()
+    grammar.init()
+
+    # There are only 2 possibilities.
+    graphs_labs = [
+        (nx.path_graph(2), 1, 4),
+        (nx.path_graph(3), 2, 5),  # TODO ???
+    ]
+
+    test_distribution_for_l_size(grammar, 'K', 'x*G_1_dx(x,y)', 'D(x*G_1_dx(x,y),y)', 1, graphs_labs,
+                                 num_samples=num_samples)
+
+
+def test_distribution_K_l_2(num_samples=100):
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = binary_tree_grammar()
+    grammar.init()
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'K'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    star_path_1 = nx.star_graph(3)
+    star_path_1.add_edge(1, 4)
+    star_path_2 = nx.star_graph(3)
+    star_path_2.add_edge(1, 4)
+    star_path_2.add_edge(4, 5)
+    other = nx.Graph(star_path_1)
+    other.add_edge(4, 5)
+    other.add_edge(4, 6)
+    # The first factor is due to the position of the leaves and the second are the labellings.
+    graphs_labs_u_size = [
+        (nx.path_graph(3), 1 * 2, 5),
+        (nx.path_graph(4), 4 * 2, 6),
+        (nx.path_graph(5), 4 * 2, 7),
+        (star_path_1, 2 * 2, 7),
+        (star_path_2, 4 * 2, 8),
+        (other, 1 * 2, 9)
+    ]
+
+    test_distribution_for_l_size(
+        grammar,
+        sampled_class,
+        symbolic_x, symbolic_y,
+        2,  # l-size
+        graphs_labs_u_size,
+        num_samples=num_samples)
+
+
+def test_distribution_G_3_arrow_l_2(num_samples=100):
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = three_connected_graph_grammar()
+    grammar.init()
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'G_3_arrow'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    # There is only 1 possibility.
+    graphs_labs_u_size = [
+        (nx.complete_graph(4), 1, 5)
+    ]
+
+    test_distribution_for_l_size(
+        grammar,
+        sampled_class,
+        symbolic_x, symbolic_y,
+        2,  # l-size
+        graphs_labs_u_size,
+        num_samples=num_samples)
+
+
+def test_distribution_G_3_arrow_l_3(num_samples=100):
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = three_connected_graph_grammar()
+    grammar.init()
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'G_3_arrow'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    cycle_with_midpoint = nx.cycle_graph(4)
+    cycle_with_midpoint.add_edges_from([(0, 4), (1, 4), (2, 4), (3, 4)])
+    fully_triangulated = nx.complete_graph(4)
+    fully_triangulated.add_edges_from([(0, 4), (1, 4), (2, 4)])
+    other = nx.cycle_graph(4)
+    other.add_edges_from([(0, 4), (1, 4), (2, 4)])
+
+    # ...
+    graphs_labs_u_size = [
+        (cycle_with_midpoint, 2 * 8 * 15 / (4 * 5), 7),
+        (fully_triangulated, 2 * 9 * 10 / (4 * 5), 8)
+    ]
+
+    test_distribution_for_l_size(
+        grammar,
+        sampled_class,
+        symbolic_x, symbolic_y,
+        3,  # l-size
+        graphs_labs_u_size,
+        num_samples=num_samples)
+
+
+def test_distribution_G_3_arrow_l_4(num_samples=100):
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = three_connected_graph_grammar()
+    grammar.init()
+    symbolic_x = 'x*G_1_dx(x,y)'
+    symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'G_3_arrow'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    g9 = nx.Graph()
+    g9.add_edges_from([(0, 1), (0, 3), (0, 5), (1, 3), (1, 4), (2, 3), (2, 5), (2, 4), (4, 5)])
+    g10_1 = nx.Graph()
+    g10_1.add_edges_from([(0, 1), (0, 3), (0, 2), (0, 5), (1, 2), (1, 4), (1, 5), (2, 3), (3, 4), (4, 5)])
+    g10_2 = nx.Graph()
+    g10_2.add_edges_from([(0, 1), (0, 2), (0, 3), (1, 2), (1, 5), (2, 3), (2, 5), (2, 4), (3, 4), (4, 5)])
+    g11_1 = nx.Graph()
+    g11_1.add_edges_from([(0, 1), (0, 5), (0, 4), (0, 3), (1, 4), (1, 5), (1, 2), (2, 3), (2, 5), (3, 5), (3, 4)])
+    g11_2 = nx.Graph()
+    g11_2.add_edges_from([(0, 1), (0, 3), (0, 2), (0, 5), (0, 4), (1, 2), (1, 5), (1, 3), (2, 3), (3, 4), (4, 5)])
+    g12_1 = nx.Graph()
+    g12_1.add_edges_from(
+        [(0, 1), (0, 2), (0, 3), (0, 5), (0, 4), (1, 2), (1, 4), (2, 3), (2, 4), (2, 5), (3, 5), (4, 5)])
+    g12_2 = nx.Graph()
+    g12_2.add_edges_from(
+        [(0, 1), (0, 2), (0, 3), (0, 5), (1, 2), (1, 4), (1, 5), (2, 3), (2, 4), (3, 4), (3, 5), (4, 5)])
+
+    # ...
+    graphs_labs_u_size = [
+        (g9, 2 * 9 * 60 / (6 * 5), 8),
+        (g10_1, 2 * 10 * 432 / (6 * 5), 9),
+        (g10_2, 2 * 10 * 0 / (6 * 5), 9),
+        (g11_1, 2 * 11 * 540 / (6 * 5), 10),
+        (g11_2, 2 * 11 * 0 / (6 * 5), 10),
+        (g12_1, 2 * 12 * 195 / (6 * 5), 11),
+        (g12_2, 2 * 12 * 0 / (6 * 5), 11)
+    ]
+
+    test_distribution_for_l_size(
+        grammar, sampled_class, symbolic_x, symbolic_y, 4, graphs_labs_u_size, num_samples=num_samples)
+
+
+def test_distribution_G_2_dx_l_3(num_samples=100):
+    """Test if 2-connected planar graphs with exactly 4 nodes have the right distribution."""
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = two_connected_graph_grammar()
+    grammar.init()
+    # grammar.precompute_evals('G_2_dx', 'x*G_1_dx(x,y)', 'y')
+
+    # All two-connected planar graphs with 4 nodes and the number of their automorphisms.
+    # See p.15, Fig. 5.
+    cycle_with_chord = nx.cycle_graph(4)
+    cycle_with_chord.add_edge(0, 2)
+    graphs_labs = [
+        (nx.cycle_graph(4), 3, 4),
+        (cycle_with_chord, 6, 5),
+        (nx.complete_graph(4), 1, 6)
+    ]
+
+    test_distribution_for_l_size(grammar, 'G_2_dx', 'x*G_1_dx(x,y)', 'y', 3, graphs_labs, num_samples=num_samples)
+
+
+def test_distribution_G_2_dx_dx_l_3(num_samples=100):
+    """Test if 2-connected planar graphs with exactly 4 nodes have the right distribution."""
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = two_connected_graph_grammar()
+    grammar.init()
+    # grammar.precompute_evals('G_2_dx', 'x*G_1_dx(x,y)', 'y')
+
+    # All two-connected planar graphs with 4 nodes and the number of their labellings.
+    # See p.15, Fig. 5.
+    cycle_with_chord = nx.cycle_graph(4)
+    cycle_with_chord.add_edge(0, 2)
+    graphs_labs = [
+        (nx.cycle_graph(4), 3, 4),
+        (cycle_with_chord, 6, 5),
+        (nx.complete_graph(4), 1, 6)
+    ]
+
+    test_distribution_for_l_size(grammar, 'G_2_dx_dx', 'x*G_1_dx(x,y)', 'y', 2, graphs_labs, num_samples=num_samples)
+
+
+def test_distribution_G_1_l_3(num_samples=100):
+    """Test if connected planar graphs with exactly 4 nodes have the right distribution."""
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    grammar = one_connected_graph_grammar()
+    grammar.init()
+
+    graphs_labs = [
+        (nx.path_graph(3), 3, 2),
+        (nx.complete_graph(3), 1, 3)
+    ]
+
+    test_distribution_for_l_size(grammar, 'G_1', 'x', 'y', 3, graphs_labs, num_samples=num_samples)
+
+
+def test_distribution_G_1_l_4(num_samples=100):
     """Test if connected planar graphs with exactly 4 nodes have the right distribution."""
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     grammar = one_connected_graph_grammar()
@@ -61,37 +381,92 @@ def test_distribution_connected(num_samples=100):
     # See p.15, Fig. 5.
     cycle_with_chord = nx.cycle_graph(4)
     cycle_with_chord.add_edge(0, 2)
-    graphs_automs = [
-        (nx.path_graph(4), 12),
-        (nx.star_graph(3), 4),
-        (nx.lollipop_graph(3, 1), 12),
-        (nx.cycle_graph(4), 3),
-        (cycle_with_chord, 6),
-        (nx.complete_graph(4), 1)
+    graphs_labs = [
+        (nx.path_graph(4), 12, 3),
+        (nx.star_graph(3), 4, 3),
+        (nx.lollipop_graph(3, 1), 12, 4),
+        (nx.cycle_graph(4), 3, 4),
+        (cycle_with_chord, 6, 5),
+        (nx.complete_graph(4), 1, 6)
     ]
 
-    test_distribution(grammar, 'G_1_dx_dx', 'x', 'y', graphs_automs, num_samples=num_samples)
+    test_distribution_for_l_size(grammar, 'G_1', 'x', 'y', 4, graphs_labs, num_samples=num_samples)
 
 
-def test_distribution_two_connected(num_samples=100):
-    """Test if 2-connected planar graphs with exactly 4 nodes have the right distribution."""
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
-    grammar = two_connected_graph_grammar()
+def test_distribution_G_1_dx_l_2(num_samples=100):
+    """Test if connected planar graphs with exactly 4 nodes have the right distribution."""
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = one_connected_graph_grammar()
     grammar.init()
 
-    # All two-connected planar graphs with 4 nodes and the number of their automorphisms.
+    graphs_labs = [
+        (nx.path_graph(3), 3, 2),
+        (nx.complete_graph(3), 1, 3)
+    ]
+
+    test_distribution_for_l_size(grammar, 'G_1_dx', 'x', 'y', 2, graphs_labs, num_samples=num_samples)
+
+
+def test_distribution_G_1_dx_l_3(num_samples=100):
+    """Test if connected planar graphs with exactly 4 nodes have the right distribution."""
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = one_connected_graph_grammar()
+    grammar.init()
+
+    # All one-connected planar graphs with 4 nodes and the number of their automorphisms.
     # See p.15, Fig. 5.
     cycle_with_chord = nx.cycle_graph(4)
     cycle_with_chord.add_edge(0, 2)
-    graphs_automs = [
-        (nx.cycle_graph(4), 3),
-        (cycle_with_chord, 6),
-        (nx.complete_graph(4), 1)
+    graphs_labs = [
+        (nx.path_graph(4), 12, 3),
+        (nx.star_graph(3), 4, 3),
+        (nx.lollipop_graph(3, 1), 12, 4),
+        (nx.cycle_graph(4), 3, 4),
+        (cycle_with_chord, 6, 5),
+        (nx.complete_graph(4), 1, 6)
     ]
 
-    test_distribution(grammar, 'G_2_dx_dx', 'x*G_1_dx(x,y)', 'y', graphs_automs, num_samples=num_samples)
+    test_distribution_for_l_size(grammar, 'G_1_dx', 'x', 'y', 3, graphs_labs, num_samples=num_samples)
+
+
+def test_distribution_G_1_dx_dx_l_2(num_samples=100):
+    """Test if connected planar graphs with exactly 4 nodes have the right distribution."""
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    grammar = one_connected_graph_grammar()
+    grammar.init()
+
+    # All one-connected planar graphs with 4 nodes and the number of their automorphisms.
+    # See p.15, Fig. 5.
+    cycle_with_chord = nx.cycle_graph(4)
+    cycle_with_chord.add_edge(0, 2)
+    graphs_labs = [
+        (nx.path_graph(4), 12, 3),
+        (nx.star_graph(3), 4, 3),
+        (nx.lollipop_graph(3, 1), 12, 4),
+        (nx.cycle_graph(4), 3, 4),
+        (cycle_with_chord, 6, 5),
+        (nx.complete_graph(4), 1, 6)
+    ]
+
+    test_distribution_for_l_size(grammar, 'G_1_dx_dx', 'x', 'y', 2, graphs_labs, num_samples=num_samples)
 
 
 if __name__ == "__main__":
-    test_distribution_connected(500)
-    #test_distribution_two_connected()
+    # test_distribution_connected(100)
+    #test_distribution_G_1_l_3(100)
+    #test_distribution_G_1_l_4(100)
+    # test_distribution_G_1_dx_l_2(1000)
+    test_distribution_G_1_dx_l_3(10000)
+    test_distribution_G_1_dx_dx_l_2(10000)
+
+    # test_distribution_G_2_dx_l_3(100)
+
+    # test_distribution_R_w_l_1(20000)
+    # test_distribution_R_b_l_1(20000)
+    # test_distribution_K_dy_l_1(10000)
+    # test_distribution_K_l_2(1000)
+    # test_distribution_K_l_1(1000)
+
+    # test_distribution_G_3_arrow_l_2(1000)
+    # test_distribution_G_3_arrow_l_3(1000)
+    # test_distribution_G_3_arrow_l_4(100)

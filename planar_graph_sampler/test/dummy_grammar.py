@@ -56,8 +56,7 @@ def dummy_sampling_grammar():
 
     binary_tree_rules = {
 
-        # See section 4.1.6. for this rejection.
-        'K': Bij(Rej(K_dy, rej_to_K), underive),
+        'K': Bij(Rej(K_dy, rej_to_K), underive),  # See 4.1.6.
 
         'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),
 

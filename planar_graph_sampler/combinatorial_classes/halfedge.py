@@ -147,7 +147,6 @@ class HalfEdge(CombinatorialClass):
             id(self), self.node_nr, id(self.opposite), id(self.next), id(self.prior))
         return repr
 
-
     def list_half_edges(self, edge_list=None):
         """Returns a list with half-edges."""
         # TODO Deprecated?
