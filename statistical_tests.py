@@ -20,6 +20,7 @@ from scipy import stats
 import matplotlib.pyplot as plt
 from math import fabs, sqrt
 import copy
+import sys
 import networkx as nx
 import networkx.algorithms.isomorphism as iso
 from networkx.algorithms import isomorphism
@@ -140,19 +141,20 @@ def ___non_isomorphic_graphs_dict(objects):
     # Convert to netwokrx graphs
     nx_objects = [o.to_networkx_graph() for o in objects]
     graphs = dict()
-    nm = iso.categorical_node_match('color',['black','white'])
+    cm = iso.categorical_node_match('color',['black','white'])
+    nm = iso.numerical_node_match('node_nr', 1)
     # Filter out isomorphic graphs
     for g1 in nx_objects:
         graphs[g1] = 1
         for g2 in reversed(nx_objects):
-            if g2 is not g1 and iso.is_isomorphic(g1,g2,node_match=nm):
+            if g2 is not g1 and iso.is_isomorphic(g1,g2,node_match=cm) and iso.is_isomorphic(g1,g2,node_match=nm):
                 nx_objects.remove(g2)
                 graphs[g1] += 1
         nx_objects.remove(g1)
  
-    # for g in graphs:
-    #     nx.draw(g, with_labels=True)
-    #     plt.show()
+    for g in graphs:
+        nx.draw(g, with_labels=True)
+        plt.show()
     return graphs
 
 # Tests if the graphs frequencies are uniformly distributed using
@@ -250,7 +252,7 @@ def ___calculate_number_of_possible_graphs(size, object_class):
         sizes = [1, 1, 1, 1, 4, 6, 12, 20, 30]
     elif object_class is "three_connected":
         # 	Number of labeled 3-connected graphs with n nodes. 
-        sizes = [1, 26, 1768, 225096, 51725352, 21132802544, 15463799747936]
+        sizes = [1, 25, 1227, 84672, 7635120, 850626360]
     elif object_class is "two_connected":
         # Number of 2-connected planar graphs on n labeled nodes
         sizes = [1, 10, 237, 10707, 774924, 78702536, 10273189176, 1631331753120]
