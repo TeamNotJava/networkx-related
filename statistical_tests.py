@@ -141,21 +141,16 @@ def ___non_isomorphic_graphs_dict(objects):
     # Convert to netwokrx graphs
     nx_g = [o.to_networkx_graph(False) for o in objects]
     nx_objects =  [nx.relabel.convert_node_labels_to_integers(o) for o in nx_g]
-    graphs = dict()
-    cm = iso.categorical_node_match('color',(0,'#999999'))
-    
-
-    # Filter out isomorphic graphs
+    graphs = dict() 
+    # Add labels as attributes
     for g in nx_objects:
-        # print(nx.get_node_attributes(g, 'color'))
         label = 0
         for n in g.nodes():
             g.nodes[n]['number'] = label
             label += 1
-        # print(nx.get_node_attributes(g, 'number'))
-        # nx.draw(g, with_labels=True)
-        # plt.show()
 
+    # Filter out isomorphic graphs
+    cm = iso.categorical_node_match('color',(0,'#999999'))
     nm = iso.numerical_node_match('number',0)
     for g1 in nx_objects:
         graphs[g1] = 1
@@ -164,11 +159,6 @@ def ___non_isomorphic_graphs_dict(objects):
                 nx_objects.remove(g2)
                 graphs[g1] += 1
         nx_objects.remove(g1)
- 
-    # for g in graphs:
-    #     print(nx.get_node_attributes(g, 'color'))
-    #     nx.draw(g, with_labels=True)
-    #     plt.show()
     return graphs
 
 # Tests if the graphs frequencies are uniformly distributed using
