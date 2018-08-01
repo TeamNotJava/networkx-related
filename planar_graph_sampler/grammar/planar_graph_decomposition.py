@@ -28,8 +28,7 @@ def bij_connected_comps(components):
     for g in components:
         g = g.underive_all()
         g = g.to_planar_embedding()
-        res.add_nodes_from(g.nodes)
-        res.add_edges_from(g.edges)
+        res = nx.PlanarEmbedding(nx.compose(res, g))
     return res
 
 
