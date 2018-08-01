@@ -90,7 +90,7 @@ class CombinatorialClass(object):
         raise NotImplementedError
 
     def assign_random_labels(self):
-        """Assigns labels from [0, l-size) to all l-atoms in this object (including itself).
+        """Assigns labels from [0, l-size) to all l-atoms in this object (including itself if it is an l-atom).
 
         Notes
         -----
@@ -99,6 +99,19 @@ class CombinatorialClass(object):
         labels = random.sample(range(self.l_size), self.l_size)
         for atom in self.l_atoms():
             atom.label = labels.pop()
+
+    def underive_all(self):
+        """Removes all wrapping derived classes from an object.
+
+        Returns
+        -------
+        CombinatorialClass
+            An object which is not an instance of DerivedClass.
+        """
+        res = self
+        while isinstance(res, DerivedClass):
+            res = res.base_class_object
+        return res
 
     def __str__(self):
         """Returns a string representation of this object."""
@@ -326,6 +339,9 @@ class SetClass(CombinatorialClass):
     def __iter__(self):
         """Returns an iterator over the set."""
         return iter(self._elems)
+
+    def append(self, obj):
+        self._elems.append(obj)
 
     @property
     def l_size(self):

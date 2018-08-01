@@ -75,7 +75,7 @@ class HalfEdgeGraph(CombinatorialClass):
         # TODO make more checks here
 
     def _check_node_nr(self, visited=None):
-        """Check node_nr consistency."""
+        """Checks node_nr consistency."""
         if visited is None:
             visited = set()
         curr = self._half_edge
@@ -166,16 +166,47 @@ class HalfEdgeGraph(CombinatorialClass):
         res.set_data(embedding)
         return res
 
+    def to_planar_embedding(self):
+        """Converts to nx.PlanarEmbedding.
+
+        Returns
+        -------
+        PlanarEmbedding
+        """
+        nodes = self.half_edge.node_dict()
+        embedding = nx.PlanarEmbedding()
+        # Loop over all nodes in the graph (node_nr).
+        for node in nodes:
+            embedding.add_node(node)
+            # Loop over all half-edges incident the the current node, in ccw order around the node.
+            reference_neighbour = None
+            for he in nodes[node]:
+                if he.opposite is None:
+                    continue
+                embedding.add_half_edge_ccw(node, he.opposite.node_nr, reference_neighbour)
+                reference_neighbour = he.opposite.node_nr
+        return embedding
+
     def to_networkx_graph(self, include_unpaired=False):
-        """Transforms the graph into a networkx graph."""
-        # Get the counter in case we have to create node for leaves (= unpaired half-edges).
+        """Transforms the graph into a networkx graph.
+
+        Parameters
+        ----------
+        include_unpaired: bool, optional (default=False)
+            Includes half-edges that do not have an opposite.
+            In this case, a new node is created and connected to the unpaired half-edge.
+        """
+        # Get the counter in case we have to create nodes for unpaired half-edges.
         counter = Counter()
-        # Get all edges (one half-edge per edge).
-        half_edges = self.half_edge.get_all_half_edges(include_opp=False, include_unpaired=include_unpaired)
-        if len(half_edges) == 0:
+        # If this graph consists of only one unpaired half-edge we interpret this as the one-node graph.
+        if self.half_edge.is_trivial:
             G = nx.Graph()
+            if self.half_edge.node_nr is None:
+                self.half_edge.node_nr = next(counter)
             G.add_node(self.half_edge.node_nr)
             return G
+        # Get all edges (one half-edge per edge).
+        half_edges = self.half_edge.get_all_half_edges(include_opp=False, include_unpaired=include_unpaired)
         G = nx.Graph()
         while len(half_edges) > 0:
             half_edge = half_edges.pop()
