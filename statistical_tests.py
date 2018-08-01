@@ -139,22 +139,36 @@ def ___stat_test_planar_graphs(data, graphs, size, tolerance):
 # frequencies 
 def ___non_isomorphic_graphs_dict(objects):
     # Convert to netwokrx graphs
-    nx_objects = [o.to_networkx_graph() for o in objects]
+    nx_g = [o.to_networkx_graph(False) for o in objects]
+    nx_objects =  [nx.relabel.convert_node_labels_to_integers(o) for o in nx_g]
     graphs = dict()
-    cm = iso.categorical_node_match('color',['black','white'])
-    nm = iso.numerical_node_match('node_nr', 1)
+    cm = iso.categorical_node_match('color',(0,'#999999'))
+    
+
     # Filter out isomorphic graphs
+    for g in nx_objects:
+        # print(nx.get_node_attributes(g, 'color'))
+        label = 0
+        for n in g.nodes():
+            g.nodes[n]['number'] = label
+            label += 1
+        # print(nx.get_node_attributes(g, 'number'))
+        # nx.draw(g, with_labels=True)
+        # plt.show()
+
+    nm = iso.numerical_node_match('number',0)
     for g1 in nx_objects:
         graphs[g1] = 1
         for g2 in reversed(nx_objects):
-            if g2 is not g1 and iso.is_isomorphic(g1,g2,node_match=cm) and iso.is_isomorphic(g1,g2,node_match=nm):
+            if g2 is not g1  and iso.is_isomorphic(g1,g2,node_match=cm) and iso.is_isomorphic(g1,g2,node_match=nm):
                 nx_objects.remove(g2)
                 graphs[g1] += 1
         nx_objects.remove(g1)
  
-    for g in graphs:
-        nx.draw(g, with_labels=True)
-        plt.show()
+    # for g in graphs:
+    #     print(nx.get_node_attributes(g, 'color'))
+    #     nx.draw(g, with_labels=True)
+    #     plt.show()
     return graphs
 
 # Tests if the graphs frequencies are uniformly distributed using
@@ -249,7 +263,7 @@ def ___draw_least_frequent_graph(graphs):
 def ___calculate_number_of_possible_graphs(size, object_class):
     # Verify if this numbers are really correct
     if object_class is "binary_tree":
-        sizes = [1, 1, 1, 1, 4, 6, 12, 20, 30]
+        sizes = [1, 2, 6, 24]
     elif object_class is "three_connected":
         # 	Number of labeled 3-connected graphs with n nodes. 
         sizes = [1, 25, 1227, 84672, 7635120, 850626360]
@@ -261,7 +275,7 @@ def ___calculate_number_of_possible_graphs(size, object_class):
         sizes = [1, 1, 1, 4, 38, 728, 26704, 1866256, 251548592, 66296291072, 34496488594816]
     elif object_class is "planar_graph":
         # Number of planar graphs on n labeled nodes.
-        sizes =[1, 1, 2, 8, 64, 1023, 32071, 1823707, 163947848, 20402420291]
+        sizes =[1, 1, 4, 38, 727, 26013, 1597690, 149248656]
     else:
         raise Exception("No such object.")
     
