@@ -12,12 +12,8 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-import networkx as nx
 
-from framework.generic_classes import CombinatorialClass
-
-
-class HalfEdge(CombinatorialClass):
+class HalfEdge:
     """
     Generic class for half-edge representation of a combinatorial planar embedding.
 
@@ -28,30 +24,23 @@ class HalfEdge(CombinatorialClass):
     """
 
     def __init__(self, self_consistent=False):
-        # Contains the opposite half-edge
+        # Contains the opposite half-edge.
         self.opposite = None
-        # Contains the next half-edge in ccw order around the incident node
+        # Contains the next half-edge in ccw order around the incident node.
         self.next = None
         if self_consistent:
             self.next = self
-        # Contains the prior half-edge in cw order around the incident node
+        # Contains the prior half-edge in cw order around the incident node.
         self.prior = None
         if self_consistent:
             self.prior = self
-        # Node the half-edge is  assigned to
+        # Label of the node the half-edge is assigned to.
         self.node_nr = -1
 
     @property
-    def l_size(self):
-        return self.get_number_of_nodes()
-
-    @property
-    def u_size(self):
-        return self.get_number_of_edges()
-
-    @property
     def is_trivial(self):
-        return self.next == self and self.opposite is None
+        """True iff this half-edge is the only one in the graph."""
+        return (self.next is None or self.next == self) and self.opposite is None
 
     def insert_after(self, new=None):
         """Inserts a half-edge that follows this half-edge in ccw order."""
@@ -99,7 +88,7 @@ class HalfEdge(CombinatorialClass):
         self.node_nr = -1
 
     def insert_all(self, other):
-        """Inserts the given half-edge and all its incident half-edge after this half-edge."""
+        """Inserts the given half-edge and all its incident half-edges after this half-edge."""
         # Set node numbers.
         for he in other.incident_half_edges():
             he.node_nr = self.node_nr
@@ -135,6 +124,17 @@ class HalfEdge(CombinatorialClass):
             curr = curr.next
         return res
 
+    def incident(self):
+        """Generator over all incident half-edges, including this half-edge itself.
+
+        Two half-edges are incident if they start in the same vertex.
+        """
+        curr = self
+        yield curr
+        while curr.next is not self:
+            curr = curr.next
+            yield curr
+
     def set_node_nr(self, node_nr):
         for he in self.incident_half_edges():
             he.node_nr = node_nr
@@ -149,28 +149,7 @@ class HalfEdge(CombinatorialClass):
             id(self), self.node_nr, id(self.opposite), id(self.next), id(self.prior))
         return repr
 
-    def list_half_edges(self, edge_list=None):
-        """Returns a list with half-edges."""
-        # TODO Deprecated?
-        if edge_list is None:
-            edge_list = []
-        edge_list.append(self)
-        current_half_edge = self
-        while True:
-            if current_half_edge.next is not None:
-                current_half_edge = current_half_edge.next
-                if current_half_edge is not self and current_half_edge not in edge_list:
-                    edge_list.append(current_half_edge)
-                    if current_half_edge.opposite is not None:
-                        if current_half_edge.opposite not in edge_list:
-                            current_half_edge.opposite.list_half_edges(edge_list)
-                else:
-                    break
-            else:
-                break
-        return edge_list
-
-    def node_dict(self, res=None):
+    def node_dict_rec(self, res=None):
         """Returns a dictionary that maps nodes to a list of half-edges in ccw order around the node."""
         if res is None:
             res = {}
@@ -185,7 +164,24 @@ class HalfEdge(CombinatorialClass):
                 res = he.opposite.node_dict(res)
         return res
 
-    def get_all_half_edges(self, edge_set=None, include_opp=True, include_unpaired=True):
+    def node_dict(self):
+        """Returns a dictionary that maps nodes to a list of half-edges in ccw order around the node."""
+        res = {}
+        stack = [self]
+        while stack:
+            curr = stack.pop()
+            node_nr = curr.node_nr
+            if node_nr not in res:
+                # curr has not been visited yet.
+                incident = [h for h in curr.incident()]
+                # incident are the half-edges in the right order.
+                res[node_nr] = incident
+                for he in incident:
+                    if he.opposite is not None:
+                        stack.append(he.opposite)
+        return res
+
+    def get_all_half_edges_rec(self, edge_set=None, include_opp=True, include_unpaired=True):
         """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False."""
         if edge_set is None:
             edge_set = set()
@@ -199,34 +195,29 @@ class HalfEdge(CombinatorialClass):
                         he.opposite.get_all_half_edges(edge_set, include_opp, include_unpaired)
         return edge_set
 
+    def get_all_half_edges(self, include_opp=True, include_unpaired=True):
+        """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False."""
+        result = set()
+        stack = [self]
+        while stack:
+            curr = stack.pop()
+            for he in curr.incident():
+                if he not in result:
+                    if he.opposite is None and include_unpaired:
+                        result.add(he)
+                    elif include_opp or (he.opposite is not None and he.opposite not in result):
+                        result.add(he)
+                        if he.opposite is not None:
+                            stack.append(he.opposite)
+        return result
+
     def get_number_of_nodes(self):
         """Returns the number of nodes in the graph."""
-        edge_list = self.get_all_half_edges()
-        nodes = set()
-        for edge in edge_list:
-            nodes.add(edge.node_nr)
-        return len(nodes)
+        return len(self.node_dict())
 
     def get_number_of_edges(self):
         """Returns the number of edges (NOT half-edges!) in the graph."""
         return len(self.get_all_half_edges(include_opp=False, include_unpaired=False))
-
-    def get_node_list(self):
-        # TODO probably replace by method that also gives right order of half edges
-        """Returns a dictionary of nodes.
-
-        The key is node number and the value is a list of half-edges belonging to the node number.
-        """
-        edge_list = self.get_all_half_edges()
-        node_list = {}
-        for edge in edge_list:
-            if edge.node_nr in node_list:
-                half_edges = node_list[edge.node_nr]
-                half_edges.append(edge)
-                node_list[edge.node_nr] = half_edges
-            else:
-                node_list[edge.node_nr] = [edge]
-        return node_list
 
 
 class ClosureHalfEdge(HalfEdge):

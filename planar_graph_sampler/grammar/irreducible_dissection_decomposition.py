@@ -20,14 +20,13 @@ from framework.generic_samplers import BoltzmannSamplerBase
 from planar_graph_sampler.bijections.closure import Closure
 from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 
 def closure(binary_tree):
     """To be used as bijection in the grammar."""
     if isinstance(binary_tree, LDerivedClass):
         binary_tree = binary_tree.base_class_object
-    assert isinstance(binary_tree, BinaryTree)
+    assert isinstance(binary_tree, BinaryTree), binary_tree
     dissection = Closure().closure(binary_tree)
     return dissection
 
@@ -88,6 +87,9 @@ def irreducible_dissection_grammar():
 
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
+
     grammar = irreducible_dissection_grammar()
     grammar.init()
 
@@ -97,17 +99,15 @@ if __name__ == "__main__":
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
 
-    sampled_class = 'J_a'
+    sampled_class = 'I_dx'
 
     while True:
-        diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+        # diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+        diss = grammar.iterative_sampling(sampled_class, symbolic_x, symbolic_y)
         if True:
             print(diss)
-            try:
-                assert diss.is_consistent
+            diss = diss.underive_all()
+            # assert diss.is_consistent
+            diss.plot(with_labels=False, use_planar_drawer=False, node_size=25)
+            plt.show()
 
-                import matplotlib.pyplot as plt
-                diss.plot(with_labels=True, use_planar_drawer=True, node_size=50)
-                plt.show()
-            except AttributeError:
-                pass

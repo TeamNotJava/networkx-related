@@ -64,7 +64,7 @@ class Closure:
 
         if init_half_edge.opposite is not None:
             # Iterate to first stem
-            half_edge_list = init_half_edge.list_half_edges([])
+            half_edge_list = init_half_edge.get_all_half_edges()
             for edge in half_edge_list:
                 if edge.opposite is None:
                     return edge
@@ -215,7 +215,7 @@ class Closure:
         return hexagon_half_edges[0]
 
     def test_partial_closure(self, init_half_edge):
-        edge_list = init_half_edge.list_half_edges()
+        edge_list = init_half_edge.get_all_half_edges()
         stem_list = []
 
         for edge in edge_list:
@@ -244,8 +244,8 @@ class Closure:
 
     def test_connections_between_half_edges(self, init_half_edge):
         """Checks if the connections between the edges are correct."""
-        edge_list = init_half_edge.list_half_edges([])
-        node_dict = init_half_edge.get_node_list()
+        edge_list = init_half_edge.get_all_half_edges()
+        nodes = init_half_edge.node_dict()
         hex_half_edge = None
         num_hex_half_edges = 0
         for edge in edge_list:
@@ -278,8 +278,8 @@ class Closure:
         assert hex_edges == 5
 
         # Test if every node has at most two hexagonal edges
-        for node in node_dict:
-            half_edges = node_dict[node]
+        for node in nodes:
+            half_edges = nodes[node]
             num_hex = 0
             for e in half_edges:
                 if e.is_hexagonal:
@@ -289,7 +289,7 @@ class Closure:
 
     def test_planarity_of_embedding(self, init_half_edge):
         """Checks if half edges at every node are planar."""
-        edge_list = init_half_edge.list_half_edges([])
+        edge_list = init_half_edge.get_all_half_edges()
 
         # Check if there are two different edges that have the same
         # prior/next half-edge

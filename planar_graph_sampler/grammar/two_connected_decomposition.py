@@ -122,6 +122,8 @@ def two_connected_graph_grammar():
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
     grammar = two_connected_graph_grammar()
     grammar.init()
 
@@ -131,22 +133,16 @@ if __name__ == '__main__':
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
 
-    sampled_class = 'G_2_dx'
+    sampled_class = 'G_2_dx_dx'
 
     while True:
         try:
-            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+            g = grammar.iterative_sampling(sampled_class, symbolic_x, symbolic_y)
         except RecursionError:
             pass
-        if g.l_size == 4:
-            if isinstance(g, DerivedClass):
-                g = g.base_class_object
-            if isinstance(g, DerivedClass):
-                g = g.base_class_object
+        if g.l_size == 2:
+            g = g.underive_all()
             assert g.is_consistent
             print(g)
-
-            import matplotlib.pyplot as plt
-
             g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
             plt.show()

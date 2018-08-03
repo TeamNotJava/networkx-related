@@ -109,7 +109,7 @@ if __name__ == '__main__':
     grammar = one_connected_graph_grammar()
     grammar.init()
 
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
     BoltzmannSamplerBase.debug_mode = False
 
     symbolic_x = 'x'
@@ -125,12 +125,9 @@ if __name__ == '__main__':
     while True:
 
         try:
-            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size == 2:
-                if isinstance(g, DerivedClass):
-                    g = g.base_class_object
-                if isinstance(g, DerivedClass):
-                    g = g.base_class_object
+            g = grammar.iterative_sampling(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size == 4:
+                g = g.underive_all()
                 print(g)
                 assert g.is_consistent
 
@@ -139,4 +136,4 @@ if __name__ == '__main__':
                 g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
                 plt.show()
         except RecursionError:
-            pass
+            print("Recursion error")

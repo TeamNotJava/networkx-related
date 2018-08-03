@@ -162,6 +162,8 @@ def network_grammar():
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
     grammar = network_grammar()
     grammar.init()
     # grammar.dummy_sampling_mode()
@@ -174,15 +176,14 @@ if __name__ == '__main__':
 
     sampled_class = 'D_dx'
 
+    random.seed(0)
+
     while True:
         try:
             g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 5:
+            if g.l_size == 2:
                 print(g)
                 assert g.is_consistent
-
-                import matplotlib.pyplot as plt
-
                 g.plot(with_labels=False, use_planar_drawer=False, node_size=10)
                 plt.show()
         except RecursionError:

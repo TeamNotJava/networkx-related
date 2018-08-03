@@ -17,8 +17,8 @@ import random
 import networkx as nx
 
 from framework.generic_classes import CombinatorialClass
-from planar_graph_sampler.grammar.grammar_utils import Counter
 
+from planar_graph_sampler.grammar.grammar_utils import Counter
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 
 
@@ -64,7 +64,7 @@ class HalfEdgeGraph(CombinatorialClass):
 
         This is not the same as choosing a random half-edge!
         """
-        nodes = self.half_edge.get_node_list()
+        nodes = self.half_edge.node_dict()
         random_node = random.choice(list(nodes.keys()))
         return nodes[random_node][0]
 
@@ -146,25 +146,6 @@ class HalfEdgeGraph(CombinatorialClass):
         # TODO Check if this works the way intended.
         connectivity_dict = nx.k_components(self.to_networkx_graph())
         return len(connectivity_dict[k][0]) == self.number_of_nodes
-
-    def planar_embedding(self, embedding=None):
-        """Converts to format needed by planar graph drawer."""
-        if embedding is None:
-            embedding = {}
-        node_nr = self._half_edge.node_nr
-        if node_nr in embedding:
-            res = nx.PlanarEmbedding()
-            res.set_data(embedding)
-            return res
-        incident = self._half_edge.incident_half_edges()
-        incident_node_nrs = [he.opposite.node_nr for he in incident if he.opposite is not None]
-        embedding[node_nr] = incident_node_nrs
-        for he in incident:
-            if he.opposite is not None:
-                HalfEdgeGraph(he.opposite).planar_embedding(embedding)
-        res = nx.PlanarEmbedding()
-        res.set_data(embedding)
-        return res
 
     def to_planar_embedding(self):
         """Converts to nx.PlanarEmbedding.

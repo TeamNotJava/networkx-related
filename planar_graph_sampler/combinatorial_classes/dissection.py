@@ -148,7 +148,7 @@ class IrreducibleDissection(HalfEdgeGraph):
     @property
     def l_size(self):
         """The l-size is the number of black inner vertices."""
-        node_dict = self.half_edge.get_node_list()
+        node_dict = self.half_edge.node_dict()
         black_vertices = len([node_nr for node_nr in node_dict if node_dict[node_nr][0].color is 'black'])
         # There are always 3 hexagonal outer black vertices.
         return black_vertices - 3
@@ -159,7 +159,7 @@ class IrreducibleDissection(HalfEdgeGraph):
         """Converts to networkx graph, encodes hexagonal nodes with colors."""
         from planar_graph_sampler.combinatorial_classes.half_edge_graph import color_scale
         # Get dict of nodes.
-        nodes = self.half_edge.get_node_list()
+        nodes = self.half_edge.node_dict()
         # Include the leaves as well.
         G = super(IrreducibleDissection, self).to_networkx_graph(include_unpaired=False)
         for v in G:

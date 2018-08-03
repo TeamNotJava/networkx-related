@@ -143,7 +143,7 @@ class BinaryTree(HalfEdgeGraph):
 
     def to_networkx_graph(self, include_unpaired=True):
         # Get dict of nodes.
-        nodes = self._half_edge.get_node_list()
+        nodes = self._half_edge.node_dict()
         # Include the leaves as well.
         G = super(BinaryTree, self).to_networkx_graph(include_unpaired=include_unpaired)
         for v in G:

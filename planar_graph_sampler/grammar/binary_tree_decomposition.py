@@ -160,6 +160,8 @@ def binary_tree_grammar():
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = False
 
@@ -168,25 +170,24 @@ if __name__ == '__main__':
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
-    sampled_class = 'K'
-    # grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+    sampled_class = 'R_b'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
     print("Expected size of K: {}".format(BoltzmannSamplerBase.oracle.get_expected_l_size('K', symbolic_x, symbolic_y)))
 
+    random.seed(0)
+
     while True:
         try:
-            tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-        except RecursionError:
-            pass
-        if tree.l_size == 2:
-            print(tree)
-            print("Rejections to draw K: {}".format(grammar.rules['K'].get_children()[0].rejections_count))
-            try:
-                # tree = tree.base_class_object
+            # tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+            tree = grammar.iterative_sampling(sampled_class, symbolic_x, symbolic_y)
+            if tree.l_size == 1:
+                print(tree)
+                print("Rejections to draw K: {}".format(grammar.rules['K'].get_children()[0].rejections_count))
+                tree = tree.underive_all()
                 assert tree.is_consistent
-                import matplotlib.pyplot as plt
-
-                tree.plot(draw_leaves=True, node_size=50)
+                tree.plot(draw_leaves=False, node_size=50)
                 plt.show()
-            except AttributeError:
-                pass
+        except RecursionError:
+            print("Recursion error")
+
