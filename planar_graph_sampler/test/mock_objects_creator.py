@@ -13,6 +13,7 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 from planar_graph_sampler.combinatorial_classes.halfedge import ClosureHalfEdge, HalfEdge
+from planar_graph_sampler.combinatorial_classes.network import Network
 from planar_graph_sampler.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 
 
@@ -21,32 +22,45 @@ def create_sample_closure_output():
     half_edges = [ClosureHalfEdge() for _ in range(65)]
 
     # Set node_nrs
-    for i in range(1, 5): half_edges[i].node_nr = 1
-    for i in range(1, 5): half_edges[i].color = 'black'
-    for i in range(5, 8): half_edges[i].node_nr = 6
-    for i in range(5, 8): half_edges[i].color = 'white'
-    for i in range(8, 11): half_edges[i].node_nr = 13
-    for i in range(8, 11): half_edges[i].color = 'black'
-    for i in range(11, 15): half_edges[i].node_nr = 7
-    for i in range(11, 15): half_edges[i].color = 'white'
-    for i in range(15, 18): half_edges[i].node_nr = 8
-    for i in range(15, 18): half_edges[i].color = 'black'
-    for i in range(18, 21): half_edges[i].node_nr = 2
-    for i in range(18, 21): half_edges[i].color = 'white'
-    for i in range(21, 24): half_edges[i].node_nr = 3
-    for i in range(21, 24): half_edges[i].color = 'black'
-    for i in range(24, 27): half_edges[i].node_nr = 9
-    for i in range(24, 27): half_edges[i].color = 'white'
-    for i in range(27, 32): half_edges[i].node_nr = 10
-    for i in range(27, 32): half_edges[i].color = 'black'
-    for i in range(32, 35): half_edges[i].node_nr = 12
-    for i in range(32, 35): half_edges[i].color = 'white'
-    for i in range(35, 39): half_edges[i].node_nr = 5
-    for i in range(35, 39): half_edges[i].color = 'black'
-    for i in range(39, 41): half_edges[i].node_nr = 11
-    for i in range(39, 41): half_edges[i].color = 'white'
-    for i in range(41, 45): half_edges[i].node_nr = 4
-    for i in range(41, 45): half_edges[i].color = 'white'
+    for i in range(1, 5):
+        half_edges[i].node_nr = 1
+        half_edges[i].color = 'black'
+    for i in range(5, 8):
+        half_edges[i].node_nr = 6
+        half_edges[i].color = 'white'
+    for i in range(8, 11):
+        half_edges[i].node_nr = 13
+        half_edges[i].color = 'black'
+    for i in range(11, 15):
+        half_edges[i].node_nr = 7
+        half_edges[i].color = 'white'
+    for i in range(15, 18):
+        half_edges[i].node_nr = 8
+        half_edges[i].color = 'black'
+    for i in range(18, 21):
+        half_edges[i].node_nr = 2
+        half_edges[i].color = 'white'
+    for i in range(21, 24):
+        half_edges[i].node_nr = 3
+        half_edges[i].color = 'black'
+    for i in range(24, 27):
+        half_edges[i].node_nr = 9
+        half_edges[i].color = 'white'
+    for i in range(27, 32):
+        half_edges[i].node_nr = 10
+        half_edges[i].color = 'black'
+    for i in range(32, 35):
+        half_edges[i].node_nr = 12
+        half_edges[i].color = 'white'
+    for i in range(35, 39):
+        half_edges[i].node_nr = 5
+        half_edges[i].color = 'black'
+    for i in range(39, 41):
+        half_edges[i].node_nr = 11
+        half_edges[i].color = 'white'
+    for i in range(41, 45):
+        half_edges[i].node_nr = 4
+        half_edges[i].color = 'white'
 
     # Set opposite half-edges
     half_edges[1].opposite = half_edges[5]
@@ -266,3 +280,72 @@ def create_three_connected_graph(lowest_node_number=0):
     first_net_root_edge_opposite.next = tenth
 
     return EdgeRootedThreeConnectedPlanarGraph(first_net_root_edge)
+
+
+def create_sample_network_for_testing_merge_operations(lowest_node_nr=0, is_linked=False):
+    graph = create_three_connected_graph(lowest_node_nr)
+    return Network(graph.half_edge, is_linked)
+
+
+def create_sample_network_for_testing_substitution_operation(is_linked=False):
+    network_root_edge = HalfEdge()
+    network_root_edge.node_nr = 11
+
+    network_root_edge_opposite = HalfEdge()
+    network_root_edge_opposite.node_nr = 13
+    network_root_edge.opposite = network_root_edge_opposite
+    network_root_edge_opposite.opposite = network_root_edge
+
+    net_second = HalfEdge()
+    net_second.node_nr = 11
+    net_second.prior = network_root_edge
+    network_root_edge.next = net_second
+
+    net_third = HalfEdge()
+    net_third.node_nr = 12
+    net_second.opposite = net_third
+    net_third.opposite = net_second
+
+    net_fourth = HalfEdge()
+    net_fourth.node_nr = 12
+    net_fourth.prior = net_third
+    net_fourth.next = net_third
+    net_third.next = net_fourth
+    net_third.prior = net_fourth
+
+    net_fifth = HalfEdge()
+    net_fifth.node_nr = 13
+    net_fifth.opposite = net_fourth
+    net_fourth.opposite = net_fifth
+    net_fifth.next = network_root_edge_opposite
+    network_root_edge_opposite.prior = net_fifth
+
+    net_seventh = HalfEdge()
+    net_seventh.node_nr = 11
+    net_seventh.prior = net_second
+    net_second.next = net_seventh
+    net_seventh.next = network_root_edge
+    network_root_edge.prior = net_seventh
+
+    net_eighth = HalfEdge()
+    net_eighth.node_nr = 14
+    net_eighth.opposite = net_seventh
+    net_seventh.opposite = net_eighth
+
+    net_nineth = HalfEdge()
+    net_nineth.node_nr = 14
+    net_nineth.prior = net_eighth
+    net_eighth.next = net_nineth
+    net_nineth.next = net_eighth
+    net_eighth.prior = net_nineth
+
+    net_tenth = HalfEdge()
+    net_tenth.node_nr = 13
+    net_tenth.prior = network_root_edge_opposite
+    network_root_edge_opposite.next = net_tenth
+    net_tenth.next = net_fifth
+    net_fifth.prior = net_tenth
+    net_tenth.opposite = net_nineth
+    net_nineth.opposite = net_tenth
+
+    return Network(network_root_edge, is_linked)
