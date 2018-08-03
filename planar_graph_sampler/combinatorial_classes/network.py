@@ -36,7 +36,7 @@ class Network(HalfEdgeGraph):
         if u_size is None:
             u_size = self.number_of_edges - (not is_linked)
         self._u_size = u_size
-        assert self.is_consistent
+        # assert self.is_consistent  # quite expensive assertion
 
     @property
     def is_consistent(self):

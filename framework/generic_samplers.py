@@ -67,7 +67,9 @@ class BoltzmannSamplerBase(object):
         raise NotImplementedError
 
     def sample(self, x, y):
-        """Invokes this _sampler with the given x and y parameters.
+        """Invokes this sampler with the given x and y parameters.
+
+        Calls the child-samplers recursively.
 
         Parameters
         ----------
