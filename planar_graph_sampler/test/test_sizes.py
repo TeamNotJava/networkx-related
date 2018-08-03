@@ -5,24 +5,25 @@ from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_g
 
 from planar_graph_sampler.grammar.planar_graph_decomposition import planar_graph_grammar
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000, reference_evals
+from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 from planar_graph_sampler.test.dummy_grammar import dummy_sampling_grammar
 
 
 def test_sampled_sizes():
 
-    all_evaluations = [planar_graph_evals_n100]
+    all_evaluations = [reference_evals]
 
     for evaluations in all_evaluations:
         oracle = EvaluationOracle(evaluations)
         BoltzmannSamplerBase.oracle = oracle
-        grammar = binary_tree_grammar()
-        # grammar = dummy_sampling_grammar()
+        # grammar = three_connected_graph_grammar()
+        grammar = dummy_sampling_grammar()
         grammar.init()
-        # grammar.dummy_sampling_mode()
+        grammar.dummy_sampling_mode()
         grammar.precompute_evals('K', 'x*G_1_dx(x,y)', 'D(x*G_1_dx(x,y),y)')
 
         classes_known_dx = [
-            'K',
+            'G_3_arrow',
             #'K_dx',
             #'K_dy',
             #'J_a',
@@ -106,7 +107,7 @@ def test_sampled_sizes():
             y = symbolic_y[index]
             expected_size = oracle.get_expected_l_size(label, symbolic_x[index], symbolic_y[index])
 
-            num_samples = 1000
+            num_samples = 10000
             count = 0
             sizes = []
             rec_errors = 0

@@ -13,6 +13,41 @@ from planar_graph_sampler.grammar.one_connected_decomposition import two_connect
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 
 
+def test_boltzmann_prob(grammar, sampled_class, x, y, l_size, num_graphs, num_samples=100, silent=False):
+    oracle = BoltzmannSamplerBase.oracle
+    assert oracle is not None
+    assert oracle[y] == 1.0
+
+    total_prob = num_graphs * oracle.get_probability(sampled_class, x, y, l_size, 1.0)
+    count = 0
+    fails = 0
+    successes = 0
+    while count < num_samples:
+        try:
+            g = grammar.sample(sampled_class, x, y)
+            if g.l_size == l_size:
+                # Count the observation.
+                successes += 1
+            else:
+                fails += 1
+        except RecursionError:
+            fails += 1
+            if not silent:
+                print("RecursionError")
+        count += 1
+
+    observed_prob = successes / num_samples
+    error = observed_prob / total_prob - 1
+
+    if not silent:
+        print("{} ({} samples):\n".format(sampled_class, num_samples))
+        print("Probability for hitting object with l-size {}: {}".format(l_size, total_prob))
+        print("Observed probability: {} (Error: {})\n".format(observed_prob, error))
+
+    return error
+
+
+
 def test_distribution_for_l_size(grammar, sampled_class, x, y, l_size, graphs_labs_u_size, num_samples=100, silent=False):
     # for g_aut in graphs_labs_u_size:
     #     import matplotlib.pyplot as plt
@@ -51,11 +86,7 @@ def test_distribution_for_l_size(grammar, sampled_class, x, y, l_size, graphs_la
             g = grammar.sample(sampled_class, x, y)
             if g.l_size == l_size:
                 # Remove all wrapping derived classes if any (in our tests there are at most two).
-                g_base = g
-                if isinstance(g, DerivedClass):
-                    g_base = g.base_class_object
-                if isinstance(g_base, DerivedClass):
-                    g_base = g_base.base_class_object
+                g_base = g.underive_all()
                 assert g_base.is_consistent
                 # Convert to networkx graph to use the isomorphism test.
                 gnx = g_base.to_networkx_graph(include_unpaired=False)
@@ -452,21 +483,36 @@ def test_distribution_G_1_dx_dx_l_2(num_samples=100):
 
 
 if __name__ == "__main__":
-    # test_distribution_connected(100)
-    #test_distribution_G_1_l_3(100)
-    #test_distribution_G_1_l_4(100)
-    # test_distribution_G_1_dx_l_2(1000)
-    test_distribution_G_1_dx_l_3(10000)
-    test_distribution_G_1_dx_dx_l_2(10000)
+    test_distribution_G_1_l_3(100000)
+    test_distribution_G_1_l_4(100000)
+    test_distribution_G_1_dx_l_2(100000)
+    test_distribution_G_1_dx_l_3(100000)
+    test_distribution_G_1_dx_dx_l_2(100000)
 
-    # test_distribution_G_2_dx_l_3(100)
+    test_distribution_G_2_dx_l_3(100000)
 
-    # test_distribution_R_w_l_1(20000)
-    # test_distribution_R_b_l_1(20000)
-    # test_distribution_K_dy_l_1(10000)
-    # test_distribution_K_l_2(1000)
-    # test_distribution_K_l_1(1000)
+    #test_distribution_R_w_l_1(10)
+    #test_distribution_R_b_l_1(10)
+    #test_distribution_K_dy_l_1(10)
+    #test_distribution_K_l_2(10)
+    #test_distribution_K_l_1(10)
 
-    # test_distribution_G_3_arrow_l_2(1000)
-    # test_distribution_G_3_arrow_l_3(1000)
-    # test_distribution_G_3_arrow_l_4(100)
+    #test_distribution_G_3_arrow_l_2(1000)
+    #test_distribution_G_3_arrow_l_3(1000)
+    #test_distribution_G_3_arrow_l_4(100)
+
+    #BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    #grammar = one_connected_graph_grammar()
+    #grammar.init()
+    # grammar.precompute_evals('G_1_dx_dx', 'x', 'y')
+
+    # sequence counting connected planar graphs
+
+    # [1,1,4,38,727,26013,1597690,149248656,18919743219,
+    #  3005354096360,569226803220234,124594074249852576,
+    #  30861014504270954737,8520443838646833231236,
+    #  2592150684565935977152860,
+    #  861079753184429687852978432,
+    #  310008316267496041749182487881]
+
+    #test_boltzmann_prob(grammar, 'G_1_dx_dx', 'x', 'y', 3, 727, 2 * 10**6)

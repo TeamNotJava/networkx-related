@@ -21,6 +21,10 @@ from framework.utils import bern
 from planar_graph_sampler.grammar.grammar_utils import underive, to_u_derived_class, divide_by_2, to_l_derived_class
 
 
+def to_K_dy(dummy):
+    dummy._u_size += 1
+    return UDerivedClass(dummy)
+
 def dummy_sampling_grammar():
     """Returns the adapted grammar for sampling dummies.
 
@@ -60,7 +64,7 @@ def dummy_sampling_grammar():
 
         'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),
 
-        'K_dy': Bij(R_b_as + R_w_as, to_u_derived_class),
+        'K_dy': Bij(R_b_as + R_w_as, to_K_dy),
 
         'R_b_as': R_w * L() * U() + U() * L() * R_w + R_w * L() * R_w,
 
