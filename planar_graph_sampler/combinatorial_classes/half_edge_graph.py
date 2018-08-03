@@ -227,7 +227,7 @@ class HalfEdgeGraph(CombinatorialClass):
         # Generate planar embedding or use default algorithm.
         pos = None
         if use_planar_drawer:
-            emb = self.planar_embedding()
+            emb = self.to_planar_embedding()
             pos = nx.combinatorial_embedding_to_pos(emb, fully_triangulate=False)
         # Take color attributes on the nodes into account.
         colors = nx.get_node_attributes(G, 'color').values()
