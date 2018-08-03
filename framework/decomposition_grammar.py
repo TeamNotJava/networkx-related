@@ -385,14 +385,36 @@ class DecompositionGrammar(object):
         def __init__(self, sampler):
             self.sampler = sampler
 
-        def sample(self, x, y):
+        class _ResultStack(list):
+            """Modified stack that keeps track of the total l-size it contains."""
+
+            def __init__(self):
+                self.l_size = 0
+
+            def append(self, obj):
+                list.append(self, obj)
+                self.l_size += obj.l_size
+
+            def pop(self):
+                obj = list.pop(self)
+                self.l_size -= obj.l_size
+                return obj
+
+        def sample(self, x, y, max_size=1000000, abs_tolerance=0):
             """Invokes the iterative sampler for the given symbolic parameters.
+
+            Parameters
+            ----------
+            x: str
+            y: str
+            max_size: int
+            abs_tolerance: int
 
             """
             # Main stack.
             stack = [self.sampler]
             # Stack that holds the intermediate sampling results.
-            result_stack = []
+            result_stack = self._ResultStack()
             # Stack that records variable substitutions.
             substitution_stack = []
             # The previously visited node in the decomposition tree.
@@ -430,7 +452,11 @@ class DecompositionGrammar(object):
                     set_elems_sampler = curr.get_children().pop()
                     k = curr.draw_k(x, y)
                     sampler = self.__class__(set_elems_sampler)
-                    result_stack.append(curr.builder.set([sampler.sample(x, y) for _ in range(k)]))
+                    set_elems = []
+                    for _ in range(k):
+                        obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
+                        set_elems.append(obj)
+                    result_stack.append(curr.builder.set(set_elems))
 
                 elif isinstance(curr, USubsSampler):
                     if prev is None or curr in prev.get_children():
@@ -636,11 +662,13 @@ class DecompositionGrammar(object):
             if self._stack_y and self._stack_y[-1][0] == sampler:
                 _, y = self._stack_y.pop()
                 self._y = y
+            sampler.precompute_eval(self._x, self._y)
             if isinstance(sampler, LSubsSampler):
                 self._stack_x.append((sampler.rhs, self._x))
+                self._x = sampler.rhs.oracle_query_string(self._x, self._y)
             if isinstance(sampler, USubsSampler):
                 self._stack_y.append((sampler.rhs, self._y))
-            sampler.precompute_eval(self._x, self._y)
+                self._y = sampler.rhs.oracle_query_string(self._x, self._y)
             if isinstance(sampler, AliasSampler):
                 if sampler.sampled_class in self._seen_alias_samplers:
                     # Indicate that the recursion should not go further down here as we have already seen the alias.
