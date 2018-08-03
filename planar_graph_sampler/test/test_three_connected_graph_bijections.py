@@ -15,7 +15,8 @@
 from planar_graph_sampler.bijections.primal_map import PrimalMap
 from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
 from planar_graph_sampler.bijections.whitney_3map_to_3graph import whitney
-from planar_graph_sampler.test.mock_objects_creator import create_sample_closure_output
+from planar_graph_sampler.test.mock_objects_creator import create_sample_closure_output, \
+    create_specific_closure_output_for_admissibility_check_test
 
 
 def test_admissibility_check():
@@ -99,6 +100,16 @@ def test_admissibility_check():
     half_edges_list[53].opposite = half_edges_list[55]
 
     assert dissection.is_admissible
+
+
+def test_admissibility_check_with_initially_wrong_result():
+    '''  TDD for fixing the bug in admissibility check.
+    '''
+    half_edges = create_specific_closure_output_for_admissibility_check_test()
+
+    dissection = IrreducibleDissection(half_edges[2])
+    assert not dissection.is_admissible
+    assert not dissection.is_admissible_slow
 
 
 def todotest_primal_map():

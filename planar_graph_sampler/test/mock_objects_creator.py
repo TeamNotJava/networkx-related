@@ -208,6 +208,136 @@ def create_sample_closure_output():
     return half_edges
 
 
+def create_specific_closure_output_for_admissibility_check_test():
+    half_edges = [ClosureHalfEdge() for _ in range(27)]
+
+    for i in range(1, 3):
+        half_edges[i].node_nr = 0
+        half_edges[i].color = 'black'
+    for i in range(3, 7):
+        half_edges[i].node_nr = 5
+        half_edges[i].color = 'white'
+    for i in range(7, 10):
+        half_edges[i].node_nr = 3
+        half_edges[i].color = 'black'
+    for i in range(10, 13):
+        half_edges[i].node_nr = 9
+        half_edges[i].color = 'white'
+    for i in range(13, 15):
+        half_edges[i].node_nr = 6
+        half_edges[i].color = 'black'
+    for i in range(15, 18):
+        half_edges[i].node_nr = 2
+        half_edges[i].color = 'black'
+    for i in range(18, 21):
+        half_edges[i].node_nr = 4
+        half_edges[i].color = 'white'
+    for i in range(21, 24):
+        half_edges[i].node_nr = 7
+        half_edges[i].color = 'white'
+    for i in range(24, 27):
+        half_edges[i].node_nr = 8
+        half_edges[i].color = 'black'
+
+    # Set up the next and prior pointers.
+    half_edges[1].next = half_edges[2]
+    half_edges[2].prior = half_edges[1]
+    half_edges[2].next = half_edges[1]
+    half_edges[1].prior = half_edges[2]
+    half_edges[3].next = half_edges[4]
+    half_edges[4].prior = half_edges[3]
+    half_edges[4].next = half_edges[5]
+    half_edges[5].prior = half_edges[4]
+    half_edges[5].next = half_edges[6]
+    half_edges[6].prior = half_edges[5]
+    half_edges[6].next = half_edges[3]
+    half_edges[3].prior = half_edges[6]
+    half_edges[7].next = half_edges[8]
+    half_edges[8].prior = half_edges[7]
+    half_edges[8].next = half_edges[9]
+    half_edges[9].prior = half_edges[8]
+    half_edges[9].next = half_edges[7]
+    half_edges[7].prior = half_edges[9]
+    half_edges[10].next = half_edges[11]
+    half_edges[11].prior = half_edges[10]
+    half_edges[11].next = half_edges[12]
+    half_edges[12].prior = half_edges[11]
+    half_edges[12].next = half_edges[10]
+    half_edges[10].prior = half_edges[12]
+    half_edges[13].next = half_edges[14]
+    half_edges[14].prior = half_edges[13]
+    half_edges[14].next = half_edges[13]
+    half_edges[13].prior = half_edges[14]
+    half_edges[15].next = half_edges[16]
+    half_edges[16].prior = half_edges[15]
+    half_edges[16].next = half_edges[17]
+    half_edges[17].prior = half_edges[16]
+    half_edges[17].next = half_edges[15]
+    half_edges[15].prior = half_edges[17]
+    half_edges[18].next = half_edges[19]
+    half_edges[19].prior = half_edges[18]
+    half_edges[19].next = half_edges[20]
+    half_edges[20].prior = half_edges[19]
+    half_edges[20].next = half_edges[18]
+    half_edges[18].prior = half_edges[20]
+    half_edges[21].next = half_edges[22]
+    half_edges[22].prior = half_edges[21]
+    half_edges[22].next = half_edges[23]
+    half_edges[23].prior = half_edges[22]
+    half_edges[23].next = half_edges[21]
+    half_edges[21].prior = half_edges[23]
+    half_edges[24].next = half_edges[25]
+    half_edges[25].prior = half_edges[24]
+    half_edges[25].next = half_edges[26]
+    half_edges[26].prior = half_edges[25]
+    half_edges[26].next = half_edges[24]
+    half_edges[24].prior = half_edges[26]
+
+    # Set up the opposite pointers
+    half_edges[1].opposite = half_edges[3]
+    half_edges[3].opposite = half_edges[1]
+    half_edges[2].opposite = half_edges[10]
+    half_edges[10].opposite = half_edges[2]
+    half_edges[4].opposite = half_edges[7]
+    half_edges[7].opposite = half_edges[4]
+    half_edges[5].opposite = half_edges[15]
+    half_edges[15].opposite = half_edges[5]
+    half_edges[6].opposite = half_edges[13]
+    half_edges[13].opposite = half_edges[6]
+    half_edges[8].opposite = half_edges[12]
+    half_edges[12].opposite = half_edges[8]
+    half_edges[9].opposite = half_edges[18]
+    half_edges[18].opposite = half_edges[9]
+    half_edges[11].opposite = half_edges[24]
+    half_edges[24].opposite = half_edges[11]
+    half_edges[14].opposite = half_edges[21]
+    half_edges[21].opposite = half_edges[14]
+    half_edges[16].opposite = half_edges[20]
+    half_edges[20].opposite = half_edges[16]
+    half_edges[17].opposite = half_edges[22]
+    half_edges[22].opposite = half_edges[17]
+    half_edges[19].opposite = half_edges[26]
+    half_edges[26].opposite = half_edges[19]
+    half_edges[23].opposite = half_edges[25]
+    half_edges[25].opposite = half_edges[23]
+
+    # Set up is_hexagonal property
+    half_edges[1].is_hexagonal = True
+    half_edges[2].is_hexagonal = True
+    half_edges[3].is_hexagonal = True
+    half_edges[6].is_hexagonal = True
+    half_edges[13].is_hexagonal = True
+    half_edges[14].is_hexagonal = True
+    half_edges[21].is_hexagonal = True
+    half_edges[23].is_hexagonal = True
+    half_edges[25].is_hexagonal = True
+    half_edges[24].is_hexagonal = True
+    half_edges[11].is_hexagonal = True
+    half_edges[10].is_hexagonal = True
+
+    return half_edges
+
+
 def create_three_connected_graph(lowest_node_number=0):
     """Creates a three connected graph used for testing the network operations."""
     first_net_vertices_list = []

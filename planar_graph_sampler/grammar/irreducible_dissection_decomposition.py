@@ -41,6 +41,14 @@ def add_random_root_edge(decomp):
 
 def is_admissible(dissection):
     """Admissibility check for usage in the grammar."""
+    # TODO used for check the cases where both implementations have different results. The problem is fixed now.
+    # if dissection.is_admissible != dissection.is_admissible_slow:
+    #     print("error root: %s    resuls: pp: %s     tob: %s"
+    #           %(dissection.half_edge.node_nr, dissection.is_admissible, dissection.is_admissible_slow))
+    #     import matplotlib.pyplot as plt
+    #     dissection.plot(with_labels=True, use_planar_drawer=False, node_size=50)
+    #     plt.show()
+    #     dissection.is_admissible
     return dissection.is_admissible
 
 
@@ -102,12 +110,12 @@ if __name__ == "__main__":
     while True:
         diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
         if True:
-            print(diss)
+            #print(diss)
             try:
                 assert diss.is_consistent
 
                 import matplotlib.pyplot as plt
-                diss.plot(with_labels=True, use_planar_drawer=True, node_size=50)
-                plt.show()
+                #diss.plot(with_labels=True, use_planar_drawer=True, node_size=50)
+                #plt.show()
             except AttributeError:
                 pass
