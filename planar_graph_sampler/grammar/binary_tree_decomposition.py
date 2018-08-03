@@ -39,6 +39,7 @@ class WhiteRootedBinaryTreeBuilder(DefaultBuilder):
         return Leaf()
 
     def product(self, lhs, rhs):
+        # Builds white-rooted tree from decomposition of the form (leaf|black)(leaf|black)
         res = BinaryTree('white')
         res.set_root_node_nr(next(self._counter))
         res.add_left_child(lhs)
@@ -66,7 +67,7 @@ class BlackRootedBinaryTreeBuilder(DefaultBuilder):
 
     def product(self, lhs, rhs):
         # Builds black rooted tree from decompositions of the form
-        # (1) l-atom(leaf|white) or (2) (leaf|white)l-atom.
+        # (1) black(leaf|white) or (2) (leaf|white)black.
         if not lhs.is_leaf and lhs.is_black_rooted:
             # Form (1)
             lhs.add_right_child(rhs)
@@ -75,8 +76,6 @@ class BlackRootedBinaryTreeBuilder(DefaultBuilder):
             # Form (2)
             rhs.add_left_child(lhs)
             res = rhs
-        assert res is not None
-        assert res.root_color is 'black'
         return res
 
 
@@ -85,18 +84,8 @@ def rej_to_K(u_derived_tree):
 
 
 def to_K_dy(tree):
-    tree._leaves_count += 1
+    tree.leaves_count += 1
     return UDerivedClass(tree)
-
-
-def is_asymmetric(tree):
-    if tree.black_nodes_count == 1 and tree.white_nodes_count == 0:
-        return False
-    if tree.black_nodes_count == 0 and tree.white_nodes_count == 1:
-        return False
-    if tree.black_nodes_count == 1 and tree.white_nodes_count == 3:
-        return False
-    return True
 
 
 def binary_tree_grammar():
@@ -131,8 +120,6 @@ def binary_tree_grammar():
         'K': Bij(Rej(K_dy, rej_to_K), underive),  # See 4.1.6.
 
         'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),  # See 5.3.1
-
-        # 'K_dy': Bij(Rej(R_w + R_b, is_asymmetric), to_K_dy),
 
         'K_dy': Bij(R_b_as + R_w_as, to_K_dy),
 
@@ -170,7 +157,7 @@ if __name__ == '__main__':
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
-    sampled_class = 'R_b'
+    sampled_class = 'K_dx'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
     print("Expected size of K: {}".format(BoltzmannSamplerBase.oracle.get_expected_l_size('K', symbolic_x, symbolic_y)))
@@ -180,14 +167,13 @@ if __name__ == '__main__':
     while True:
         try:
             # tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            tree = grammar.iterative_sampling(sampled_class, symbolic_x, symbolic_y)
-            if tree.l_size == 1:
+            tree = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+            if tree.l_size > 100:
                 print(tree)
-                print("Rejections to draw K: {}".format(grammar.rules['K'].get_children()[0].rejections_count))
                 tree = tree.underive_all()
-                assert tree.is_consistent
-                tree.plot(draw_leaves=False, node_size=50)
-                plt.show()
+                #assert tree.is_consistent
+                #tree.plot(draw_leaves=False, node_size=50)
+                #plt.show()
         except RecursionError:
             print("Recursion error")
 

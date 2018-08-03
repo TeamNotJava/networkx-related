@@ -28,36 +28,35 @@ class BinaryTree(HalfEdgeGraph):
     root_half_edge: HalfEdge, optional (default=None)
     """
 
+    __slots__ = 'black_nodes_count', 'white_nodes_count', 'leaves_count'
+
     def __init__(self, root_color, root_half_edge=None):
         if root_half_edge is None:
             root_half_edge = ClosureHalfEdge(self_consistent=True)
             root_half_edge.color = root_color
         super(BinaryTree, self).__init__(root_half_edge)
-        self._black_nodes_count = 0
-        self._white_nodes_count = 0
+        self.black_nodes_count = 0
+        self.white_nodes_count = 0
         # There is a leaf on the root pointing 'upwards'.
-        self._leaves_count = 0
+        self.leaves_count = 0
         if root_color == 'black':
-            self._black_nodes_count = 1
+            self.black_nodes_count = 1
         elif root_color == 'white':
-            self._white_nodes_count = 1
+            self.white_nodes_count = 1
 
     @property
     def is_consistent(self):
         """Checks invariants (for debugging)."""
         super_ok = super(BinaryTree, self).is_consistent
-        node_count_ok = self.number_of_nodes == self._black_nodes_count + self._white_nodes_count
+        node_count_ok = self.number_of_nodes == self.black_nodes_count + self.white_nodes_count
         leaf_count_ok = True  # self._leaves_count == self.number_of_nodes + 2
         is_tree = self.is_tree
         return super_ok and node_count_ok and leaf_count_ok and is_tree
 
     def flip(self):
         """Flips the children."""
-        deg = self._half_edge.degree()
-        assert deg <= 3
-        # Both children present:
-        if deg == 3:
-            self._half_edge.invert()
+        # TODO needed?
+        self.half_edge.invert()
         # Otherwise don't do anything.
         return self
 
@@ -66,36 +65,46 @@ class BinaryTree(HalfEdgeGraph):
 
         Only works if the tree does not have two children yet and the child root has the correct color.
         """
-        assert self._half_edge.degree() < 3
+        # assert self._half_edge.degree() < 3
         # Add new half edge to root.
         new = ClosureHalfEdge()
-        new.color = self.root_color
-        new.node_nr = self._half_edge.node_nr
-        self._half_edge.insert_after(new)
+        new.color = self.half_edge.color
+        new.node_nr = self.half_edge.node_nr
+        self.half_edge.insert_after(new)
         if not other.is_leaf:
-            assert other.half_edge.opposite is None
-            assert other.half_edge.color is not self._half_edge.color
+            # assert other.half_edge.opposite is None
+            # assert other.half_edge.color is not self._half_edge.color
             new.opposite = other.half_edge
             other.half_edge.opposite = new
-            self._black_nodes_count += other.black_nodes_count
-            self._white_nodes_count += other.white_nodes_count
-            # The minus 1 is because the root leaf from other is discarded.
-            self._leaves_count += other.leaves_count  # - 1
+            self.black_nodes_count += other.black_nodes_count
+            self.white_nodes_count += other.white_nodes_count
+            self.leaves_count += other.leaves_count
         else:
             # Other is a leaf.
-            self._leaves_count += 1
+            self.leaves_count += 1
 
     def add_right_child(self, other):
         """Adds right child to the root.
 
         Only works if the tree does not have two children yet and the child root has the correct color.
         """
-        self.add_left_child(other)
-        self.flip()
+        new = ClosureHalfEdge()
+        new.color = self.half_edge.color
+        new.node_nr = self.half_edge.node_nr
+        self.half_edge.insert_before(new)
+        if not other.is_leaf:
+            new.opposite = other.half_edge
+            other.half_edge.opposite = new
+            self.black_nodes_count += other.black_nodes_count
+            self.white_nodes_count += other.white_nodes_count
+            self.leaves_count += other.leaves_count
+        else:
+            # Other is a leaf.
+            self.leaves_count += 1
 
     @property
     def root_color(self):
-        return self._half_edge.color
+        return self.half_edge.color
 
     @property
     def is_white_rooted(self):
@@ -105,20 +114,20 @@ class BinaryTree(HalfEdgeGraph):
     def is_black_rooted(self):
         return self.root_color is 'black'
 
-    @property
-    def black_nodes_count(self):
-        return self._black_nodes_count
-
-    @property
-    def white_nodes_count(self):
-        return self._white_nodes_count
-
-    @property
-    def leaves_count(self):
-        return self._leaves_count
+    # @property
+    # def black_nodes_count(self):
+    #     return self._black_nodes_count
+    #
+    # @property
+    # def white_nodes_count(self):
+    #     return self._white_nodes_count
+    #
+    # @property
+    # def leaves_count(self):
+    #     return self._leaves_count
 
     def set_root_node_nr(self, node_nr):
-        for h in self._half_edge.incident_half_edges():
+        for h in self.half_edge.incident():
             h.node_nr = node_nr
 
     @property
@@ -129,21 +138,21 @@ class BinaryTree(HalfEdgeGraph):
 
     @property
     def u_size(self):
-        return self._leaves_count
+        return self.leaves_count
 
     @property
     def l_size(self):
-        return self._black_nodes_count
+        return self.black_nodes_count
 
     def __str__(self):
         return "Binary tree (black: {}, white: {}, leaves: {})" \
-            .format(self._black_nodes_count, self._white_nodes_count, self._leaves_count)
+            .format(self.black_nodes_count, self.white_nodes_count, self.leaves_count)
 
     # Networkx related functionality.
 
     def to_networkx_graph(self, include_unpaired=True):
         # Get dict of nodes.
-        nodes = self._half_edge.node_dict()
+        nodes = self.half_edge.node_dict()
         # Include the leaves as well.
         G = super(BinaryTree, self).to_networkx_graph(include_unpaired=include_unpaired)
         for v in G:
