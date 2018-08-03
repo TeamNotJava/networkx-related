@@ -30,10 +30,13 @@ class AliasSampler(BoltzmannSamplerBase):
     alias: str
     """
 
+    __slots__ = '_alias', '_grammar', '_referenced_sampler'
+
     def __init__(self, alias):
         super(AliasSampler, self).__init__()
         self._alias = alias
         self._grammar = None
+        self._referenced_sampler = None  # The referenced sampler.
 
     def _grammar_not_initialized_error_msg(self):
         return "{}: you have to set the grammar this AliasSampler belongs to before using it".format(self._alias)
@@ -76,7 +79,7 @@ class AliasSampler(BoltzmannSamplerBase):
     def sample(self, x, y):
         if self.grammar is None:
             raise BoltzmannFrameworkError(self._grammar_not_initialized_error_msg())
-        return self.grammar[self.sampled_class].sample(x, y)
+        return self._referenced_sampler.sample(x, y)
 
     @return_precomp
     def eval(self, x, y):
@@ -85,7 +88,7 @@ class AliasSampler(BoltzmannSamplerBase):
         if self.is_recursive:
             return self.oracle.get(self.oracle_query_string(x, y))
         else:
-            return self.grammar[self.sampled_class].eval(x, y)
+            return self._referenced_sampler.eval(x, y)
 
     def oracle_query_string(self, x, y):
         if self.grammar is None:
@@ -94,12 +97,14 @@ class AliasSampler(BoltzmannSamplerBase):
             # Evaluations of recursive classes cannot be inferred automatically.
             return "{}({},{})".format(self._alias, x, y)
         else:
-            return self.grammar[self.sampled_class].oracle_query_string(x, y)
+            return self._referenced_sampler.oracle_query_string(x, y)
 
     def get_children(self):
-        if self.grammar is None:
-            raise BoltzmannFrameworkError(self._grammar_not_initialized_error_msg())
-        return [self.grammar[self.sampled_class]]
+        # TODO removed due to measurable performance increase
+        # if self.grammar is None:
+        #    raise BoltzmannFrameworkError(self._grammar_not_initialized_error_msg())
+        # return [self._grammar[self._sampled_class]]
+        return [self._referenced_sampler]
 
     def accept(self, visitor):
         # here we let the visitor decide if he wants to recurse further down into the children
@@ -143,18 +148,19 @@ class DecompositionGrammar(object):
         A grammar can only be used for sampling after initialization.
         """
         # Initialize the alias samplers (set their referenced grammar to this grammar).
-        self._set_active_grammar()
+        self._init_alias_samplers()
         # Find out which rules are recursive.
         self._find_recursive_rules()
         # Automatically set target class labels of transformation samplers where possible.
         self._infer_target_class_labels()
 
-    def _set_active_grammar(self):
+    def _init_alias_samplers(self):
         """Sets the grammar in the alias samplers."""
 
         def apply_to_each(sampler):
             if isinstance(sampler, AliasSampler):
                 sampler.grammar = self
+                sampler._referenced_sampler = self[sampler.sampled_class]
 
         for alias in self._rules:
             v = self._DFSVisitor(apply_to_each)
@@ -393,11 +399,11 @@ class DecompositionGrammar(object):
 
             def append(self, obj):
                 list.append(self, obj)
-                self.l_size += obj.l_size
+                # self.l_size += obj.l_size
 
             def pop(self):
                 obj = list.pop(self)
-                self.l_size -= obj.l_size
+                # self.l_size -= obj.l_size
                 return obj
 
         def sample(self, x, y, max_size=1000000, abs_tolerance=0):
@@ -407,7 +413,7 @@ class DecompositionGrammar(object):
             ----------
             x: str
             y: str
-            max_size: int
+            max_size: int # TODO implement this
             abs_tolerance: int
 
             """
@@ -424,7 +430,15 @@ class DecompositionGrammar(object):
                 # Get top of stack.
                 curr = stack[-1]
 
-                if isinstance(curr, ProdSampler):
+                # TODO find an optimal order of these if statements
+
+                if isinstance(curr, AliasSampler):
+                    if prev is None or curr in prev.get_children():
+                        stack.append(curr._referenced_sampler)
+                    else:
+                        stack.pop()
+
+                elif isinstance(curr, ProdSampler):
                     if prev is None or curr in prev.get_children():
                         stack.append(curr.lhs)
                     elif curr.lhs is prev:
@@ -440,11 +454,26 @@ class DecompositionGrammar(object):
                 elif isinstance(curr, SumSampler):
                     if prev is None or curr in prev.get_children():
                         if bern(curr.lhs.eval(x, y) / curr.eval(x, y)):
+                        # if bern(curr.lhs._precomputed_eval / curr._precomputed_eval):
                             stack.append(curr.lhs)
                         else:
                             stack.append(curr.rhs)
                     else:
                         stack.pop()
+
+                elif isinstance(curr, RejectionSampler):
+                    if prev is None or curr in prev.get_children():
+                        stack.append(curr.get_children().pop())
+                    else:
+                        obj_to_check = result_stack.pop()
+                        is_acceptable = curr.transformation  # This is kind of weird ...
+                        if is_acceptable(obj_to_check):
+                            stack.pop()
+                            result_stack.append(obj_to_check)
+                        else:
+                            stack.append(curr.get_children().pop())
+
+
 
                 elif isinstance(curr, SetSampler):
                     # We use recursion here for now.
@@ -494,18 +523,6 @@ class DecompositionGrammar(object):
                         res = core_object.replace_l_atoms(sampler, x, y)  # Recursion for now.
                         result_stack.append(res)
 
-                elif isinstance(curr, RejectionSampler):
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr.get_children().pop())
-                    else:
-                        obj_to_check = result_stack.pop()
-                        is_acceptable = curr.transformation  # This is kind of weird ...
-                        if is_acceptable(obj_to_check):
-                            stack.pop()
-                            result_stack.append(obj_to_check)
-                        else:
-                            stack.append(curr.get_children().pop())
-
                 elif isinstance(curr, UDerFromLDerSampler):
                     if prev is None or curr in prev.get_children():
                         stack.append(curr.get_children().pop())
@@ -549,14 +566,9 @@ class DecompositionGrammar(object):
                         else:
                             result_stack.append(to_transform)
 
-                elif isinstance(curr, AliasSampler):
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr.grammar[curr.sampled_class])
-                        # stack.append(self[curr.sampled_class])
-                    else:
-                        stack.pop()
-
-                elif isinstance(curr, AtomSampler):
+                else:
+                    assert isinstance(curr, AtomSampler)
+                    # elif isinstance(curr, AtomSampler):
                     # Atom samplers are the leaves in the decomposition tree.
                     stack.pop()
                     result_stack.append(curr.sample(x, y))
@@ -589,6 +601,7 @@ class DecompositionGrammar(object):
             self._f = f
             self._result = []
             self._seen_alias_samplers = set()
+            self._grammar = None
 
         def visit(self, sampler):
             # Apply the function to the current sampler.
