@@ -362,6 +362,10 @@ class BinarySampler(BoltzmannSamplerBase):
     def __init__(self, lhs, rhs, op_symbol):
         super(BinarySampler, self).__init__()
         self._lhs = lhs
+        # While this is okay for the recursive sampling it causes problems in the iterative version.
+        if lhs is rhs:
+            from copy import copy
+            rhs = copy(lhs)
         self._rhs = rhs
         self._op_symbol = op_symbol
 
@@ -535,9 +539,12 @@ class SetSampler(UnarySampler):
     def sampled_class(self):
         return "Set_{}({})".format(self._d, self._sampler.sampled_class)
 
+    def draw_k(self, x, y):
+        return pois(self._d, self._sampler.eval(x, y))
+
     def sample(self, x, y):
         # todo
-        k = pois(self._d, self._sampler.eval(x, y))
+        k = self.draw_k(x, y)
         return self._builder.set([self._sampler.sample(x, y) for _ in range(k)])
 
     @return_precomp

@@ -373,6 +373,128 @@ class DecompositionGrammar(object):
                 v = self._DFSVisitor(apply_to_each)
                 self[alias].accept(v)
 
+    def iterative_sampling(self, sampler, x, y):
+        """Samples from the rule identified by `alias` in an iterative manner.
+
+        Traverses the decomposition tree in post-order.
+        The tree may be arbitrarily large and is expanded on the fly.
+        """
+        # Main stack.
+        if isinstance(sampler, str):
+            stack = [self[sampler]]
+        else:
+            assert isinstance(sampler, BoltzmannSamplerBase)
+            stack = [sampler]
+        # Stack that holds the intermediate sampling results.
+        result_stack = []
+        # The previously visited node in the decomposition tree.
+        prev = None
+        while stack:
+            # Get top of stack.
+            curr = stack[-1]
+
+            if isinstance(curr, ProdSampler):
+                if prev is None or curr in prev.get_children():
+                    stack.append(curr.lhs)
+                elif curr.lhs is prev:
+                    # Left child has already been visited - visit right child.
+                    stack.append(curr.rhs)
+                else:
+                    # Both children have been processed.
+                    stack.pop()
+                    arg_rhs = result_stack.pop()
+                    arg_lhs = result_stack.pop()
+                    result_stack.append(curr.builder.product(arg_lhs, arg_rhs))
+
+            elif isinstance(curr, SumSampler):
+                # Going down ...
+                if prev is None or curr in prev.get_children():
+                    if bern(curr.lhs.eval(x, y) / curr.eval(x, y)):
+                        stack.append(curr.lhs)
+                    else:
+                        stack.append(curr.rhs)
+                # Coming back ...
+                else:
+                    stack.pop()
+
+            elif isinstance(curr, SetSampler):
+                # We use recursion here for now.
+                stack.pop()
+                set_elems_sampler = curr.get_children().pop()
+                k = curr.draw_k(x, y)
+                return curr.builder.set([self.iterative_sampling(set_elems_sampler, x, y) for _ in range(k)])
+
+            elif isinstance(curr, RejectionSampler):
+                if prev is None or curr in prev.get_children():
+                    stack.append(curr.get_children().pop())
+                else:
+                    stack.pop()
+                    obj_to_check = result_stack.pop()
+                    is_acceptable = curr.transformation  # This is kind of weird ...
+                    if is_acceptable(obj_to_check):
+                        result_stack.append(obj_to_check)
+                    else:
+                        stack.append(curr)
+                        stack.append(curr.get_children().pop())
+
+            elif isinstance(curr, UDerFromLDerSampler):
+                if prev is None or curr in prev.get_children():
+                    stack.append(curr.get_children().pop())
+                else:
+                    stack.pop()
+                    obj_to_check = result_stack.pop()
+
+                    def is_acceptable(gamma):
+                        return bern((1 / curr._alpha_u_l) * (gamma.u_size / (gamma.l_size + 1)))
+
+                    if is_acceptable(obj_to_check):
+                        result_stack.append(UDerivedClass(obj_to_check.base_class_object))
+                    else:
+                        stack.append(curr)
+                        stack.append(curr.get_children().pop())
+
+            elif isinstance(curr, LDerFromUDerSampler):
+                if prev is None or curr in prev.get_children():
+                    stack.append(curr.get_children().pop())
+                else:
+                    stack.pop()
+                    obj_to_check = result_stack.pop()
+
+                    def is_acceptable(gamma):
+                        return bern((1 / curr._alpha_l_u) * (gamma.l_size / (gamma.u_size + 1)))
+
+                    if is_acceptable(obj_to_check):
+                        result_stack.append(LDerivedClass(obj_to_check.base_class_object))
+                    else:
+                        stack.append(curr)
+                        stack.append(curr.get_children().pop())
+
+            elif isinstance(curr, TransformationSampler):
+                if prev is None or curr in prev.get_children():
+                    stack.append(curr.get_children().pop())
+                else:
+                    stack.pop()
+                    to_transform = result_stack.pop()
+                    result_stack.append(curr.transformation(to_transform))
+
+            elif isinstance(curr, AliasSampler):
+                # Going down ...
+                if prev is None or curr in prev.get_children():
+                    stack.append(self[curr.sampled_class])
+                # Coming back ...
+                else:
+                    stack.pop()
+
+            elif isinstance(curr, AtomSampler):
+                # Atom samplers are the leaves in the decomposition tree.
+                stack.pop()
+                result_stack.append(curr.sample(x, y))
+
+            prev = curr
+
+        assert len(result_stack) == 1
+        return result_stack[0]
+
     class _DFSVisitor:
         """
         Traverses the sampler hierarchy with a DFS.
