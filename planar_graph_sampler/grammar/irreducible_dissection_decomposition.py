@@ -98,24 +98,23 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
-    grammar = irreducible_dissection_grammar()
-    grammar.init()
-
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = False
 
+    grammar = irreducible_dissection_grammar()
+    grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'J_a_dx'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
-    sampled_class = 'I_dx'
+    # random.seed(0)
 
     while True:
-        # diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
         diss = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        if True:
+        if diss.l_size > 0:
             print(diss)
             diss = diss.underive_all()
-            # assert diss.is_consistent
-            diss.plot(with_labels=False, use_planar_drawer=False, node_size=25)
+            assert diss.is_consistent
+            diss.plot(with_labels=False, use_planar_drawer=True, node_size=25)
             plt.show()
-

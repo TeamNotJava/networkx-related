@@ -23,7 +23,6 @@ from planar_graph_sampler.grammar.grammar_utils import Counter, divide_by_2, to_
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.combinatorial_classes.two_connected_graph import EdgeRootedTwoConnectedPlanarGraph, \
     TwoConnectedPlanarGraph
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 from planar_graph_sampler.grammar.network_decomposition import network_grammar
 
 
@@ -123,26 +122,26 @@ def two_connected_graph_grammar():
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-
-    grammar = two_connected_graph_grammar()
-    grammar.init()
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = True
 
+    grammar = two_connected_graph_grammar()
+    grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
-
     sampled_class = 'G_2_dx_dx'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
     while True:
         try:
-            g = grammar.iterative_sampling(sampled_class, symbolic_x, symbolic_y)
+            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size > 0:
+                g = g.underive_all()
+                assert g.is_consistent
+                print(g)
+                g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
+                plt.show()
         except RecursionError:
-            pass
-        if g.l_size == 2:
-            g = g.underive_all()
-            assert g.is_consistent
-            print(g)
-            g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
-            plt.show()
+            print("Recursion error")

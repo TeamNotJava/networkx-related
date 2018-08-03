@@ -18,7 +18,6 @@ from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
 from framework.generic_samplers import BoltzmannSamplerBase
 
 from planar_graph_sampler.combinatorial_classes.one_connected_graph import OneConnectedPlanarGraph
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 from planar_graph_sampler.grammar.grammar_utils import underive
 from planar_graph_sampler.grammar.two_connected_decomposition import two_connected_graph_grammar
 
@@ -36,6 +35,7 @@ class Merger(DefaultBuilder):
         result = graphs.pop()
         for g in graphs:
             result.marked_atom.insert_all(g.marked_atom)
+        assert isinstance(result, LDerivedClass)
         return result
 
 
@@ -106,33 +106,28 @@ def one_connected_graph_grammar():
 
 
 if __name__ == '__main__':
-    grammar = one_connected_graph_grammar()
-    grammar.init()
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = False
 
+    grammar = one_connected_graph_grammar()
+    grammar.init()
     symbolic_x = 'x'
     symbolic_y = 'y'
-
     sampled_class = 'G_1_dx_dx'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
-    try:
-        print(BoltzmannSamplerBase.oracle.get_expected_l_size(sampled_class, symbolic_x, symbolic_y))
-    except BoltzmannFrameworkError:
-        pass
+    # random.seed(0)
 
     while True:
-
         try:
-            g = grammar.iterative_sampling(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size == 4:
+            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size > 0:
                 g = g.underive_all()
                 print(g)
                 assert g.is_consistent
-
-                import matplotlib.pyplot as plt
-
                 g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
                 plt.show()
         except RecursionError:

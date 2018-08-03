@@ -20,10 +20,9 @@ from framework.generic_samplers import *
 from framework.generic_samplers import BoltzmannSamplerBase
 from framework.utils import bern
 
-from planar_graph_sampler.grammar.grammar_utils import underive, to_u_derived_class, Counter
+from planar_graph_sampler.grammar.grammar_utils import underive, Counter
 from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.combinatorial_classes.binary_tree import Leaf
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
 
 class WhiteRootedBinaryTreeBuilder(DefaultBuilder):
@@ -148,32 +147,28 @@ def binary_tree_grammar():
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = False
 
     grammar = binary_tree_grammar()
     grammar.init()
-
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
     sampled_class = 'K_dx'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
-    print("Expected size of K: {}".format(BoltzmannSamplerBase.oracle.get_expected_l_size('K', symbolic_x, symbolic_y)))
-
-    random.seed(0)
+    # random.seed(0)
 
     while True:
         try:
-            # tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
             tree = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-            if tree.l_size > 100:
+            if tree.l_size > 0:
                 print(tree)
                 tree = tree.underive_all()
-                #assert tree.is_consistent
-                #tree.plot(draw_leaves=False, node_size=50)
-                #plt.show()
+                assert tree.is_consistent
+                tree.plot(draw_leaves=False, node_size=50)
+                plt.show()
         except RecursionError:
             print("Recursion error")
-

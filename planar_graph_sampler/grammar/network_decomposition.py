@@ -22,7 +22,6 @@ from planar_graph_sampler.bijections.networks import merge_networks_in_parallel,
     substitute_edge_by_network
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.combinatorial_classes.network import Network
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 
 
@@ -166,28 +165,27 @@ def network_grammar():
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-
-    grammar = network_grammar()
-    grammar.init()
-    # grammar.dummy_sampling_mode()
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
     BoltzmannSamplerBase.debug_mode = True
 
+    grammar = network_grammar()
+    grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
-    sampled_class = 'H'
+    sampled_class = 'D_dx'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
     # random.seed(0)
 
     while True:
         try:
-            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size == 2:
+            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size > 0:
                 print(g)
                 assert g.is_consistent
-                g.plot(with_labels=False, use_planar_drawer=False, node_size=10)
+                g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
                 plt.show()
         except RecursionError:
             print("RecursionError")
