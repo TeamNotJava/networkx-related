@@ -53,12 +53,12 @@ class Network(HalfEdgeGraph):
     @property
     def zero_pole(self):
         """Returns the half-edge between zero-pole and inf-pole."""
-        return self._half_edge
+        return self.half_edge
 
     @property
     def inf_pole(self):
         """Returns the half-edge between inf-pole and zero-pole."""
-        return self._half_edge.opposite
+        return self.half_edge.opposite
 
     # CombinatorialClass interface.
 
@@ -88,6 +88,6 @@ class Network(HalfEdgeGraph):
     def to_networkx_graph(self, include_unpaired=False):
         g = super(Network, self).to_networkx_graph(include_unpaired=include_unpaired)
         if not self.is_linked:
-            link = self._half_edge
+            link = self.half_edge
             g.remove_edge(link.node_nr, link.opposite.node_nr)
         return g

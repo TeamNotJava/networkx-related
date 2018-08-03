@@ -36,28 +36,30 @@ class HalfEdgeGraph(CombinatorialClass):
         A half-edge in the graph.
     """
 
-    def __init__(self, half_edge):
-        self._half_edge = half_edge
+    __slots__ = 'half_edge'
 
-    @property
-    def half_edge(self):
-        """Returns the underlying half-edge for direct manipulation."""
-        return self._half_edge
+    def __init__(self, half_edge):
+        self.half_edge = half_edge
+
+    # @property
+    # def half_edge(self):
+    #     """Returns the underlying half-edge for direct manipulation."""
+    #     return self._half_edge
 
     @property
     def number_of_nodes(self):
         """Number of nodes in the graph."""
-        return self._half_edge.get_number_of_nodes()
+        return self.half_edge.get_number_of_nodes()
 
     @property
     def number_of_edges(self):
         """Number of edges in the graph."""
-        return self._half_edge.get_number_of_edges()
+        return self.half_edge.get_number_of_edges()
 
     @property
     def number_of_half_edges(self):
         """Number of half-edges in the graph."""
-        return len(self._half_edge.get_all_half_edges(include_unpaired=True, include_opp=True))
+        return len(self.half_edge.get_all_half_edges(include_unpaired=True, include_opp=True))
 
     def random_node_half_edge(self):
         """Returns a half-edge incident to a node chosen uniformly at random.
@@ -78,7 +80,7 @@ class HalfEdgeGraph(CombinatorialClass):
         """Checks node_nr consistency."""
         if visited is None:
             visited = set()
-        curr = self._half_edge
+        curr = self.half_edge
         visited.add(curr)
         incident = curr.incident_half_edges()
         if len(set([he.node_nr for he in incident])) > 1:

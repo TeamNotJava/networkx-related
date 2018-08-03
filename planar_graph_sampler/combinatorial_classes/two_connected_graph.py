@@ -53,7 +53,7 @@ class TwoConnectedPlanarGraph(HalfEdgeGraph):
                 # Get an arbitrary half-edge incident to the current node.
                 he = nodes[node][0]
                 he.insert_all(plug_in)
-        return OneConnectedPlanarGraph(self._half_edge)
+        return OneConnectedPlanarGraph(self.half_edge)
 
     def __str__(self):
         return "2-connected planar graph (l: {}, u: {})".format(self.number_of_nodes, self.number_of_edges)

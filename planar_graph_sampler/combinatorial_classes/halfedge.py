@@ -13,7 +13,7 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 
-class HalfEdge:
+class HalfEdge(object):
     """
     Generic class for half-edge representation of a combinatorial planar embedding.
 
@@ -22,6 +22,8 @@ class HalfEdge:
     self_consistent: bool
         Makes a consistent one-node/zero-edge graph.
     """
+
+    __slots__ = 'opposite', 'next', 'prior', 'node_nr'
 
     def __init__(self, self_consistent=False):
         # Contains the opposite half-edge.
@@ -104,6 +106,7 @@ class HalfEdge:
 
     def invert(self):
         """Inverts order."""
+        # TODO still needed?
         for h in self.incident_half_edges():
             # Swap pointers.
             h.next, h.prior = h.prior, h.next
@@ -136,7 +139,7 @@ class HalfEdge:
             yield curr
 
     def set_node_nr(self, node_nr):
-        for he in self.incident_half_edges():
+        for he in self.incident():
             he.node_nr = node_nr
 
     # TODO hack hack
@@ -224,6 +227,8 @@ class ClosureHalfEdge(HalfEdge):
     """
     Half-edges with additional attributes needed in the closure.
     """
+
+    __slots__ = 'number_proximate_inner_edges', 'color', 'is_hexagonal', 'added_by_comp_clsr'
 
     def __init__(self, self_consistent=False):
         super(ClosureHalfEdge, self).__init__(self_consistent)
