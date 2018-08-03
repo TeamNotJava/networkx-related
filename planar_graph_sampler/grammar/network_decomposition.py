@@ -68,7 +68,9 @@ class PNetworkBuilder(NetworkBuilder):
     def set(self, networks):
         """Merges a set of networks in parallel."""
         if len(networks) == 0:
-            return None
+            # An empty set is like a zero atom (it has size 0).
+            # We use the generic zero atom here as a zero-atom-network cannot be defined.
+            return ZeroAtomClass()
         # TODO Without reversing the list of networks, weird things happen, find out why.
         networks.reverse()
         res = networks.pop()
@@ -78,7 +80,8 @@ class PNetworkBuilder(NetworkBuilder):
 
     def product(self, n1, n2):
         """Merges the set {n1, n2} of networks in parallel."""
-        if n2 is None:
+        # n2 might be the zero-atom resulting from an empty set of networks.
+        if isinstance(n2, ZeroAtomClass):
             return n1
         assert isinstance(n1, Network) and isinstance(n2, Network)
         return self.set([n1, n2])
@@ -173,10 +176,10 @@ if __name__ == '__main__':
 
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
+    sampled_class = 'H'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
-    sampled_class = 'D_dx'
-
-    random.seed(0)
+    # random.seed(0)
 
     while True:
         try:
