@@ -379,6 +379,15 @@ class DecompositionGrammar(object):
                 v = self._DFSVisitor(apply_to_each)
                 self[alias].accept(v)
 
+    def sample_iterative(self, alias, x, y):
+        """Samples from the rule identified by `alias` in an iterative manner.
+
+        Traverses the decomposition tree in post-order.
+        The tree may be arbitrarily large and is expanded on the fly.
+        """
+
+        return self._IterativeSampler(self[alias]).sample(x, y)
+
     class _IterativeSampler(object):
         """
 
@@ -430,7 +439,7 @@ class DecompositionGrammar(object):
                 # Get top of stack.
                 curr = stack[-1]
 
-                # TODO find an optimal order of these if statements
+                # TODO find an optimal order of these if statements or, even better, refactor the code somehow so to not have this horrible case distinction
 
                 if isinstance(curr, AliasSampler):
                     if prev is None or curr in prev.get_children():
@@ -454,7 +463,6 @@ class DecompositionGrammar(object):
                 elif isinstance(curr, SumSampler):
                     if prev is None or curr in prev.get_children():
                         if bern(curr.lhs.eval(x, y) / curr.eval(x, y)):
-                        # if bern(curr.lhs._precomputed_eval / curr._precomputed_eval):
                             stack.append(curr.lhs)
                         else:
                             stack.append(curr.rhs)
@@ -472,8 +480,6 @@ class DecompositionGrammar(object):
                             result_stack.append(obj_to_check)
                         else:
                             stack.append(curr.get_children().pop())
-
-
 
                 elif isinstance(curr, SetSampler):
                     # We use recursion here for now.
@@ -577,15 +583,6 @@ class DecompositionGrammar(object):
 
             assert len(result_stack) == 1
             return result_stack[0]
-
-    def sample_iterative(self, alias, x, y, rec_depth=0):
-        """Samples from the rule identified by `alias` in an iterative manner.
-
-        Traverses the decomposition tree in post-order.
-        The tree may be arbitrarily large and is expanded on the fly.
-        """
-
-        return self._IterativeSampler(self[alias]).sample(x, y)
 
     class _DFSVisitor:
         """
