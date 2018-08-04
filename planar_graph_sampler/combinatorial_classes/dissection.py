@@ -13,6 +13,7 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 import random as rnd
+from collections import deque
 
 import networkx as nx
 
@@ -96,13 +97,13 @@ class IrreducibleDissection(HalfEdgeGraph):
         assert end_node.color is 'white'
 
         # Creates the queue for the BFS.
-        queue = list()
+        queue = deque(list())
         # Put the init half edge into the queue.
         queue.append((self.half_edge, 0, False, set()))
 
         while len(queue) != 0:
             # Pop the _first element from the FIFO queue.
-            top_element = queue.pop(0)
+            top_element = queue.popleft()
 
             # Extract the components from the top element.
             top_half_edge = top_element[0]
