@@ -17,8 +17,8 @@ import random
 import networkx as nx
 
 from framework.generic_classes import CombinatorialClass
-from planar_graph_sampler.grammar.grammar_utils import Counter
 
+from planar_graph_sampler.grammar.grammar_utils import Counter
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 
 
@@ -36,35 +36,37 @@ class HalfEdgeGraph(CombinatorialClass):
         A half-edge in the graph.
     """
 
-    def __init__(self, half_edge):
-        self._half_edge = half_edge
+    __slots__ = 'half_edge'
 
-    @property
-    def half_edge(self):
-        """Returns the underlying half-edge for direct manipulation."""
-        return self._half_edge
+    def __init__(self, half_edge):
+        self.half_edge = half_edge
+
+    # @property
+    # def half_edge(self):
+    #     """Returns the underlying half-edge for direct manipulation."""
+    #     return self._half_edge
 
     @property
     def number_of_nodes(self):
         """Number of nodes in the graph."""
-        return self._half_edge.get_number_of_nodes()
+        return self.half_edge.get_number_of_nodes()
 
     @property
     def number_of_edges(self):
         """Number of edges in the graph."""
-        return self._half_edge.get_number_of_edges()
+        return self.half_edge.get_number_of_edges()
 
     @property
     def number_of_half_edges(self):
         """Number of half-edges in the graph."""
-        return len(self._half_edge.get_all_half_edges(include_unpaired=True, include_opp=True))
+        return len(self.half_edge.get_all_half_edges(include_unpaired=True, include_opp=True))
 
     def random_node_half_edge(self):
         """Returns a half-edge incident to a node chosen uniformly at random.
 
         This is not the same as choosing a random half-edge!
         """
-        nodes = self.half_edge.get_node_list()
+        nodes = self.half_edge.node_dict()
         random_node = random.choice(list(nodes.keys()))
         return nodes[random_node][0]
 
@@ -78,7 +80,7 @@ class HalfEdgeGraph(CombinatorialClass):
         """Checks node_nr consistency."""
         if visited is None:
             visited = set()
-        curr = self._half_edge
+        curr = self.half_edge
         visited.add(curr)
         incident = curr.incident_half_edges()
         if len(set([he.node_nr for he in incident])) > 1:
@@ -146,25 +148,6 @@ class HalfEdgeGraph(CombinatorialClass):
         # TODO Check if this works the way intended.
         connectivity_dict = nx.k_components(self.to_networkx_graph())
         return len(connectivity_dict[k][0]) == self.number_of_nodes
-
-    def planar_embedding(self, embedding=None):
-        """Converts to format needed by planar graph drawer."""
-        if embedding is None:
-            embedding = {}
-        node_nr = self._half_edge.node_nr
-        if node_nr in embedding:
-            res = nx.PlanarEmbedding()
-            res.set_data(embedding)
-            return res
-        incident = self._half_edge.incident_half_edges()
-        incident_node_nrs = [he.opposite.node_nr for he in incident if he.opposite is not None]
-        embedding[node_nr] = incident_node_nrs
-        for he in incident:
-            if he.opposite is not None:
-                HalfEdgeGraph(he.opposite).planar_embedding(embedding)
-        res = nx.PlanarEmbedding()
-        res.set_data(embedding)
-        return res
 
     def to_planar_embedding(self):
         """Converts to nx.PlanarEmbedding.
@@ -244,7 +227,7 @@ class HalfEdgeGraph(CombinatorialClass):
         # Generate planar embedding or use default algorithm.
         pos = None
         if use_planar_drawer:
-            emb = self.planar_embedding()
+            emb = self.to_planar_embedding()
             pos = nx.combinatorial_embedding_to_pos(emb, fully_triangulate=False)
         # Take color attributes on the nodes into account.
         colors = nx.get_node_attributes(G, 'color').values()

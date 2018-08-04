@@ -12,8 +12,8 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
-from planar_graph_sampler.test.mock_objects_creator import create_three_connected_graph
+from planar_graph_sampler.test.mock_objects_creator import create_three_connected_graph, \
+    create_sample_network_for_testing_merge_operations, create_sample_network_for_testing_substitution_operation
 from planar_graph_sampler.bijections.networks import *
 
 
@@ -25,80 +25,13 @@ def test_edge_by_netwrok_substitution():
     tcg_seventh = tcg_fifth.opposite
     tcg_eighth = tcg_seventh.next
 
-    network_edges_list = []
-    network_vertices_list = []
-
-    network_root_edge = HalfEdge()
-    network_root_edge.node_nr = 11
-
-    network_root_edge_opposite = HalfEdge()
-    network_root_edge_opposite.node_nr = 13
-    network_root_edge.opposite = network_root_edge_opposite
-    network_root_edge_opposite.opposite = network_root_edge
-
-    net_second = HalfEdge()
-    net_second.node_nr = 11
-    net_second.prior = network_root_edge
-    net_second.next = network_root_edge
-    network_root_edge.next = net_second
-    network_root_edge.prior = net_second
-    network_edges_list.append(net_second)
-
-    net_third = HalfEdge()
-    net_third.node_nr = 12
-    net_second.opposite = net_third
-    net_third.opposite = net_second
-    network_vertices_list.append(net_third)
-
-    net_fourth = HalfEdge()
-    net_fourth.node_nr = 12
-    net_fourth.prior = net_third
-    net_fourth.next = net_third
-    net_third.next = net_fourth
-    net_third.prior = net_fourth
-    network_edges_list.append(net_fourth)
-
-    net_fifth = HalfEdge()
-    net_fifth.node_nr = 13
-    net_fifth.opposite = net_fourth
-    net_fourth.opposite = net_fifth
-    net_fifth.next = network_root_edge_opposite
-    net_fifth.prior = network_root_edge_opposite
-    network_root_edge_opposite.prior = net_fifth
-    network_root_edge_opposite.next = net_fifth
-
-    net_seventh = HalfEdge()
-    net_seventh.node_nr = 11
-    net_seventh.prior = net_second
-    net_second.next = net_seventh
-    net_seventh.next = network_root_edge
-    network_root_edge.prior = net_seventh
-    network_edges_list.append(net_seventh)
-
-    net_eighth = HalfEdge()
-    net_eighth.node_nr = 14
-    net_eighth.opposite = net_seventh
-    net_seventh.opposite = net_eighth
-    network_vertices_list.append(net_eighth)
-
-    net_nineth = HalfEdge()
-    net_nineth.node_nr = 14
-    net_nineth.prior = net_eighth
-    net_eighth.next = net_nineth
-    net_nineth.next = net_eighth
-    net_eighth.prior = net_nineth
-    network_edges_list.append(net_nineth)
-
-    net_tenth = HalfEdge()
-    net_tenth.node_nr = 13
-    net_tenth.prior = network_root_edge_opposite
-    network_root_edge_opposite.next = net_tenth
-    net_tenth.next = net_fifth
-    net_fifth.prior = net_tenth
-    net_tenth.opposite = net_nineth
-    net_nineth.opposite = net_tenth
-
-    network = Network(network_root_edge, False)
+    network = create_sample_network_for_testing_substitution_operation()
+    network_zero_pole = network.zero_pole
+    network_inf_pole = network.inf_pole
+    net_third = network_zero_pole.next.opposite
+    net_fifth = network_inf_pole.prior
+    net_seventh = network_zero_pole.prior
+    net_nineth = net_seventh.opposite.next
 
     edge_for_substitution = tcg_fifth
     substitute_edge_by_network(edge_for_substitution, network)
@@ -138,28 +71,25 @@ def test_edge_by_netwrok_substitution():
         half_edge_walker = half_edge_walker.next
 
 
-def create_sample_network(lowest_node_nr=0):
-    graph = create_three_connected_graph(lowest_node_nr)
-    return Network(graph.half_edge, False)
-
-
 def test_series_merge_of_networks():
     """Tests the merging of two networks in series."""
-    first_network = create_sample_network(0)
+    first_network = create_sample_network_for_testing_merge_operations(0)
     first_net_zero_pole_node_nr = first_network.zero_pole.node_nr
     first_net_inf_pole = first_network.inf_pole
     first_net_inf_pole_next_initial = first_net_inf_pole.next
     first_net_inf_pole_prior_initial = first_net_inf_pole.prior
     expected_node_number = first_net_inf_pole.node_nr
 
-    second_network = create_sample_network(10)
+    second_network = create_sample_network_for_testing_merge_operations(10)
     second_net_zero_pole = second_network.zero_pole
     second_net_zero_pole_next_initial = second_net_zero_pole.next
     second_net_zero_pole_edge_prior_initial = second_net_zero_pole.prior
     second_net_inf_pole_node_nr = second_network.inf_pole.node_nr
 
-
     series_merged_result = merge_networks_in_series(first_network, second_network)
+
+    # Merge in series result is never linked network
+    assert series_merged_result.is_linked is False
 
     # Check the root edge
     assert series_merged_result.zero_pole.node_nr == first_net_zero_pole_node_nr
@@ -183,42 +113,135 @@ def test_series_merge_of_networks():
         half_edge_walker = half_edge_walker.next
 
 
-def todotest_parallel_merge_of_networks():
+def test_series_merge_of_linked_networks():
+    """Tests the merging of two networks in series."""
+    first_network = create_sample_network_for_testing_merge_operations(0, True)
+    first_net_zero_pole_node_nr = first_network.zero_pole.node_nr
+    first_net_inf_pole = first_network.inf_pole
+    first_net_inf_pole_prior_initial = first_net_inf_pole.prior
+    expected_node_number = first_net_inf_pole.node_nr
+
+    second_network = create_sample_network_for_testing_merge_operations(10, True)
+    second_net_zero_pole = second_network.zero_pole
+    second_net_zero_pole_edge_prior_initial = second_net_zero_pole.prior
+    second_net_inf_pole_node_nr = second_network.inf_pole.node_nr
+
+    series_merged_result = merge_networks_in_series(first_network, second_network)
+
+    # Merge in series result is never linked network
+    assert series_merged_result.is_linked is False
+
+    # Check the root edge
+    assert series_merged_result.zero_pole.node_nr == first_net_zero_pole_node_nr
+    assert series_merged_result.inf_pole.node_nr == second_net_inf_pole_node_nr
+
+    # Check the number of elements in vertices and edges list
+    assert series_merged_result.l_size == 5
+    # The edges between the poles of the networks are kept.
+    assert series_merged_result.u_size == 10
+
+    # Check the the in pointers. The networks are linked therefore the half edges between the poles are kept.
+    assert first_net_inf_pole.prior == second_net_zero_pole_edge_prior_initial
+    assert second_net_zero_pole_edge_prior_initial.next == first_net_inf_pole
+    assert first_net_inf_pole_prior_initial.next == second_net_zero_pole
+    assert second_net_zero_pole.prior == first_net_inf_pole_prior_initial
+
+    # Check the node numbers of the merged edge
+    assert expected_node_number == 2
+    half_edge_walker = first_net_inf_pole_prior_initial.next
+    while half_edge_walker != first_net_inf_pole_prior_initial.prior:
+        assert half_edge_walker.node_nr == expected_node_number
+        half_edge_walker = half_edge_walker.next
+
+
+def test_parallel_merge_of_networks():
     """Tests the merging of two networks in parallel."""
-    first_network = create_sample_network()
-    first_net_zero_pole = first_network.half_edge
+    first_network = create_sample_network_for_testing_merge_operations()
+    first_net_zero_pole = first_network.zero_pole
     first_net_zero_pole_prior_initial = first_net_zero_pole.prior
     first_net_inf_pole = first_net_zero_pole.opposite
     first_net_inf_pole_next_initial = first_net_inf_pole.next
 
-    second_network = create_sample_network(10)
-    second_net_zero_pole = second_network.half_edge
-    second_net_inf_pole = second_net_zero_pole.opposite
-    # Change the node numbers for testing
-    second_net_zero_pole.node_nr = -1
-    second_net_zero_pole.next.node_nr = -1
-    second_net_inf_pole.node_nr = -1
-    second_net_inf_pole.next.node_nr = -1
-    second_net_inf_pole.next.next.node_nr = -1
+    second_network = create_sample_network_for_testing_merge_operations(10)
+    second_net_zero_pole = second_network.zero_pole
+    second_net_inf_pole = second_network.inf_pole
 
     second_net_zero_pole_next_initial = second_net_zero_pole.next
+    second_net_zero_pole_prior_initial = second_net_zero_pole.prior
+    second_net_inf_pole_next_initial = second_net_inf_pole.next
     second_net_inf_pole_prior_initial = second_net_inf_pole.prior
 
-    result = merge_networks_in_parallel(first_network, second_network)
+    merge_in_parallel_result = merge_networks_in_parallel(first_network, second_network)
+
+    # Check whether the network is linked. It shouldn't be since both networks used in the operation are not.
+    assert merge_in_parallel_result.is_linked is False
 
     # Check the sizes of the resulted network
-    assert len(result.vertices_list) == 4
-    assert len(result.edges_list) == 8
+    assert merge_in_parallel_result.l_size == 4
+    assert merge_in_parallel_result.u_size == 8
 
     # Check the pointers updates in the zero pole
-    assert first_net_zero_pole.prior == second_net_zero_pole
-    assert second_net_zero_pole.next == first_net_zero_pole
+    assert first_net_zero_pole.prior == second_net_zero_pole_prior_initial
+    assert second_net_zero_pole_prior_initial.next == first_net_zero_pole
     assert first_net_zero_pole_prior_initial.next == second_net_zero_pole_next_initial
     assert second_net_zero_pole_next_initial.prior == first_net_zero_pole_prior_initial
 
     # Check the pointers updates in the inf pole
-    assert first_net_inf_pole.next == second_net_inf_pole
-    assert second_net_inf_pole.prior == first_net_inf_pole
+    assert first_net_inf_pole.next == second_net_inf_pole_next_initial
+    assert second_net_inf_pole_next_initial.prior == first_net_inf_pole
+    assert first_net_inf_pole_next_initial.prior == second_net_inf_pole_prior_initial
+    assert second_net_inf_pole_prior_initial.next == first_net_inf_pole_next_initial
+
+    # Check the node numbers update
+    assert first_net_zero_pole.node_nr == 1
+    half_edge_walker = first_net_zero_pole.next
+    while half_edge_walker != first_net_zero_pole:
+        assert half_edge_walker.node_nr == first_net_zero_pole.node_nr
+        half_edge_walker = half_edge_walker.next
+
+    assert first_net_inf_pole.node_nr == 2
+    half_edge_walker = first_net_inf_pole.next
+    while half_edge_walker != first_net_inf_pole:
+        assert half_edge_walker.node_nr == first_net_inf_pole.node_nr
+        half_edge_walker = half_edge_walker.next
+
+
+def test_parallel_merge_with_linked_network():
+    """Tests the merging of two networks in parallel."""
+    first_network = create_sample_network_for_testing_merge_operations(is_linked=True)
+    first_net_zero_pole = first_network.zero_pole
+    first_net_zero_pole_prior_initial = first_net_zero_pole.prior
+    first_net_inf_pole = first_net_zero_pole.opposite
+    first_net_inf_pole_next_initial = first_net_inf_pole.next
+
+    second_network = create_sample_network_for_testing_merge_operations(10)
+    second_net_zero_pole = second_network.zero_pole
+    second_net_inf_pole = second_network.inf_pole
+
+    second_net_zero_pole_next_initial = second_net_zero_pole.next
+    second_net_zero_pole_prior_initial = second_net_zero_pole.prior
+    second_net_inf_pole_next_initial = second_net_inf_pole.next
+    second_net_inf_pole_prior_initial = second_net_inf_pole.prior
+
+    merge_in_parallel_result = merge_networks_in_parallel(first_network, second_network)
+
+    # Check whether the network is linked. First network is linked so the result also should be
+    assert merge_in_parallel_result.is_linked is True
+
+    # Check the sizes of the resulted network
+    assert merge_in_parallel_result.l_size == 4
+    # Since the first network is linked the edge between the poles is counted.
+    assert merge_in_parallel_result.u_size == 9
+
+    # Check the pointers updates in the zero pole
+    assert first_net_zero_pole.prior == second_net_zero_pole_prior_initial
+    assert second_net_zero_pole_prior_initial.next == first_net_zero_pole
+    assert first_net_zero_pole_prior_initial.next == second_net_zero_pole_next_initial
+    assert second_net_zero_pole_next_initial.prior == first_net_zero_pole_prior_initial
+
+    # Check the pointers updates in the inf pole
+    assert first_net_inf_pole.next == second_net_inf_pole_next_initial
+    assert second_net_inf_pole_next_initial.prior == first_net_inf_pole
     assert first_net_inf_pole_next_initial.prior == second_net_inf_pole_prior_initial
     assert second_net_inf_pole_prior_initial.next == first_net_inf_pole_next_initial
 
@@ -238,5 +261,7 @@ def todotest_parallel_merge_of_networks():
 
 if __name__ == "__main__":
     test_edge_by_netwrok_substitution()
-    #todotest_parallel_merge_of_networks()
+    test_parallel_merge_of_networks()
+    test_parallel_merge_with_linked_network()
     test_series_merge_of_networks()
+    test_series_merge_of_linked_networks()

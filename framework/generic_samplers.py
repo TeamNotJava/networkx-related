@@ -50,6 +50,8 @@ class BoltzmannSamplerBase(object):
     oracle = None
     debug_mode = False
 
+    __slots__ = '_builder', '_precomputed_eval'
+
     def __init__(self):
         # Samplers are always initialized with the default builder.
         self._builder = DefaultBuilder()
@@ -67,7 +69,9 @@ class BoltzmannSamplerBase(object):
         raise NotImplementedError
 
     def sample(self, x, y):
-        """Invokes this _sampler with the given x and y parameters.
+        """Invokes this sampler with the given x and y parameters.
+
+        Calls the child-samplers recursively.
 
         Parameters
         ----------
@@ -359,25 +363,32 @@ class BinarySampler(BoltzmannSamplerBase):
         The string representation of the implemented operator.
     """
 
+    __slots__ = 'lhs', 'rhs', '_op_symbol'
+
     def __init__(self, lhs, rhs, op_symbol):
         super(BinarySampler, self).__init__()
-        self._lhs = lhs
-        self._rhs = rhs
+        self.lhs = lhs
+        # While this is okay for the recursive sampling it causes problems in the iterative version.
+        if lhs is rhs:
+            from copy import copy
+            rhs = copy(lhs)
+        self.rhs = rhs
         self._op_symbol = op_symbol
 
-    @property
-    def lhs(self):
-        """Returns the left argument of this sampler."""
-        return self._lhs
-
-    @property
-    def rhs(self):
-        """Returns the right argument of this sampler."""
-        return self._rhs
+    # TODO remove this because of performnance?
+    # @property
+    # def lhs(self):
+    #     """Returns the left argument of this sampler."""
+    #     return self._lhs
+    #
+    # @property
+    # def rhs(self):
+    #     """Returns the right argument of this sampler."""
+    #     return self._rhs
 
     @property
     def sampled_class(self):
-        return "({}{}{})".format(self._lhs.sampled_class, self._op_symbol, self._rhs.sampled_class)
+        return "({}{}{})".format(self.lhs.sampled_class, self._op_symbol, self.rhs.sampled_class)
 
     def sample(self, x, y):
         raise NotImplementedError
@@ -487,6 +498,8 @@ class UnarySampler(BoltzmannSamplerBase):
         The _sampler this _sampler depends on.
     """
 
+    __slots__ = '_sampler'
+
     def __init__(self, sampler):
         super(UnarySampler, self).__init__()
         self._sampler = sampler
@@ -527,6 +540,8 @@ class SetSampler(UnarySampler):
     It is not checked/ensured automatically that object from the underlying class do not have l-size 0.
     """
 
+    __slots__ = '_d'
+
     def __init__(self, d, sampler):
         super(SetSampler, self).__init__(sampler)
         self._d = d
@@ -535,9 +550,12 @@ class SetSampler(UnarySampler):
     def sampled_class(self):
         return "Set_{}({})".format(self._d, self._sampler.sampled_class)
 
+    def draw_k(self, x, y):
+        return pois(self._d, self._sampler.eval(x, y))
+
     def sample(self, x, y):
         # todo
-        k = pois(self._d, self._sampler.eval(x, y))
+        k = self.draw_k(x, y)
         return self._builder.set([self._sampler.sample(x, y) for _ in range(k)])
 
     @return_precomp

@@ -15,7 +15,8 @@
 from planar_graph_sampler.bijections.primal_map import PrimalMap
 from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
 from planar_graph_sampler.bijections.whitney_3map_to_3graph import whitney
-from planar_graph_sampler.test.mock_objects_creator import create_sample_closure_output
+from planar_graph_sampler.test.mock_objects_creator import create_sample_closure_output, \
+    create_specific_closure_output_for_admissibility_check_test
 
 
 def test_admissibility_check():
@@ -62,6 +63,26 @@ def test_admissibility_check():
     for i in range(52, 55): half_edges_list[i].node_nr = 16
     for i in range(56, 59): half_edges_list[i].node_nr = 15
 
+    # Add the next and prior pinters
+    half_edges_list[49].prior = half_edges_list[50]
+    half_edges_list[50].next = half_edges_list[49]
+    half_edges_list[50].prior = half_edges_list[51]
+    half_edges_list[51].next = half_edges_list[50]
+    half_edges_list[51].prior = half_edges_list[49]
+    half_edges_list[49].next = half_edges_list[51]
+    half_edges_list[52].prior = half_edges_list[53]
+    half_edges_list[53].next = half_edges_list[52]
+    half_edges_list[53].prior = half_edges_list[54]
+    half_edges_list[54].next = half_edges_list[53]
+    half_edges_list[54].prior = half_edges_list[52]
+    half_edges_list[52].next = half_edges_list[54]
+    half_edges_list[56].prior = half_edges_list[57]
+    half_edges_list[57].next = half_edges_list[56]
+    half_edges_list[57].prior = half_edges_list[58]
+    half_edges_list[58].next = half_edges_list[57]
+    half_edges_list[58].prior = half_edges_list[56]
+    half_edges_list[56].next = half_edges_list[58]
+
     # Reassign opposites
     half_edges_list[28].opposite = half_edges_list[54]
     half_edges_list[54].opposite = half_edges_list[28]
@@ -81,7 +102,17 @@ def test_admissibility_check():
     assert dissection.is_admissible
 
 
-def test_primal_map():
+def test_admissibility_check_with_initially_wrong_result():
+    '''  TDD for fixing the bug in admissibility check.
+    '''
+    half_edges = create_specific_closure_output_for_admissibility_check_test()
+
+    dissection = IrreducibleDissection(half_edges[2])
+    assert not dissection.is_admissible
+    assert not dissection.is_admissible_slow
+
+
+def todotest_primal_map():
     """Test the primal map bijection."""
     # print("Start test...")
     half_edges = create_sample_closure_output()
@@ -147,4 +178,4 @@ def todotest_whitney_bijection():
 
 if __name__ == "__main__":
     test_admissibility_check()
-    test_primal_map()
+    #test_primal_map()

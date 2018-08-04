@@ -127,7 +127,7 @@ class PrimalMap:
     # Checks if quadrangulation is correct
     def ___test_quadrangulation(self, init_half_edge):
         # Check if every cycle is of degree 4
-        edge_list = init_half_edge.list_half_edges([])
+        edge_list = init_half_edge.get_all_half_edges()
 
         for half_edge in edge_list:
             current_half_edge = half_edge

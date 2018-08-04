@@ -17,7 +17,6 @@ import networkx as nx
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000, reference_evals
 
 from planar_graph_sampler.grammar.one_connected_decomposition import one_connected_graph_grammar
 
@@ -74,34 +73,29 @@ def planar_graph_grammar():
 
 
 if __name__ == '__main__':
-    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000, \
+        reference_evals
+
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = False
 
     grammar = planar_graph_grammar()
     grammar.init()
-    # grammar.precompute_evals('G_dx_dx', 'x', 'y')
-
     symbolic_x = 'x'
     symbolic_y = 'y'
-
     sampled_class = 'G_dx_dx'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
-    try:
-        print(BoltzmannSamplerBase.oracle.get_expected_l_size(sampled_class, symbolic_x, symbolic_y))
-    except BoltzmannFrameworkError:
-        pass
+    # random.seed(0)
 
     while True:
-
         try:
-            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size == 3:
-                import matplotlib.pyplot as plt
-
+            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size > 0:
+                print(g)
                 g = bij_connected_comps(g)
-                nx.draw(g, node_size=10)
+                nx.draw(g, pos=nx.combinatorial_embedding_to_pos(g), node_size=10, use_planar_drawer=True)
                 plt.show()
-
         except RecursionError:
-            print("Recursion error occurred, continuing")
-            pass
+            print("Recursion error")

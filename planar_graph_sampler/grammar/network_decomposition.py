@@ -22,7 +22,6 @@ from planar_graph_sampler.bijections.networks import merge_networks_in_parallel,
     substitute_edge_by_network
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.combinatorial_classes.network import Network
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
 
 
@@ -68,7 +67,9 @@ class PNetworkBuilder(NetworkBuilder):
     def set(self, networks):
         """Merges a set of networks in parallel."""
         if len(networks) == 0:
-            return None
+            # An empty set is like a zero atom (it has size 0).
+            # We use the generic zero atom here as a zero-atom-network cannot be defined.
+            return ZeroAtomClass()
         # TODO Without reversing the list of networks, weird things happen, find out why.
         networks.reverse()
         res = networks.pop()
@@ -78,7 +79,8 @@ class PNetworkBuilder(NetworkBuilder):
 
     def product(self, n1, n2):
         """Merges the set {n1, n2} of networks in parallel."""
-        if n2 is None:
+        # n2 might be the zero-atom resulting from an empty set of networks.
+        if isinstance(n2, ZeroAtomClass):
             return n1
         assert isinstance(n1, Network) and isinstance(n2, Network)
         return self.set([n1, n2])
@@ -162,28 +164,28 @@ def network_grammar():
 
 
 if __name__ == '__main__':
-    grammar = network_grammar()
-    grammar.init()
-    # grammar.dummy_sampling_mode()
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
     BoltzmannSamplerBase.debug_mode = True
 
+    grammar = network_grammar()
+    grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
-
     sampled_class = 'D_dx'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    # random.seed(0)
 
     while True:
         try:
-            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 5:
+            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size > 0:
                 print(g)
                 assert g.is_consistent
-
-                import matplotlib.pyplot as plt
-
-                g.plot(with_labels=False, use_planar_drawer=False, node_size=10)
+                g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
                 plt.show()
         except RecursionError:
             print("RecursionError")

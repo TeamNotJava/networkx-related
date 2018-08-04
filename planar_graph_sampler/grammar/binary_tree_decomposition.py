@@ -20,10 +20,9 @@ from framework.generic_samplers import *
 from framework.generic_samplers import BoltzmannSamplerBase
 from framework.utils import bern
 
-from planar_graph_sampler.grammar.grammar_utils import underive, to_u_derived_class, Counter
+from planar_graph_sampler.grammar.grammar_utils import underive, Counter
 from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.combinatorial_classes.binary_tree import Leaf
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
 
 
 class WhiteRootedBinaryTreeBuilder(DefaultBuilder):
@@ -39,6 +38,7 @@ class WhiteRootedBinaryTreeBuilder(DefaultBuilder):
         return Leaf()
 
     def product(self, lhs, rhs):
+        # Builds white-rooted tree from decomposition of the form (leaf|black)(leaf|black)
         res = BinaryTree('white')
         res.set_root_node_nr(next(self._counter))
         res.add_left_child(lhs)
@@ -66,7 +66,7 @@ class BlackRootedBinaryTreeBuilder(DefaultBuilder):
 
     def product(self, lhs, rhs):
         # Builds black rooted tree from decompositions of the form
-        # (1) l-atom(leaf|white) or (2) (leaf|white)l-atom.
+        # (1) black(leaf|white) or (2) (leaf|white)black.
         if not lhs.is_leaf and lhs.is_black_rooted:
             # Form (1)
             lhs.add_right_child(rhs)
@@ -75,8 +75,6 @@ class BlackRootedBinaryTreeBuilder(DefaultBuilder):
             # Form (2)
             rhs.add_left_child(lhs)
             res = rhs
-        assert res is not None
-        assert res.root_color is 'black'
         return res
 
 
@@ -85,18 +83,8 @@ def rej_to_K(u_derived_tree):
 
 
 def to_K_dy(tree):
-    tree._leaves_count += 1
+    tree.leaves_count += 1
     return UDerivedClass(tree)
-
-
-def is_asymmetric(tree):
-    if tree.black_nodes_count == 1 and tree.white_nodes_count == 0:
-        return False
-    if tree.black_nodes_count == 0 and tree.white_nodes_count == 1:
-        return False
-    if tree.black_nodes_count == 1 and tree.white_nodes_count == 3:
-        return False
-    return True
 
 
 def binary_tree_grammar():
@@ -132,8 +120,6 @@ def binary_tree_grammar():
 
         'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),  # See 5.3.1
 
-        # 'K_dy': Bij(Rej(R_w + R_b, is_asymmetric), to_K_dy),
-
         'K_dy': Bij(R_b_as + R_w_as, to_K_dy),
 
         'R_b_as': R_w * L() * U() + U() * L() * R_w + R_w * L() * R_w,
@@ -160,33 +146,29 @@ def binary_tree_grammar():
 
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
+
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = False
 
     grammar = binary_tree_grammar()
     grammar.init()
-
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
-    sampled_class = 'K'
-    # grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+    sampled_class = 'K_dx'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
-    print("Expected size of K: {}".format(BoltzmannSamplerBase.oracle.get_expected_l_size('K', symbolic_x, symbolic_y)))
+    # random.seed(0)
 
     while True:
         try:
-            tree = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-        except RecursionError:
-            pass
-        if tree.l_size == 2:
-            print(tree)
-            print("Rejections to draw K: {}".format(grammar.rules['K'].get_children()[0].rejections_count))
-            try:
-                # tree = tree.base_class_object
+            tree = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+            if tree.l_size > 0:
+                print(tree)
+                tree = tree.underive_all()
                 assert tree.is_consistent
-                import matplotlib.pyplot as plt
-
-                tree.plot(draw_leaves=True, node_size=50)
+                tree.plot(draw_leaves=False, node_size=50)
                 plt.show()
-            except AttributeError:
-                pass
+        except RecursionError:
+            print("Recursion error")

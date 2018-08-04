@@ -36,7 +36,7 @@ class EdgeRootedThreeConnectedPlanarGraph(HalfEdgeGraph):
 
     @property
     def root_half_edge(self):
-        return self._half_edge
+        return self.half_edge
 
     # CombinatorialClass interface.
 

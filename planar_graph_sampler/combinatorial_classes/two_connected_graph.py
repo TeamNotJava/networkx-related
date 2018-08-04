@@ -38,11 +38,11 @@ class TwoConnectedPlanarGraph(HalfEdgeGraph):
         return self.random_node_half_edge()
 
     def l_atoms(self):
-        return iter([half_edge_list[0] for half_edge_list in self.half_edge.get_node_list().values()])
+        return iter([half_edge_list[0] for half_edge_list in self.half_edge.node_dict().values()])
         # return iter(self.half_edge.get_node_list().keys())
 
     def replace_l_atoms(self, sampler, x, y, exceptions=None):
-        nodes = self.half_edge.get_node_list()
+        nodes = self.half_edge.node_dict()
         # Sample a graph and merge it with all remaining nodes.
         for node in nodes:
             if node in [he.node_nr for he in exceptions]:
@@ -53,7 +53,7 @@ class TwoConnectedPlanarGraph(HalfEdgeGraph):
                 # Get an arbitrary half-edge incident to the current node.
                 he = nodes[node][0]
                 he.insert_all(plug_in)
-        return OneConnectedPlanarGraph(self._half_edge)
+        return OneConnectedPlanarGraph(self.half_edge)
 
     def __str__(self):
         return "2-connected planar graph (l: {}, u: {})".format(self.number_of_nodes, self.number_of_edges)

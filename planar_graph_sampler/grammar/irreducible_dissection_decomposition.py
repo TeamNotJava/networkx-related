@@ -20,14 +20,13 @@ from framework.generic_samplers import BoltzmannSamplerBase
 from planar_graph_sampler.bijections.closure import Closure
 from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
 
 def closure(binary_tree):
     """To be used as bijection in the grammar."""
     if isinstance(binary_tree, LDerivedClass):
         binary_tree = binary_tree.base_class_object
-    assert isinstance(binary_tree, BinaryTree)
+    assert isinstance(binary_tree, BinaryTree), binary_tree
     dissection = Closure().closure(binary_tree)
     return dissection
 
@@ -41,6 +40,14 @@ def add_random_root_edge(decomp):
 
 def is_admissible(dissection):
     """Admissibility check for usage in the grammar."""
+    # TODO used for check the cases where both implementations have different results. The problem is fixed now.
+    # if dissection.is_admissible != dissection.is_admissible_slow:
+    #     print("error root: %s    resuls: pp: %s     tob: %s"
+    #           %(dissection.half_edge.node_nr, dissection.is_admissible, dissection.is_admissible_slow))
+    #     import matplotlib.pyplot as plt
+    #     dissection.plot(with_labels=True, use_planar_drawer=False, node_size=50)
+    #     plt.show()
+    #     dissection.is_admissible
     return dissection.is_admissible
 
 
@@ -88,26 +95,26 @@ def irreducible_dissection_grammar():
 
 
 if __name__ == "__main__":
-    grammar = irreducible_dissection_grammar()
-    grammar.init()
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
 
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
     BoltzmannSamplerBase.debug_mode = False
 
+    grammar = irreducible_dissection_grammar()
+    grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
+    sampled_class = 'J_a_dx'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
-    sampled_class = 'J_a'
+    # random.seed(0)
 
     while True:
-        diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-        if True:
+        diss = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        if diss.l_size > 0:
             print(diss)
-            try:
-                assert diss.is_consistent
-
-                import matplotlib.pyplot as plt
-                diss.plot(with_labels=True, use_planar_drawer=True, node_size=50)
-                plt.show()
-            except AttributeError:
-                pass
+            diss = diss.underive_all()
+            assert diss.is_consistent
+            diss.plot(with_labels=False, use_planar_drawer=True, node_size=25)
+            plt.show()
