@@ -14,13 +14,15 @@
 
 from planar_graph_sampler.bijections.primal_map import PrimalMap
 from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
-from planar_graph_sampler.bijections.whitney_3map_to_3graph import whitney
+from planar_graph_sampler.combinatorial_classes.three_connected_graph import EdgeRootedThreeConnectedPlanarGraph
 from planar_graph_sampler.test.mock_objects_creator import create_sample_closure_output, \
     create_specific_closure_output_for_admissibility_check_test
 
 
 def test_admissibility_check():
-    """Tests the admissibility check for a closure output."""
+    """
+    Tests the admissibility check for a closure output.
+    """
     half_edges_list = create_sample_closure_output()
 
     dissection = IrreducibleDissection(half_edges_list[1])
@@ -59,9 +61,12 @@ def test_admissibility_check():
     half_edges_list[42].prior = half_edges_list[43]
     half_edges_list[44].next = half_edges_list[43]
 
-    for i in range(49, 52): half_edges_list[i].node_nr = 14
-    for i in range(52, 55): half_edges_list[i].node_nr = 16
-    for i in range(56, 59): half_edges_list[i].node_nr = 15
+    for i in range(49, 52):
+        half_edges_list[i].node_nr = 14
+    for i in range(52, 55):
+        half_edges_list[i].node_nr = 16
+    for i in range(56, 59):
+        half_edges_list[i].node_nr = 15
 
     # Add the next and prior pinters
     half_edges_list[49].prior = half_edges_list[50]
@@ -103,8 +108,9 @@ def test_admissibility_check():
 
 
 def test_admissibility_check_with_initially_wrong_result():
-    '''  TDD for fixing the bug in admissibility check.
-    '''
+    """
+    TDD for fixing the bug in admissibility check.
+    """
     half_edges = create_specific_closure_output_for_admissibility_check_test()
 
     dissection = IrreducibleDissection(half_edges[2])
@@ -112,70 +118,26 @@ def test_admissibility_check_with_initially_wrong_result():
     assert not dissection.is_admissible_slow
 
 
-def todotest_primal_map():
-    """Test the primal map bijection."""
-    # print("Start test...")
+def test_primal_map():
+    """
+    Test the primal map bijection.
+    """
     half_edges = create_sample_closure_output()
 
     three_map = PrimalMap().primal_map_bijection(IrreducibleDissection(half_edges[1]).half_edge)
 
-    # Check the opposites - third output
-    assert three_map.opposite.node_nr == 5
-    assert three_map.opposite.opposite.node_nr == 1
-    assert three_map.next.opposite.node_nr == 13
-    assert three_map.next.opposite.opposite.node_nr == 1
-    assert three_map.next.next.opposite.node_nr == 8
-    assert three_map.next.next.opposite.opposite.node_nr == 1
-    assert three_map.next.next.next.opposite.node_nr == 3
-    assert three_map.next.next.next.opposite.opposite.node_nr == 1
-    assert three_map.next.next.opposite.next.opposite.node_nr == 10
-    assert three_map.next.next.opposite.next.opposite.opposite.node_nr == 8
-    assert three_map.next.next.opposite.next.next.opposite.node_nr == 3
-    assert three_map.next.next.opposite.next.next.opposite.opposite.node_nr == 8
-    assert three_map.next.next.opposite.next.opposite.next.opposite.node_nr == 13
-    assert three_map.next.next.opposite.next.opposite.next.opposite.opposite.node_nr == 10
-    assert three_map.next.next.opposite.next.opposite.next.next.opposite.node_nr == 5
-    assert three_map.next.next.opposite.next.opposite.next.next.opposite.opposite.node_nr == 10
+    # Create Three connected graph and corresponding nx graph
+    three_connected_graph = EdgeRootedThreeConnectedPlanarGraph(three_map)
+    nx_graph = three_connected_graph.to_networkx_graph()
 
-
-def todotest_whitney_bijection():
-    """
-    # TODO this can be removed or can we still reuse it?
-    Tests the whitney bijection with the prepared output from the primal bijection.
-    :return:
-    """
-    # print("Start test...")
-    half_edges = create_sample_closure_output()
-
-    # Make the primal map bijection
-    three_map = primal_map(IrreducibleDissection(half_edges[1]))
-
-    # Make the Whiney bijection
-    edge_rooted_three_connected_graph = whitney(three_map)
-
-    # Chech the properties
-    print(edge_rooted_three_connected_graph)
-    # Check the root edge
-    assert edge_rooted_three_connected_graph.root_half_edge.node_nr == 1
-    assert edge_rooted_three_connected_graph.root_half_edge.opposite.node_nr == 5
-
-    # Check the vertices list
-    vertices_node_numbers = [3, 13, 8, 10]
-    for vertex_half_edge in edge_rooted_three_connected_graph.vertices_list:
-        assert vertex_half_edge.node_nr in vertices_node_numbers
-        vertices_node_numbers.remove(vertex_half_edge.node_nr)
-    assert len(vertices_node_numbers) == 0
-
-    # Check the edges list
-    edges_node_numbers = [(1, 3), (5, 10), (10, 13), (3, 10), (5, 13), (8, 10), (3, 8), (1, 13), (1, 8), (5, 10)]
-    for half_edge in edge_rooted_three_connected_graph.edges_list:
-        from_vertex = min(half_edge.node_nr, half_edge.opposite.node_nr)
-        to_vertex = max(half_edge.node_nr, half_edge.opposite.node_nr)
-        assert (from_vertex, to_vertex) in edges_node_numbers
-        edges_node_numbers.remove((from_vertex, to_vertex))
-    assert len(edges_node_numbers) == 0
+    # Check the edges
+    expected_edges_list = [(5, 1), (13, 1), (8, 1), (3, 1), (3, 8), (10, 8), (13, 10), (5, 10)]
+    for edge in expected_edges_list:
+        assert nx_graph.has_edge(edge[0], edge[1])
+        assert nx_graph.has_edge(edge[1], edge[0])
 
 
 if __name__ == "__main__":
     test_admissibility_check()
-    #test_primal_map()
+    test_admissibility_check_with_initially_wrong_result()
+    test_primal_map()
