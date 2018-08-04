@@ -21,67 +21,66 @@ class PrimalMap:
     """
 
     def primal_map_bijection(self, init_half_edge):
-        """ Given the irreducible quadrangulation returned from the closure,
-        this function extract the 3-connected map from it.
-
-        See more in 4.1.3 where the bijection is described.
         """
-        associated_half_edge_in_3_map = {}
-        quad_half_edge = self.___quadrangulate(init_half_edge)
-        self._primal_map_bijection_rec(quad_half_edge, associated_half_edge_in_3_map)
-        return associated_half_edge_in_3_map[init_half_edge]
-
-    def _primal_map_bijection_rec(self, init_half_edge, associated_half_edges_in_3_map):
-        """Recursively transforms the irreducible quadrangulation to the three connected map.
+        Given the irreducible quadrangulation returned from the closure,
+        this function extract the 3-connected map from it.
 
         The next and prev pointers are kept as before, but the opposite pointer in the half edge is pointing to the
         opposite half-edge in the face.
+
+        See more in 4.1.3 where the bijection is described.
         """
-        # Associate the initial half edge
-        initial_half_edge_association = HalfEdge()
-        initial_half_edge_association.node_nr = init_half_edge.node_nr
-        associated_half_edges_in_3_map[init_half_edge] = initial_half_edge_association
+        quad_half_edge = self.___quadrangulate(init_half_edge)
 
-        # Associate the half edges that are on the same vertex as tie initial one.
-        walker_half_edge = init_half_edge.next
-        while walker_half_edge is not init_half_edge:
-            walker_association = HalfEdge()
-            walker_association.node_nr = walker_half_edge.node_nr
-            associated_half_edges_in_3_map[walker_half_edge] = walker_association
+        # Start dfs for the pointers reordering.
+        associated_half_edges_in_3_map = {}
+        stack = list()
+        stack.append(quad_half_edge)
 
-            # Connect the association with the association of the prev half-edge
-            walker_association.prior = associated_half_edges_in_3_map[walker_half_edge.prior]
-            associated_half_edges_in_3_map[walker_half_edge.prior].next = walker_association
+        # Stop after the stack gets empty
+        while stack:
+            top_half_edge = stack.pop()
 
-            # Continue with the next edges
-            walker_half_edge = walker_half_edge.next
+            top_half_edge_association = HalfEdge()
+            top_half_edge_association.node_nr = top_half_edge.node_nr
+            associated_half_edges_in_3_map[top_half_edge] = top_half_edge_association
 
-        # Add the final connection
-        initial_half_edge_association.prior = associated_half_edges_in_3_map[init_half_edge.prior]
-        associated_half_edges_in_3_map[init_half_edge.prior].next = initial_half_edge_association
+            # Associate the half edges that are on the same vertex as tie initial one.
+            walker_half_edge = top_half_edge.next
+            while walker_half_edge is not top_half_edge:
+                walker_association = HalfEdge()
+                walker_association.node_nr = walker_half_edge.node_nr
+                associated_half_edges_in_3_map[walker_half_edge] = walker_association
 
-        # Make the opposite pointer of the half edge to point to the opposite half edge in the face.
-        skipFirst = True
-        walker_half_edge = init_half_edge
-        while walker_half_edge is not init_half_edge or skipFirst is True:
-            skipFirst = False
-            opposite_half_edge_in_face = walker_half_edge.opposite.next.opposite.next
-            # print(walker_half_edge.__str__()+ "    " +opposite_half_edge_in_face.__str__())
+                # Connect the association with the association of the prev half-edge
+                walker_association.prior = associated_half_edges_in_3_map[walker_half_edge.prior]
+                associated_half_edges_in_3_map[walker_half_edge.prior].next = walker_association
 
-            # Check for already processed half edges
-            if opposite_half_edge_in_face not in associated_half_edges_in_3_map:
-                # Process the opposite half edge
-                self._primal_map_bijection_rec(
-                    opposite_half_edge_in_face, associated_half_edges_in_3_map)
+                # Continue with the next edges
+                walker_half_edge = walker_half_edge.next
 
-            # Make the actual opposite connection between the associations
-            associated_half_edges_in_3_map[opposite_half_edge_in_face].opposite = associated_half_edges_in_3_map[
-                walker_half_edge]
-            associated_half_edges_in_3_map[walker_half_edge].opposite = associated_half_edges_in_3_map[
-                opposite_half_edge_in_face]
+            # Add the final connection
+            top_half_edge_association.prior = associated_half_edges_in_3_map[top_half_edge.prior]
+            associated_half_edges_in_3_map[top_half_edge.prior].next= top_half_edge_association
 
-            # Continue with the next edges
-            walker_half_edge = walker_half_edge.next
+            # Make the opposite pointer of the half edge to point to the opposite half edge in the face.
+            incident_half_edges = top_half_edge.incident_half_edges()
+            for walker_half_edge in incident_half_edges:
+                opposite_half_edge_in_face = walker_half_edge.opposite.next.opposite.next
+
+                # Check for already processed half edges
+                if opposite_half_edge_in_face not in associated_half_edges_in_3_map:
+                    # Process the opposite half edge - push on the stack
+                    stack.append(opposite_half_edge_in_face)
+                else:
+                    # Make the actual opposite connection between the associations
+                    associated_half_edges_in_3_map[opposite_half_edge_in_face].opposite = associated_half_edges_in_3_map[
+                        walker_half_edge]
+                    associated_half_edges_in_3_map[walker_half_edge].opposite = associated_half_edges_in_3_map[
+                        opposite_half_edge_in_face]
+
+        return associated_half_edges_in_3_map[quad_half_edge]
+
 
     # Makes the outer face of the irreducible dissection quadrangular by adding a new edge
     # between two opposite nodes of the hexagon
