@@ -35,18 +35,24 @@ COLOR_GREEN = '\033[92m'
 COLOR_BLUE = '\033[94m'
 COLOR_END = '\033[0m'
 
-
-def ___stat_test_binary_trees(data, trees, size):
-    print(COLOR_BLUE + "                  BINARY TREE TEST" + COLOR_END)
+def ___test_combinatorial_class(comb_class, data, objects, size):
+    # Calculate average number of trials to get the right size
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
-    ___calculate_number_of_possible_graphs(size, 'binary_tree')
+    ___calculate_number_of_possible_graphs(size, comb_class)
     # Convert to netwokrx graphs
-    nx_g = [o.to_networkx_graph(False) for o in trees]
-    graphs = ___non_isomorphic_graphs_dict(nx_g)
-    dist = ___test_uniform_distribution(graphs)
-    ___draw_distribution_diagram(graphs)
+    nx_g = [o.to_networkx_graph(False) for o in objects]
+    nx_obj_dict = ___non_isomorphic_graphs_dict(nx_g)
+    dist = ___test_uniform_distribution(nx_obj_dict)
 
+    # Tests specific for a certain graph class
+    if comb_class is not "binary_tree":
+        ___test_for_special_graphs
+    elif comb_class is "binary_tree":
+        ___get_avr_btree_height(objects, size)
+
+    ___draw_distribution_diagram(nx_obj_dict)
+ 
     return dist
 
 def ___get_avr_num_trials(data):  
@@ -71,10 +77,11 @@ def ___get_avr_btree_height(data, size):
     print("Avr. binary tree height..................{}".format(avr))
 
     # Check what average height our trees have
-    graphs = list(data.keys())
+    # graphs = list(data.keys())
+    graphs = data
     heights = []
     for g in graphs:
-        init_half_edge = g.get_half_edge()
+        init_half_edge = g.half_edge
         if init_half_edge.opposite is not None:
             half_edge_list = init_half_edge.list_half_edges()
             for h in half_edge_list:
@@ -89,7 +96,6 @@ def ___get_avr_btree_height(data, size):
     avr = avr / len(heights)
     print("Avr. height of sampled tree..............{}".format(avr))
 
-
 def ___get_tree_height(init_half_edge, height=0):
     if init_half_edge is None:
         return height - 1
@@ -101,41 +107,6 @@ def ___get_tree_height(init_half_edge, height=0):
         return left
     else:
         return right
-
-def ___stat_test_three_connected_graphs(data, graphs, size):
-    print(COLOR_BLUE + "              THREE CONNECTED TEST" + COLOR_END)
-    # Calculate average number of trials to get the right size
-    ___get_avr_num_trials(data)
-    ___get_avr_time(data)
-    #___calculate_number_of_possible_graphs(size, "three_connected")
-    dist = ___test_uniform_distribution(graphs) 
-    ___test_for_special_graphs
- 
-    return dist
-    
-def ___stat_test_two_connected_graphs(data, graphs, size):
-    print(COLOR_BLUE + "                TWO CONNECTED TEST" + COLOR_END)
-    # Calculate average number of trials to get the right size
-    ___get_avr_num_trials(data)
-    ___get_avr_time(data)
-    #___calculate_number_of_possible_graphs(size, "three_connected")
-    dist = ___test_uniform_distribution(graphs) 
-    ___test_for_special_graphs(graphs, size)
-    return dist
-
-def ___stat_test_one_connected_graphs(data, graphs, size):
-    print(COLOR_BLUE + "                 ONE CONNECTED TEST" + COLOR_END)
-    # Calculate average number of trials to get the right size
-    ___get_avr_num_trials(data)
-    ___get_avr_time(data)
-    #___calculate_number_of_possible_graphs(size, "three_connected")
-    dist= ___test_uniform_distribution(graphs) 
-    ___test_for_special_graphs(graphs, size)
-    return dist
-
-def ___stat_test_planar_graphs(data, graphs, size):
-    special_graphs = ___test_for_special_graphs(graphs, size) 
-    return special_graphs
 
 # Returns a dictonary of pairwise non-isomorphic graphs with
 # frequencies 
@@ -332,8 +303,8 @@ def ___analyse_fusys_data(file_name):
     nx_objects = ___fusy_graphs_to_networkx(file_name)
     graphs = ___non_isomorphic_graphs_dict(nx_objects, colors=False)
 
-    dist = ___test_uniform_distribution(graphs, 20)
-    ___draw_distribution_diagram(graphs, 20)
+    dist = ___test_uniform_distribution(graphs)
+    ___draw_distribution_diagram(graphs)
 
     data = []
     with open("fusy_stat_btrees_5.txt") as file:
@@ -434,32 +405,32 @@ def main():
     if args.binary_tree:
         comb_class = "binary tree"
         tree_list = create_data("binary_tree", sample_num, samples_size)
-        data = ___file_to_data_frame("binary_tree")
-        passed = ___stat_test_binary_trees(data, tree_list, samples_size)     
+        data = ___file_to_data_frame("binary_tree")     
+        passed = ___test_combinatorial_class("binary_tree", data, tree_list, samples_size)
     elif args.three_connectd:
         print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
         comb_class = "three-connected"
         graph_list = create_data("three_connected", sample_num, samples_size)
         data = ___file_to_data_frame("three_connected")
-        passed = ___stat_test_three_connected_graphs(data, graph_list, samples_size)
+        passed = ___test_combinatorial_class("three_connected", data, graph_list, samples_size)
     elif args.two_connected:
         print(COLOR_BLUE + "                  TWO-CONNECTED TEST" + COLOR_END)
         comb_class = "two-connected"
         graph_list = create_data("two_connected", sample_num, samples_size)
         data = ___file_to_data_frame("two_connected")
-        passed = ___stat_test_two_connected_graphs(data, graph_list, samples_size)
+        passed = ___test_combinatorial_class("two_connected", data, graph_list, samples_size)
     elif args.one_connected:
         print(COLOR_BLUE + "                  ONE-CONNECTED TEST" + COLOR_END)
         comb_class = "one-connected"
         graph_list = create_data("one_connected", sample_num, samples_size)
         data = ___file_to_data_frame("one_connected")
-        passed = ___stat_test_one_connected_graphs(data, graph_list, samples_size)
+        passed = ___test_combinatorial_class("one_connected", data, graph_list, samples_size)
     elif args.planar_graph:
         print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
         comb_class = "planar graph"
         graph_list = create_data("planar_graph", sample_num, samples_size)
         data = ___file_to_data_frame("planar_graph")
-        passed = ___stat_test_planar_graphs(data, graph_list, samples_size)
+        passed = ___test_combinatorial_class("planar_graph", data, graph_list, samples_size)
     elif args.analyse_fusy:
         print(COLOR_BLUE + "                ANALYSE FUSYS DATA" + COLOR_END)
         ___analyse_fusys_data("fusy_graphs_btree_5.txt")
