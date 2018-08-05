@@ -16,22 +16,38 @@ from itertools import repeat
 from timeit import default_timer as timer
 import copy
 
-from framework.generic_samplers import *
+from framework.generic_samplers import BoltzmannSamplerBase
 from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
 from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
-from planar_graph_sampler.grammar.two_connected_decomposition import two_connected_graph_grammar
 from planar_graph_sampler.grammar.three_connected_decomposition import three_connected_graph_grammar
-from planar_graph_sampler.evaluations_planar_graph import *
 from planar_graph_sampler.grammar.two_connected_decomposition import two_connected_graph_grammar
+from planar_graph_sampler.grammar.one_connected_decomposition import one_connected_graph_grammar
+from planar_graph_sampler.grammar.planar_graph_decomposition import planar_graph_grammar
+from planar_graph_sampler.evaluations_planar_graph import EvaluationOracle, planar_graph_evals_n100, planar_graph_evals_n1000
 
 
-def ___sample_combinatorial_class(comb_class, symbolic_x, symbolic_y, size, exact=True):
+def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size, exact=True):
     start_sampling = timer()
     number_trials = 0
 
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    grammar = None
 
-    grammar = two_connected_graph_grammar()
+    if name is "binary_tree":
+        grammar = binary_tree_grammar()
+    elif name is "three_connected":
+        grammar = three_connected_graph_grammar()
+    elif name is "two_connected":
+        grammar = two_connected_graph_grammar()
+    elif name is "one_connected":
+        grammar = one_connected_graph_grammar()
+    elif name is "planar_graph":
+        grammar = planar_graph_grammar()
+    else:
+        raise Exception("No such graph class")
+
+    assert(grammar is not None)
+
     grammar.init()
     node_num = 0
 
@@ -45,10 +61,8 @@ def ___sample_combinatorial_class(comb_class, symbolic_x, symbolic_y, size, exac
         node_num = graph.number_of_nodes
 
     edge_num = graph.number_of_edges
-
     end_sampling = timer()
     time_needed = end_sampling - start_sampling
-
     data = (node_num, edge_num, number_trials, time_needed)
     
     return data, graph
@@ -91,7 +105,7 @@ def create_data(comb_class, sample_num, samples_size):
 
     #if comb_class is not "binary_tree":
     for i in repeat(None, sample_num):
-        d, g = ___sample_combinatorial_class(sample, symbolic_x, symbolic_y, samples_size)
+        d, g = ___sample_combinatorial_class(comb_class, sample, symbolic_x, symbolic_y, samples_size)
         data.append(d)
         obj_list.append(g)
 

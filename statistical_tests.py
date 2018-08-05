@@ -288,7 +288,6 @@ def ___test_for_special_graphs(graphs, size):
         if nx.is_isomorphic(g, wheel):
             wheel_found = True
 
-
     print("Sampled cycle............................{}".format(cycle_found))
     print("Sampled path.............................{}".format(path_found))
     print("Sampled star.............................{}".format(star_found))
@@ -378,6 +377,13 @@ def ___file_to_data_frame(file_name):
 
     data_frame = pd.DataFrame.from_records(data, columns = labels)
     return data_frame
+
+
+def ___ratio_edges_vertices(file_name):
+    pass
+
+def ___vertex_degrees_distributions(graphs):
+    pass
 
 # This class compares different kinds of graphs sampled by our code
 # and the ones sampled by Fusy's code.
