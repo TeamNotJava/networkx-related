@@ -89,8 +89,6 @@ class Closure:
         # Connect the starting half-edge of our planar map with the _first
         # node of the hexagon
         new_half_edge = ClosureHalfEdge()
-        # new_half_edge.add_to_closure(hexagon_start_half_edge, hexagon[11],
-        # starting_half_edge, True)
         hexagon_start_half_edge.add_to_closure(starting_half_edge, True,
                                                new_half_edge)
 
