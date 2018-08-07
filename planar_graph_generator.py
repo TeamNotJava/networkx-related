@@ -76,6 +76,7 @@ class PlanarGraphGenerator:
         curr_node_number = 0
 
         if variance != 100:
+            planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
             while(curr_node_number < lower_bound or curr_node_number > upper_bound):
                 planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
                 curr_node_number = planar_graph.l_size
@@ -191,5 +192,6 @@ class PlanarGraphGenerator:
 
         
 if __name__ == '__main__':
-    gnx = PlanarGraphGenerator().generate_planar_graph(1000, 50)
+    generator = PlanarGraphGenerator()
+    gnx = generator.generate_planar_graph(1000, 50)
     print(nx.info(gnx))
