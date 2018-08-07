@@ -12,11 +12,13 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-from planar_graph_sampler.grammar.planar_graph_decomposition import  planar_graph_grammar
+from planar_graph_sampler.grammar.planar_graph_decomposition import  planar_graph_grammar, bij_connected_comps
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
+from framework.generic_classes import SetClass
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100,\
     planar_graph_evals_n1000
+import networkx as nx
 
 class PlanarGraphGenerator:
 
@@ -81,8 +83,8 @@ class PlanarGraphGenerator:
             planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y) 
 
         # Transform to networkx graph
-        graph = planar_graph.to_networkx_graph()
-        return graph
+        gnx = bij_connected_comps(planar_graph)
+        return gnx
 
     def generate_planar_graph_fixed_nodes_edges(self, node_num, edge_num, node_var, edge_var):
         """This function samples random planar graphs using Boltzmann
@@ -129,8 +131,8 @@ class PlanarGraphGenerator:
             planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y) 
 
         # Transform to networkx graph
-        graph = planar_graph.to_networkx_graph()
-        return graph
+        gnx = bij_connected_comps(planar_graph)
+        return gnx
 
     def generate_planar_graph_with_min_number_nodes(self, node_number):
         """This function samples random planar graphs using Boltzmann samplers
@@ -155,8 +157,8 @@ class PlanarGraphGenerator:
             curr_node_number = planar_graph.l_size
 
         # Transform to networkx graph
-        graph = planar_graph.to_networkx_graph()
-        return graph
+        gnx = bij_connected_comps(planar_graph)
+        return gnx
 
     def generate_planar_graph_with_max_number_nodes(self, node_number):
         """This function samples random planar graphs using Boltzmann samplers
@@ -182,11 +184,12 @@ class PlanarGraphGenerator:
             curr_node_number = planar_graph.l_size
 
         # Transform to networkx graph
-        graph = planar_graph.to_networkx_graph()
-        return graph
+        gnx = bij_connected_comps(planar_graph)
+        return gnx
 
         
 
         
-
-PlanarGraphGenerator().generate_planar_graph_with_min_number_nodes(1000)
+if __name__ == '__main__':
+    gnx = PlanarGraphGenerator().generate_planar_graph(1000, 50)
+    print(nx.info(gnx))
