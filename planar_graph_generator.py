@@ -13,8 +13,8 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 from planar_graph_sampler.grammar.planar_graph_decomposition import  planar_graph_grammar
-from framework.generic_samplers import BoltzmannSampler
 from framework.evaluation_oracle import EvaluationOracle
+from framework.generic_samplers import BoltzmannSamplerBase
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100,\
     planar_graph_evals_n1000
 
@@ -63,9 +63,9 @@ class PlanarGraphGenerator:
         symbolic_y = 'y'
 
         if node_number == 100:
-            BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)     
         elif node_number == 1000:
-            BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
         else:
             raise Exception("Only admissible number of nodes is 100 or 1000!")
 
@@ -75,10 +75,10 @@ class PlanarGraphGenerator:
 
         if variance != 100:
             while(curr_node_number < lower_bound or curr_node_number > upper_bound):
-                planar_graph = grammar.sample('G_dx_dx', symbolic_x, symbolic_y)
-                curr_node_number = planar_graph.get_l_size()
+                planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
+                curr_node_number = planar_graph.l_size
         else:
-            planar_graph = grammar.sample('G_dx_dx', symbolic_x, symbolic_y) 
+            planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y) 
 
         # Transform to networkx graph
         graph = planar_graph.to_networkx_graph()
@@ -100,9 +100,9 @@ class PlanarGraphGenerator:
         symbolic_y = 'y'
 
         if node_num == 100:
-            BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)     
         elif node_num == 1000:
-            BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
         else:
             raise Exception("Only admissible number of nodes is 100 or 1000!")
 
@@ -114,19 +114,19 @@ class PlanarGraphGenerator:
         if node_var != 100 and edge_var != 100:
             while(curr_node_number < lower_nodes or curr_node_number > upper_nodes
                     or curr_edge_number < lower_edges or curr_edge_number > upper_edges):
-                planar_graph = grammar.sample('G_dx_dx', symbolic_x, symbolic_y)
-                curr_node_number = planar_graph.get_l_size()
-                curr_edge_number = planar_graph.get_u_size()
-        elif: node_num != 100 and edge_var == 100:
+                planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
+                curr_node_number = planar_graph.l_size
+                curr_edge_number = planar_graph.u_size
+        elif node_num != 100 and edge_var == 100:
             while(curr_node_number < lower_nodes or curr_node_number > upper_nodes):
-                planar_graph = grammar.sample('G_dx_dx', symbolic_x, symbolic_y)
-                curr_node_number = planar_graph.get_l_size()
-        elif: node_num == 100 and edge_var != 100:
+                planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
+                curr_node_number = planar_graph.l_size
+        elif node_num == 100 and edge_var != 100:
             while(curr_node_number < lower_nodes or curr_node_number > upper_nodes):
-                planar_graph = grammar.sample('G_dx_dx', symbolic_x, symbolic_y)
-                curr_node_number = planar_graph.get_l_size()
+                planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
+                curr_node_number = planar_graph.l_size
         else:
-            planar_graph = grammar.sample('G_dx_dx', symbolic_x, symbolic_y) 
+            planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y) 
 
         # Transform to networkx graph
         graph = planar_graph.to_networkx_graph()
@@ -140,9 +140,9 @@ class PlanarGraphGenerator:
         symbolic_y = 'y'
 
         if node_number == 100:
-            BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)     
         elif node_number == 1000:
-            BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
         else:
             raise Exception("Only admissible number of nodes is 100 or 1000!")
 
@@ -151,8 +151,8 @@ class PlanarGraphGenerator:
         curr_node_number = 0
 
         while(curr_node_number < node_number):
-            planar_graph = grammar.sample('G_dx_dx', symbolic_x, symbolic_y)
-            curr_node_number = planar_graph.get_l_size()
+            planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
+            curr_node_number = planar_graph.l_size
 
         # Transform to networkx graph
         graph = planar_graph.to_networkx_graph()
@@ -167,9 +167,9 @@ class PlanarGraphGenerator:
         symbolic_y = 'y'
 
         if node_number == 100:
-            BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n100)     
+            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)     
         elif node_number == 1000:
-            BoltzmannSampler.oracle = EvaluationOracle(planar_graph_evals_n1000)
+            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
         else:
             raise Exception("Only admissible number of nodes is 100 or 1000!")
 
@@ -178,8 +178,8 @@ class PlanarGraphGenerator:
         curr_node_number = node_number + 1
         
         while(curr_node_number > node_number):
-            planar_graph = grammar.sample('G_dx_dx', symbolic_x, symbolic_y)
-            curr_node_number = planar_graph.get_l_size()
+            planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
+            curr_node_number = planar_graph.l_size
 
         # Transform to networkx graph
         graph = planar_graph.to_networkx_graph()
@@ -189,3 +189,4 @@ class PlanarGraphGenerator:
 
         
 
+PlanarGraphGenerator().generate_planar_graph_with_min_number_nodes(1000)
