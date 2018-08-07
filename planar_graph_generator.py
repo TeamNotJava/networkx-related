@@ -58,8 +58,8 @@ class PlanarGraphGenerator:
         # If the user specifies a variance of 100, then there are no
         #  lower/upper bounds
         if variance != 100:
-            lower_bound = node_number - (node_number * variance)
-            upper_bound = node_number + (node_number * variance)
+            lower_bound = node_number - (node_number * variance/100)
+            upper_bound = node_number + (node_number * variance/100)
 
         symbolic_x = 'x'
         symbolic_y = 'y'
@@ -77,6 +77,7 @@ class PlanarGraphGenerator:
 
         if variance != 100:
             planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
+            curr_node_number = planar_graph.l_size
             while(curr_node_number < lower_bound or curr_node_number > upper_bound):
                 planar_graph = grammar.sample_iterative('G_dx_dx', symbolic_x, symbolic_y)
                 curr_node_number = planar_graph.l_size
