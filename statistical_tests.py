@@ -40,10 +40,23 @@ def ___test_combinatorial_class(comb_class, data, objects, size):
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     ___calculate_number_of_possible_graphs(size, comb_class)
+
     # Convert to netwokrx graphs
     nx_g = [o.to_networkx_graph(False) for o in objects]
+
+    # Calculate edges/nodes ratio for each of the sampled graphs
+    ___ratio_edges_vertices(nx_g)
+
+    # Draw the distribution of node degrees
+    ___vertex_degrees_distributions(nx_g)
+
+    # Remove all pairwise isomorphic graphs
     nx_obj_dict = ___non_isomorphic_graphs_dict(nx_g)
-    dist = ___test_uniform_distribution(nx_obj_dict)
+
+    # Make distribution tests
+    ___test_uniform_distribution(nx_obj_dict)
+    ___chi_square_test(nx_obj_dict)
+    
 
     # Tests specific for a certain graph class
     if comb_class is not "binary_tree":
@@ -52,8 +65,17 @@ def ___test_combinatorial_class(comb_class, data, objects, size):
         ___get_avr_btree_height(objects, size)
 
     ___draw_distribution_diagram(nx_obj_dict)
- 
-    return dist
+
+
+def ___chi_square_test(graphs):
+    data = list(graphs.values())
+    _, p = stats.chisquare(data)
+    alpha = 0.05
+    
+    if p <= alpha:
+        print(COLOR_RED + "Chi-Square Test..........................failed" + COLOR_END)
+    else:
+        print(COLOR_GREEN + "Chi-Square Test..........................passed" + COLOR_END)   
 
 def ___get_avr_num_trials(data):  
     trials = data.copy().trials
@@ -160,14 +182,13 @@ def ___test_uniform_distribution(graphs):
 
     loc, scale = stats.uniform.fit(test_data)
     u = stats.uniform(loc=loc, scale=scale)
-    d, p = stats.kstest(test_data, u.cdf)
+    _, p = stats.kstest(test_data, u.cdf)
     print("KS-test p-value..........................{}".format(p))
     alpha = 0.05
     if p <= alpha:
         print(COLOR_RED + "Kolmogorov-Smirnov Test..................failed" + COLOR_END)
-        return False
-    print(COLOR_GREEN + "Kolmogorov-Smirnov Test..................passed" + COLOR_END)   
-    return True
+    else:
+        print(COLOR_GREEN + "Kolmogorov-Smirnov Test..................passed" + COLOR_END)   
 
 # Tests if the graphs frequencies are poisson distributed using
 # Kolmogorov-Smirnov test
@@ -190,9 +211,8 @@ def ___test_poisson_distribution(data):
     alpha = 0.05
     if p <= alpha:
         print(COLOR_RED + "Kolmogorov-Smirnov Test..................failed" + COLOR_END)
-        return False
-    print(COLOR_GREEN + "Kolmogorov-Smirnov Test..................passed" + COLOR_END)   
-    return True
+    else:
+        print(COLOR_GREEN + "Kolmogorov-Smirnov Test..................passed" + COLOR_END)   
 
 def ___draw_distribution_diagram(data):
     x_data = [x for x in range(len(data))]
@@ -201,7 +221,7 @@ def ___draw_distribution_diagram(data):
     for y in y_data:
         mean += y
     mean = mean / len(data)
-    _, ax = plt.subplots()
+    _ , ax = plt.subplots()
     # Draw bars, position them in the center of the tick mark on the x-axis
     ax.bar(x_data, y_data, color = '#539caf', align = 'center')
     ax.axhline(mean, color='green', linewidth=2)
@@ -238,7 +258,7 @@ def ___calculate_number_of_possible_graphs(size, object_class):
         sizes = [1, 2, 6, 24]
     elif object_class is "three_connected":
         # 	Number of labeled 3-connected graphs with n nodes. 
-        sizes = [1, 25, 1227, 84672, 7635120, 850626360]
+        sizes = [1, 25, 1227, 84672, 7635120, 850626360, 112876089480, 17381709797760]
     elif object_class is "two_connected":
         # Number of 2-connected planar graphs on n labeled nodes
         sizes = [1, 10, 237, 10707, 774924, 78702536, 10273189176, 1631331753120]
@@ -247,7 +267,7 @@ def ___calculate_number_of_possible_graphs(size, object_class):
         sizes = [1, 1, 1, 4, 38, 728, 26704, 1866256, 251548592, 66296291072, 34496488594816]
     elif object_class is "planar_graph":
         # Number of planar graphs on n labeled nodes.
-        sizes =[1, 1, 4, 38, 727, 26013, 1597690, 149248656]
+        sizes =[1, 1, 2, 8, 64, 1023, 32071, 1823707, 163947848, 20402420291, 3209997749284]
     else:
         raise Exception("No such object.")
     
@@ -302,7 +322,7 @@ def ___analyse_fusys_data(file_name):
     nx_objects = ___fusy_graphs_to_networkx(file_name)
     graphs = ___non_isomorphic_graphs_dict(nx_objects, colors=False)
 
-    dist = ___test_uniform_distribution(graphs)
+    ___test_uniform_distribution(graphs)
     ___draw_distribution_diagram(graphs)
 
     data = []
@@ -315,7 +335,6 @@ def ___analyse_fusys_data(file_name):
     data_frame = pd.DataFrame.from_records(data, columns = labels)
     ___get_avr_num_trials(data_frame)
 
-    return dist
 
 # Convert graphs sampled by our code into
 # a list.            
@@ -379,11 +398,53 @@ def ___file_to_data_frame(file_name):
     return data_frame
 
 
-def ___ratio_edges_vertices(file_name):
-    pass
+def ___ratio_edges_vertices(graphs):
+    """Calculates the edges to nodes ratio for each graph and plot it."""
+    ratio_list = []
+    for g in graphs:
+        node_number = len(g.nodes())
+        edge_number = len(g.edges())
+        ratio = edge_number / node_number
+        ratio_list.append(ratio)
+
+    x_data = [x for x in range(len(ratio_list))]
+    y_data = ratio_list
+    mean = 0
+    for y in y_data:
+        mean += y
+    mean = mean / len(graphs)
+    _, ax = plt.subplots()
+    # Draw bars, position them in the center of the tick mark on the x-axis
+    # ax.plo(x_data, y_data, color = '#539caf', align = 'center')
+    ax.plot(x_data, y_data, 'ro')
+    ax.axhline(mean, color='green', linewidth=2)
+    ax.set_ylabel("Edges/vertices ratio")
+    ax.set_xlabel("Graph")
+    ax.set_title("Edges/vertices Ratio")
+    plt.show()
 
 def ___vertex_degrees_distributions(graphs):
-    pass
+    degrees_list = []
+    for g in graphs:
+        neighbors = []
+        nodes = g.nodes()
+        for n in nodes:
+            degree = g.degree(n)/100
+            neighbors.append(degree)
+        degrees_list.append(neighbors)
+
+    x_data = [x for x in range(len(degrees_list))]
+    y_data = degrees_list
+    _, ax = plt.subplots()
+
+    for x, y in zip(x_data, y_data):
+        ax.scatter([x] * len(y), y) 
+
+    #plt.figure(figsize=(20,5))
+    ax.set_ylabel("Nodes degrees")
+    ax.set_xlabel("Graph")
+    ax.set_title("Distribution of Vertex Degrees")
+    plt.show()   
 
 # This class compares different kinds of graphs sampled by our code
 # and the ones sampled by Fusy's code.
@@ -405,48 +466,36 @@ def main():
 
     sample_num = args.samples
     samples_size = args.size
-    passed = False
-    comb_class = None
 
     if args.binary_tree:
-        comb_class = "binary tree"
         tree_list = create_data("binary_tree", sample_num, samples_size)
         data = ___file_to_data_frame("binary_tree")     
-        passed = ___test_combinatorial_class("binary_tree", data, tree_list, samples_size)
+        ___test_combinatorial_class("binary_tree", data, tree_list, samples_size)
     elif args.three_connectd:
         print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
-        comb_class = "three-connected"
         graph_list = create_data("three_connected", sample_num, samples_size)
         data = ___file_to_data_frame("three_connected")
-        passed = ___test_combinatorial_class("three_connected", data, graph_list, samples_size)
+        ___test_combinatorial_class("three_connected", data, graph_list, samples_size)
     elif args.two_connected:
         print(COLOR_BLUE + "                  TWO-CONNECTED TEST" + COLOR_END)
-        comb_class = "two-connected"
         graph_list = create_data("two_connected", sample_num, samples_size)
         data = ___file_to_data_frame("two_connected")
-        passed = ___test_combinatorial_class("two_connected", data, graph_list, samples_size)
+        ___test_combinatorial_class("two_connected", data, graph_list, samples_size)
     elif args.one_connected:
         print(COLOR_BLUE + "                  ONE-CONNECTED TEST" + COLOR_END)
-        comb_class = "one-connected"
         graph_list = create_data("one_connected", sample_num, samples_size)
         data = ___file_to_data_frame("one_connected")
-        passed = ___test_combinatorial_class("one_connected", data, graph_list, samples_size)
+        ___test_combinatorial_class("one_connected", data, graph_list, samples_size)
     elif args.planar_graph:
         print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
-        comb_class = "planar graph"
         graph_list = create_data("planar_graph", sample_num, samples_size)
         data = ___file_to_data_frame("planar_graph")
-        passed = ___test_combinatorial_class("planar_graph", data, graph_list, samples_size)
+        ___test_combinatorial_class("planar_graph", data, graph_list, samples_size)
     elif args.analyse_fusy:
         print(COLOR_BLUE + "                ANALYSE FUSYS DATA" + COLOR_END)
         ___analyse_fusys_data("fusy_graphs_btree_5.txt")
     else:
         raise Exception("Wrong combinatorial class.")
-
-    if passed:
-        print(COLOR_GREEN + '{} test.........................PASSED'.format(comb_class) + COLOR_END)
-    else:
-        print(COLOR_RED + '{} test.........................FAILED'.format(comb_class) + COLOR_END) 
 
 if __name__ == '__main__':
     main()

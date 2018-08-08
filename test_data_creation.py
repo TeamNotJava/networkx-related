@@ -12,7 +12,6 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-from itertools import repeat
 from timeit import default_timer as timer
 import copy
 
@@ -55,12 +54,21 @@ def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size
         while node_num != size:
             number_trials += 1
             graph = grammar.sample(comb_class, symbolic_x, symbolic_y)
-            node_num = graph.number_of_nodes
+            if name is not "planar_graph":
+                node_num = graph.number_of_nodes
+            else:
+                node_num = graph.l_size
     else:
         graph = grammar.sample(comb_class, symbolic_x, symbolic_y)
-        node_num = graph.number_of_nodes
+        if name is not "planar_graph":
+            node_num = graph.number_of_nodes
+        else:
+            node_num = graph.l_size
 
-    edge_num = graph.number_of_edges
+    if name is not "planar_graph":
+        edge_num = graph.number_of_edges
+    else:
+        edge_num = graph.u_size
     end_sampling = timer()
     time_needed = end_sampling - start_sampling
     data = (node_num, edge_num, number_trials, time_needed)
@@ -104,7 +112,7 @@ def create_data(comb_class, sample_num, samples_size):
         raise Exception("No such combinatorial class!")
 
     #if comb_class is not "binary_tree":
-    for i in repeat(None, sample_num):
+    for _ in range(sample_num):
         d, g = ___sample_combinatorial_class(comb_class, sample, symbolic_x, symbolic_y, samples_size)
         data.append(d)
         obj_list.append(g)
