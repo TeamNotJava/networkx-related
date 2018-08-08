@@ -479,3 +479,153 @@ def create_sample_network_for_testing_substitution_operation(is_linked=False):
     net_nineth.opposite = net_tenth
 
     return Network(network_root_edge, is_linked)
+
+def create_sample_binary_tree():
+
+    half_edges = [ClosureHalfEdge() for _ in range(24)]
+
+    half_edges[0].node_nr = 0
+    half_edges[0].color = 'black'
+    half_edges[0].next = half_edges[1]
+    half_edges[0].prior = half_edges[5]
+    half_edges[0].opposite = None
+
+    half_edges[1].node_nr = 0
+    half_edges[1].color = 'black'
+    half_edges[1].next = half_edges[5]
+    half_edges[1].prior = half_edges[0]
+    half_edges[1].opposite = half_edges[2]
+
+    half_edges[2].node_nr = 1
+    half_edges[2].color = 'white'
+    half_edges[2].next = half_edges[3]
+    half_edges[2].prior = half_edges[4]
+    half_edges[2].opposite = half_edges[1]
+
+    half_edges[3].node_nr = 1
+    half_edges[3].color = 'white'
+    half_edges[3].next = half_edges[4]
+    half_edges[3].prior = half_edges[2]
+    half_edges[3].opposite = None
+
+    half_edges[4].node_nr = 1
+    half_edges[4].color = 'white'
+    half_edges[4].next = half_edges[2]
+    half_edges[4].prior = half_edges[3]
+    half_edges[4].opposite = None
+
+    half_edges[5].node_nr = 0
+    half_edges[5].color = 'black'
+    half_edges[5].next = half_edges[0]
+    half_edges[5].prior = half_edges[1]
+    half_edges[5].opposite = half_edges[6]
+    
+    half_edges[6].node_nr = 2
+    half_edges[6].color = 'white'
+    half_edges[6].next = half_edges[7]
+    half_edges[6].prior = half_edges[14]
+    half_edges[6].opposite = half_edges[5]
+
+    half_edges[7].node_nr = 2
+    half_edges[7].color = 'white'
+    half_edges[7].next = half_edges[14]
+    half_edges[7].prior = half_edges[6]
+    half_edges[7].opposite = half_edges[8]
+
+    half_edges[8].node_nr = 3
+    half_edges[8].color = 'black'
+    half_edges[8].next = half_edges[9]
+    half_edges[8].prior = half_edges[10]
+    half_edges[8].opposite = half_edges[7]
+
+    half_edges[9].node_nr = 3
+    half_edges[9].color = 'black'
+    half_edges[9].next = half_edges[10]
+    half_edges[9].prior = half_edges[8]
+    half_edges[9].opposite = None
+
+    half_edges[10].node_nr = 3
+    half_edges[10].color = 'black'
+    half_edges[10].next = half_edges[8]
+    half_edges[10].prior = half_edges[9]
+    half_edges[10].opposite = half_edges[11]
+
+    half_edges[11].node_nr = 5
+    half_edges[11].color = 'white'
+    half_edges[11].next = half_edges[12]
+    half_edges[11].prior = half_edges[13]
+    half_edges[11].opposite = half_edges[10]
+
+    half_edges[12].node_nr = 5
+    half_edges[12].color = 'white'
+    half_edges[12].next = half_edges[13]
+    half_edges[12].prior = half_edges[11]
+    half_edges[12].opposite = None
+
+    half_edges[13].node_nr = 5
+    half_edges[13].color = 'white'
+    half_edges[13].next = half_edges[11]
+    half_edges[13].prior = half_edges[12]
+    half_edges[13].opposite = None
+
+    half_edges[14].node_nr = 2
+    half_edges[14].color = 'white'
+    half_edges[14].next = half_edges[6]
+    half_edges[14].prior = half_edges[7]
+    half_edges[14].opposite = half_edges[15]
+
+    half_edges[15].node_nr = 4
+    half_edges[15].color = 'black'
+    half_edges[15].next = half_edges[16]
+    half_edges[15].prior = half_edges[17]
+    half_edges[15].opposite = half_edges[14]
+
+    half_edges[16].node_nr = 4
+    half_edges[16].color = 'black'
+    half_edges[16].next = half_edges[17]
+    half_edges[16].prior = half_edges[15]
+    half_edges[16].opposite = None
+
+    half_edges[17].node_nr = 4
+    half_edges[17].color = 'black'
+    half_edges[17].next = half_edges[15]
+    half_edges[17].prior = half_edges[16]
+    half_edges[17].opposite = half_edges[18]
+
+    half_edges[18].node_nr = 6
+    half_edges[18].color = 'white'
+    half_edges[18].next = half_edges[19]
+    half_edges[18].prior = half_edges[23]
+    half_edges[18].opposite = half_edges[17]
+
+    half_edges[19].node_nr = 6
+    half_edges[19].color = 'white'
+    half_edges[19].next = half_edges[23]
+    half_edges[19].prior = half_edges[18]
+    half_edges[19].opposite = half_edges[20]
+
+    half_edges[20].node_nr = 7
+    half_edges[20].color = 'black'
+    half_edges[20].next = half_edges[21]
+    half_edges[20].prior = half_edges[22]
+    half_edges[20].opposite = half_edges[19]
+
+    half_edges[21].node_nr = 7
+    half_edges[21].color = 'black'
+    half_edges[21].next = half_edges[22]
+    half_edges[21].prior = half_edges[20]
+    half_edges[21].opposite = None
+
+    half_edges[22].node_nr = 7
+    half_edges[22].color = 'black'
+    half_edges[22].next = half_edges[20]
+    half_edges[22].prior = half_edges[21]
+    half_edges[22].opposite = None
+
+    half_edges[23].node_nr = 6
+    half_edges[23].color = 'white'
+    half_edges[23].next = half_edges[18]
+    half_edges[23].prior = half_edges[19]
+    half_edges[23].opposite = None
+
+    return half_edges[0]

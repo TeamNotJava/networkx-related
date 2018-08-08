@@ -13,30 +13,23 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 from nose.tools import assert_false, assert_true
+from planar_graph_sampler.test.mock_objects_creator import create_sample_binary_tree
 from planar_graph_sampler.bijections.closure import Closure
-from framework.generic_samplers import BoltzmannSamplerBase
-from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
-from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
-from planar_graph_sampler.evaluations_planar_graph import EvaluationOracle, planar_graph_evals_n100, planar_graph_evals_n1000
+# from framework.generic_samplers import BoltzmannSamplerBase
+# from framework.decomposition_grammar import AliasSampler, DecompositionGrammar
+# from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
+# from planar_graph_sampler.evaluations_planar_graph import EvaluationOracle, planar_graph_evals_n100, planar_graph_evals_n1000
 
 
 class TestClosure(object):
     """Unit tests for closure of binary trees."""
 
-    def ___sample_binary_tree(self):
-
-        BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
-        grammar = binary_tree_grammar()
-        grammar.init()
-        btree = grammar.sample('K', 'x*G_1_dx(x,y)', 'D(x*G_1_dx(x,y),y)')
-        return btree
-
     def test_partial_closure(self):
         """Checks if the computed partial closure is correct"""
-        print("Hallo")
-        c = Closure()
-        btree = self.___sample_binary_tree()
-        init_half_edge = c._bicolored_partial_closure(btree.half_edge)
+
+        print("Test partial closure")
+        btree_half_edge = create_sample_binary_tree()
+        init_half_edge = Closure()._bicolored_partial_closure(btree_half_edge)
 
         edge_list = init_half_edge.get_all_half_edges()
         stem_list = []
@@ -56,17 +49,15 @@ class TestClosure(object):
                 if current_half_edge.opposite is not None:
                     current_half_edge = current_half_edge.opposite
                     count = count + 1
-                    if count > 2:
-                        raise Exception("partial closure failed")
-                    assert_true(count < 3)
+                    assert_true(count < 3, "A half-edge has more than 2 full successor edges")
                 else:
                     break
 
     def test_connections_between_half_edges(self):
         """Checks if the connections between the edges are correct."""
-        c = Closure()
-        btree = self.___sample_binary_tree()
-        init_half_edge = c._bicolored_complete_closure(btree.half_edge)
+        
+        btree_half_edge = create_sample_binary_tree()
+        init_half_edge = Closure()._bicolored_complete_closure(btree_half_edge)
 
         edge_list = init_half_edge.get_all_half_edges()
         nodes = init_half_edge.node_dict()
@@ -112,17 +103,193 @@ class TestClosure(object):
 
     def test_planarity_of_embedding(self):
         """Checks if half edges at every node are planar."""
-        c = Closure()
-        btree = self.___sample_binary_tree()
-        init_half_edge = c._bicolored_complete_closure(btree.half_edge)
+
+        print("Test embedding")
+        btree_half_edge = create_sample_binary_tree()
+        init_half_edge = Closure()._bicolored_complete_closure(btree_half_edge)
         edge_list = init_half_edge.get_all_half_edges()
 
         # Check if there are two different edges that have the same
         # prior/next half-edge
         for edge in edge_list:
             for i in edge_list:
-                assert_false(id(i) != id(edge) and (i.prior is edge.prior or i.next is edge.next))
-                # if id(i) != id(edge) and \
-                #         (i.prior is edge.prior or i.next is edge.next):
-                #     raise Exception("There are two different edges with the "
-                #                     "same prior/next.")
+                assert_false(id(i) != id(edge) and (i.prior is edge.prior or i.next is edge.next), "Two edges with the same next or prior")
+
+
+    def test_concrete_btree_partial_closure(self):
+        """Tests if the connections in the concret btree are correct after partial closure"""
+
+        print("Test concrete partail closure")
+        btree_half_edge = create_sample_binary_tree()
+        init_half_edge = Closure()._bicolored_partial_closure(btree_half_edge)
+
+        nodes = init_half_edge.node_dict()
+
+        for n in nodes:
+            if n == 0:
+                n_half_edges = nodes[n]
+                new_edge = False
+                for he in n_half_edges:
+                    if he.opposite is not None and he.opposite.node_nr == 6:
+                        new_edge = True
+                assert_true(new_edge, "No edge (0,6)")
+            if n == 1:
+                n_half_edges = nodes[n]
+                new_edge = False
+                for he in n_half_edges:
+                    if he.opposite is not None and he.opposite.node_nr == 3:
+                        new_edge = True
+                assert_true(new_edge, "No edge (1,3)")
+            if n == 3:
+                n_half_edges = nodes[n]
+                new_edge = False
+                for he in n_half_edges:
+                    if he.opposite is not None and he.opposite.node_nr == 1:
+                        new_edge = True
+                assert_true(new_edge, "No edge (3,1)")
+            if n == 4:
+                n_half_edges = nodes[n]
+                new_edge = False
+                for he in n_half_edges:
+                    if he.opposite is not None and he.opposite.node_nr == 5:
+                        new_edge = True
+                assert_true(new_edge, "No edge (4,5)")
+            if n == 6:
+                n_half_edges = nodes[n]
+                new_edge = False
+                for he in n_half_edges:
+                    if he.opposite is not None and he.opposite.node_nr == 0:
+                        new_edge = True
+                assert_true(new_edge, "No edge (6,0)")
+
+    def test_concrete_btree_complete_closure(self):
+        """Tests connections in the concrete binary tree after complet closure"""
+    
+        print("Test concrete complete closure")
+        btree_half_edge = create_sample_binary_tree()
+        init_half_edge = Closure()._bicolored_complete_closure(btree_half_edge)
+
+        nodes = init_half_edge.node_dict()
+        hexagon_nodes = []
+        first_hex = btree_half_edge.opposite
+        hexagon_nodes.append(first_hex.node_nr)
+        current_half_edge = first_hex.prior.opposite
+        while(True):
+            if current_half_edge == first_hex.next.next:
+                break
+            hexagon_nodes.append(current_half_edge.node_nr)
+            current_half_edge = current_half_edge.next.opposite
+
+        for n in nodes:
+            n_hf = nodes[n]
+            test = True
+            for i in n_hf:
+                # Test only nodes with non hexagonal edges
+                if i.is_hexagonal:
+                    test = False
+            if test:
+                if n == 0:
+                    n_half_edges = nodes[n]
+                    new_edge = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == hexagon_nodes[0]:
+                            new_edge = True
+                    assert_true(new_edge, "No edge (0,0) (btree,hex)")
+                if n == 1:
+                    n_half_edges = nodes[n]
+                    new_edge = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == hexagon_nodes[1]:
+                            new_edge = True
+                    assert_true(new_edge, "No edge (1,1) (btree,hex)")
+                if n == 3:
+                    n_half_edges = nodes[n]
+                    new_edge = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == hexagon_nodes[2]:
+                            new_edge = True
+                    assert_true(new_edge, "No edge (3,2) (btree,hex)")
+                if n == 5:
+                    n_half_edges = nodes[n]
+                    new_edge = False
+                    for he in n_half_edges:
+                        if he.opposite is not None:
+                            print(he.opposite.node_nr)
+                        if he.opposite is not None and he.opposite.node_nr == hexagon_nodes[3]:
+                            new_edge = True
+                    assert_true(new_edge, "No edge (5,3) (btree,hex)")
+                if n == 4:
+                    n_half_edges = nodes[n]
+                    new_edge = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == hexagon_nodes[4]:
+                            new_edge = True
+                    assert_true(new_edge, "No edge (4,4) (btree,hex)")
+                if n == 7:
+                    n_half_edges = nodes[n]
+                    new_edge_1 = False
+                    new_edge_2 = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == hexagon_nodes[4]:
+                            new_edge_1 = True
+                        if he.opposite is not None and he.opposite.node_nr == hexagon_nodes[0]:
+                            new_edge_2 = True
+                    assert_true(new_edge_1, "No edge (7,4) (btree,hex)")
+                    assert_true(new_edge_2, "No edge (7,0) (btree,hex)")
+
+            for n in  hexagon_nodes:
+                if n == hexagon_nodes[0]:
+                    n_half_edges = nodes[n]
+                    new_edge_1 = False
+                    new_edge_2 = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == 7:
+                            new_edge_1 = True
+                        if he.opposite is not None and he.opposite.node_nr == 0:
+                            new_edge_2 = True
+                    assert_true(new_edge_1, "No edge (0,7) (hex,btree")
+                    assert_true(new_edge_1, "No edge (0,0) (hex,btree")
+                if n == hexagon_nodes[1]:
+                    n_half_edges = nodes[n]
+                    new_edge = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == 1:
+                            new_edge = True
+                    assert_true(new_edge, "No edge (1,1) (hex,btree")
+                if n == hexagon_nodes[2]:
+                    n_half_edges = nodes[n]
+                    new_edge = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == 3:
+                            new_edge = True
+                    assert_true(new_edge, "No edge (2,3) (hex,btree")
+                if n == hexagon_nodes[3]:
+                    n_half_edges = nodes[n]
+                    new_edge = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == 5:
+                            new_edge = True
+                    assert_true(new_edge, "No edge (3,5) (hex,btree")
+                if n == hexagon_nodes[4]:
+                    n_half_edges = nodes[n]
+                    new_edge_1 = False
+                    new_edge_2 = False
+                    for he in n_half_edges:
+                        if he.opposite is not None and he.opposite.node_nr == 4:
+                            new_edge_1 = True
+                        if he.opposite is not None and he.opposite.node_nr == 7:
+                            new_edge_2 = True
+                    assert_true(new_edge_1, "No edge (4,4) (hex,btree")
+                    assert_true(new_edge_2, "No edge (4,7) (hex,btree")
+                
+
+
+
+
+
+
+
+                    
+
+
+        

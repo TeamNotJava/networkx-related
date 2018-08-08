@@ -248,18 +248,6 @@ class ClosureHalfEdge(HalfEdge):
             self.number_proximate_inner_edges, self.is_hexagonal, self.added_by_comp_clsr)
         return repr
 
-    # Adds the fresh half edge to the closure between the prior and the next half-edge
-    # def add_to_closure(self, prior_half_edge, next_half_edge, opposite_half_edge, compl_closure):
-    #     self.opposite = opposite_half_edge
-    #     opposite_half_edge.opposite = self
-    #     self.color = prior_half_edge.color
-    #     self.node_nr = prior_half_edge.node_nr
-    #     self.added_by_comp_clsr = compl_closure
-    #     self.prior = prior_half_edge
-    #     prior_half_edge.next = self
-    #     self.next = next_half_edge
-    #     next_half_edge.prior = self
-
     def add_to_closure(self, opposite_half_edge, compl_closure, new=None):
         self.insert_after(new)
         new.color = self.color
