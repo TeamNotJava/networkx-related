@@ -68,7 +68,7 @@ class EvaluationOracle(object):
             raise BoltzmannFrameworkError('Oracle key missing: {}'.format(query_string))
             
     @staticmethod            
-    def get_best_oracle_for_size(node_number, graph_evals):
+    def get_best_oracle_for_size(size, graph_evals):
         """Returns the best fitting oracle.
         
         This is choosen based on the sampling size. 
@@ -87,7 +87,7 @@ class EvaluationOracle(object):
         orcale: EvaluationOracle
         """
         for eval_size in graph_evals.keys():
-            if node_numbers <= eval_size:
+            if size <= eval_size:
                 best_evals = graph_evals[eval_size]
                 break
         

@@ -16,8 +16,7 @@ from planar_graph_sampler.grammar.planar_graph_decomposition import  planar_grap
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
 from framework.generic_classes import SetClass
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100,\
-    planar_graph_evals_n1000
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals
 import networkx as nx
 
 class PlanarGraphGenerator:
