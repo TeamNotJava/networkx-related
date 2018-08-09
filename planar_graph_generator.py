@@ -155,35 +155,3 @@ class PlanarGraphGenerator:
         # Transform to networkx graph
         gnx = bij_connected_comps(planar_graph)
         return gnx
-
-    def generate_planar_graph_with_max_number_nodes(self, node_number):
-        """This function samples random planar graphs using Boltzmann samplers
-        with at most the given number of desired nodes.
-        """
-
-        if node_number == 100:
-            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)     
-        elif node_number == 1000:
-            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
-        else:
-            raise Exception("Only admissible number of nodes is 100 or 1000!")
-
-        grammar = planar_graph_grammar()
-        grammar.init()
-        curr_node_number = node_number + 1
-        
-        while(curr_node_number > node_number):
-            planar_graph = grammar.sample_iterative('G_dx_dx', 'x', 'y')
-            curr_node_number = planar_graph.l_size
-
-        # Transform to networkx graph
-        gnx = bij_connected_comps(planar_graph)
-        return gnx
-
-        
-
-        
-if __name__ == '__main__':
-    generator = PlanarGraphGenerator()
-    gnx = generator.generate_planar_graph(1000, 50)
-    print(nx.info(gnx))
