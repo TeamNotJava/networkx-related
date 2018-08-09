@@ -61,12 +61,8 @@ class PlanarGraphGenerator:
             lower_bound = node_number - (node_number * variance/100)
             upper_bound = node_number + (node_number * variance/100)
 
-        if node_number == 100:
-            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)     
-        elif node_number == 1000:
-            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
-        else:
-            raise Exception("Only admissible number of nodes is 100 or 1000!")
+        BoltzmannSamplerBase.oracle = EvaluationOracle.get_best_oracle_for_size(node_number, planar_graph_evals)     
+
 
         grammar = planar_graph_grammar()
         grammar.init()
@@ -97,12 +93,7 @@ class PlanarGraphGenerator:
             lower_edges = edge_num - (edge_num * edge_var)
             upper_edges = edge_num + (edge_num * edge_var)
 
-        if node_num == 100:
-            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)     
-        elif node_num == 1000:
-            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
-        else:
-            raise Exception("Only admissible number of nodes is 100 or 1000!")
+        BoltzmannSamplerBase.oracle = EvaluationOracle.get_best_oracle_for_size(node_number, planar_graph_evals)  
 
         grammar = planar_graph_grammar()
         grammar.init()
@@ -136,12 +127,7 @@ class PlanarGraphGenerator:
         with at least the given number of desired nodes.
         """
 
-        if node_number == 100:
-            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)     
-        elif node_number == 1000:
-            BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
-        else:
-            raise Exception("Only admissible number of nodes is 100 or 1000!")
+        BoltzmannSamplerBase.oracle = EvaluationOracle.get_best_oracle_for_size(node_number, planar_graph_evals)  
 
         grammar = planar_graph_grammar()
         grammar.init()
