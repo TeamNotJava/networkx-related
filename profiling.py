@@ -1,4 +1,4 @@
-import planar_graph_generator
+from planar_graph_generator import PlanarGraphGenerator
 import networkx as nx
 
 if __name__ == '__main__':
