@@ -66,6 +66,33 @@ class EvaluationOracle(object):
             return self.evals[query_string]
         except KeyError:
             raise BoltzmannFrameworkError('Oracle key missing: {}'.format(query_string))
+            
+    @staticmethod            
+    def get_best_oracle_for_size(node_number, graph_evals):
+        """Returns the best fitting oracle.
+        
+        This is choosen based on the sampling size. 
+        The next bigger evaluations are chosen to sample more bigger graphs.
+        
+        Parameters
+        ----------
+        node_number: int
+            The number of nodes the final graph should have.
+        graph_evals: dict-of-dicts
+            The evaluation of the generating function. 
+            The size of the evaluation is used as key for the topmost dict.
+        
+        Returns
+        -------
+        orcale: EvaluationOracle
+        """
+        for eval_size in graph_evals.keys():
+            if node_numbers <= eval_size:
+                best_evals = graph_evals[eval_size]
+                break
+        
+        return EvaluationOracle(best_evals)
+        
 
     def __getitem__(self, query_string):
         """Same as EvaluationOracle.get(query_string).
