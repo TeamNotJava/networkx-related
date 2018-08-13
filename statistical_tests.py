@@ -27,6 +27,7 @@ from networkx.algorithms import isomorphism
 from test_data_creation import create_data
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.grammar.grammar_utils import Counter
+from planar_graph_sampler.grammar.planar_graph_decomposition import bij_connected_comps
 counter = Counter()
 
 # Define colors for output
@@ -42,7 +43,10 @@ def ___test_combinatorial_class(comb_class, data, objects, size):
     ___calculate_number_of_possible_graphs(size, comb_class)
 
     # Convert to netwokrx graphs
-    nx_g = [o.to_networkx_graph(False) for o in objects]
+    if comb_class is not "planar_graph":
+        nx_g = [o.to_networkx_graph(False) for o in objects]
+    else:
+        nx_g = [bij_connected_comps(o) for o in objects]
 
     # Calculate edges/nodes ratio for each of the sampled graphs
     ___ratio_edges_vertices(nx_g)
@@ -53,18 +57,17 @@ def ___test_combinatorial_class(comb_class, data, objects, size):
     # Remove all pairwise isomorphic graphs
     nx_obj_dict = ___non_isomorphic_graphs_dict(nx_g)
 
-    # Make distribution tests
-    ___test_uniform_distribution(nx_obj_dict)
-    ___chi_square_test(nx_obj_dict)
-    
-
     # Tests specific for a certain graph class
     if comb_class is not "binary_tree":
-        ___test_for_special_graphs
+        ___test_for_special_graphs(nx_obj_dict, size)
     elif comb_class is "binary_tree":
         ___get_avr_btree_height(objects, size)
 
     ___draw_distribution_diagram(nx_obj_dict)
+
+     # Make distribution tests
+    ___test_uniform_distribution(nx_obj_dict)
+    ___chi_square_test(nx_obj_dict)
 
 
 def ___chi_square_test(graphs):
@@ -72,6 +75,7 @@ def ___chi_square_test(graphs):
     _, p = stats.chisquare(data)
     alpha = 0.05
     
+    print("Chi-Square p-value.......................{}".format(p))
     if p <= alpha:
         print(COLOR_RED + "Chi-Square Test..........................failed" + COLOR_END)
     else:
@@ -116,7 +120,7 @@ def ___get_avr_btree_height(data, size):
     for h in heights:
         avr += h
     avr = avr / len(heights)
-    print("Avr. height of sampled tree..............{}".format(avr))
+    print("Avr. height of sampled trees.............{}".format(avr))
 
 def ___get_tree_height(init_half_edge, height=0):
     if init_half_edge is None:
@@ -429,7 +433,7 @@ def ___vertex_degrees_distributions(graphs):
         neighbors = []
         nodes = g.nodes()
         for n in nodes:
-            degree = g.degree(n)/100
+            degree = g.degree(n)/1000
             neighbors.append(degree)
         degrees_list.append(neighbors)
 
@@ -438,9 +442,8 @@ def ___vertex_degrees_distributions(graphs):
     _, ax = plt.subplots()
 
     for x, y in zip(x_data, y_data):
-        ax.scatter([x] * len(y), y) 
+        ax.scatter([x] * len(y), y, s=10,marker='X',linewidths=0.1) 
 
-    #plt.figure(figsize=(20,5))
     ax.set_ylabel("Nodes degrees")
     ax.set_xlabel("Graph")
     ax.set_title("Distribution of Vertex Degrees")
