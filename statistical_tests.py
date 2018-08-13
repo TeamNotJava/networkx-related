@@ -36,26 +36,29 @@ COLOR_GREEN = '\033[92m'
 COLOR_BLUE = '\033[94m'
 COLOR_END = '\033[0m'
 
-def ___test_combinatorial_class(comb_class, data, objects, size):
+def ___test_combinatorial_class(comb_class, data, objects, size, derived=True):
     # Calculate average number of trials to get the right size
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     ___calculate_number_of_possible_graphs(size, comb_class)
 
     # Convert to netwokrx graphs
-    if comb_class is not "planar_graph":
-        nx_g = [o.to_networkx_graph(False) for o in objects]
+    if derived and comb_class is not "planar_graph":
+        und_der = [o.underive_all() for o in objects]
+        nx_g = [u.to_networkx_graph() for u in und_der]
+    elif comb_class is not "planar_graph":
+        nx_g = [o.to_networkx_graph() for o in objects]
     else:
         nx_g = [bij_connected_comps(o) for o in objects]
 
-    # Calculate edges/nodes ratio for each of the sampled graphs
-    ___ratio_edges_vertices(nx_g)
-
-    # Draw the distribution of node degrees
-    ___vertex_degrees_distributions(nx_g)
-
     # Remove all pairwise isomorphic graphs
     nx_obj_dict = ___non_isomorphic_graphs_dict(nx_g)
+
+    # Calculate edges/nodes ratio for each of the sampled graphs
+    ___ratio_edges_vertices(list(nx_obj_dict.keys()))
+
+    # Draw the distribution of node degrees
+    ___vertex_degrees_distributions(list(nx_obj_dict.keys()))
 
     # Tests specific for a certain graph class
     if comb_class is not "binary_tree":
@@ -97,7 +100,7 @@ def ___get_avr_time(data):
     avr = avr / len(times)
     print("Avr. comp. time..........................{}".format(avr))
 
-def ___get_avr_btree_height(data, size):
+def ___get_avr_btree_height(data, size, derived=True):
     # Average height of a btree is asymptotic to 2* sqrt(pi * n)
     avr = 2 * sqrt(2 * size)
     print("Avr. binary tree height..................{}".format(avr))
@@ -107,7 +110,10 @@ def ___get_avr_btree_height(data, size):
     graphs = data
     heights = []
     for g in graphs:
-        init_half_edge = g.half_edge
+        if not derived:
+            init_half_edge = g.half_edge
+        else:
+            init_half_edge = g.base_class_object.half_edge
         if init_half_edge.opposite is not None:
             half_edge_list = init_half_edge.list_half_edges()
             for h in half_edge_list:
@@ -322,24 +328,51 @@ def ___test_for_special_graphs(graphs, size):
     passed = cycle_found and path_found and star_found and cycl_ladder_found and ladder_found and wheel_found
     return passed
 
-def ___analyse_fusys_data(file_name):
-    nx_objects = ___fusy_graphs_to_networkx(file_name)
+def ___analyse_fusys_data(all=True, bin=False, three=False, two=False, one=False, planar=False):
+    if bin or all:
+        print("                Binary Trees               ")
+        ___analyse_fusys_results("btree", "distribution_tests_results/Fusy/fusy_graphs_btree_5.txt", "distribution_tests_results/Fusy/fusy_stat_btree_5.txt")
+    elif three or all:
+        print("               Three Connected             ")
+        ___analyse_fusys_results("three", "distribution_tests_results/Fusy/fusy_graphs_3conn_5.txt", "distribution_tests_results/Fusy/fusy_stat_3conn_5.txt")
+    elif two or all:
+        print("               Two Connected               ")
+        ___analyse_fusys_results("two", "distribution_tests_results/Fusy/fusy_graphs_2conn_5.txt", "distribution_tests_results/Fusy/fusy_stat_2conn_5.txt")
+    elif one or all:
+        print("               One Connected               ")
+        ___analyse_fusys_results("one", "distribution_tests_results/Fusy/fusy_graphs_1conn_5.txt", "distribution_tests_results/Fusy/fusy_stat_1conn_5.txt")
+    elif planar or all:
+        print("               Planar Graphs               ")
+        ___analyse_fusys_results("planar", "distribution_tests_results/Fusy/fusy_graphs_planar_5.txt", "distribution_tests_results/Fusy/fusy_stat_planar_5.txt")
+    else:
+        raise Exception("Analyse Fusys Data Failure")
+
+def ___analyse_fusys_results(comb_class, file_graphs, file_stat):
+    nx_objects = ___fusy_graphs_to_networkx(file_graphs)
     graphs = ___non_isomorphic_graphs_dict(nx_objects, colors=False)
 
     ___test_uniform_distribution(graphs)
     ___draw_distribution_diagram(graphs)
 
     data = []
-    with open("fusy_stat_btrees_5.txt") as file:
+    with open(file_stat) as file:
         for l in file:
             line_list = l.split(' ')
             data.append(tuple(line_list))
     print("No. sampled graphs.......................{}".format(len(data)))
-    labels = ["trials", "nodes", "time"]
+
+    # Create data frame from statistics file
+    if comb_class is "btree":
+        labels = ["trials", "nodes", "time"]
+    else:
+        labels = ["trials", "nodes", "edges", "time"]
+
     data_frame = pd.DataFrame.from_records(data, columns = labels)
+
     ___get_avr_num_trials(data_frame)
-
-
+    ___get_avr_time(data_frame)
+    
+    
 # Convert graphs sampled by our code into
 # a list.            
 def ___parse_data(file_name):

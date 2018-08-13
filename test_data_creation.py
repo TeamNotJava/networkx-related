@@ -26,7 +26,7 @@ from framework.evaluation_oracle import EvaluationOracle
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals
 
 
-def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size, exact=False):
+def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size, exact=True, derived=True):
     start_sampling = timer()
     number_trials = 0
 
@@ -57,19 +57,19 @@ def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size
             number_trials += 1
             graph = grammar.sample_iterative(comb_class, symbolic_x, symbolic_y) 
             
-            if name is not "planar_graph" and name is not "one_connected":     
+            if not derived and name is not "planar_graph" and name is not "one_connected":     
                 node_num = graph.number_of_nodes
             else:
                 node_num = graph.l_size
     else:
         graph = grammar.sample_iterative(comb_class, symbolic_x, symbolic_y)
         
-        if name is not "planar_graph" and name is not "one_connected":
+        if not derived and name is not "planar_graph" and name is not "one_connected":
             node_num = graph.number_of_nodes
         else:
             node_num = graph.l_size
 
-    if name is not "planar_graph" and name is not "one_connected":
+    if not derived and name is not "planar_graph" and name is not "one_connected":
         edge_num = graph.number_of_edges
     else:
         edge_num = graph.u_size
@@ -94,19 +94,19 @@ def create_data(comb_class, sample_num, samples_size):
     obj_list = []
 
     if comb_class is "binary_tree":
-        sample = 'K'
+        sample = 'K_dx'
         symbolic_x = 'x*G_1_dx(x,y)'
         symbolic_y = 'D(x*G_1_dx(x,y),y)'
     elif comb_class is "three_connected":
-        sample = 'G_3_arrow'
+        sample = 'G_3_arrow_dx'
         symbolic_x = 'x*G_1_dx(x,y)'
         symbolic_y = 'D(x*G_1_dx(x,y),y)'
     elif comb_class is "two_connected":
-        sample = 'G_2_arrow'
+        sample = 'G_2_dx_dx'
         symbolic_x = 'x*G_1_dx(x,y)'
         symbolic_y = 'y'
     elif comb_class is "one_connected":
-        sample = 'G_1'
+        sample = 'G_1_dx_dx'
         symbolic_x = 'x'
         symbolic_y = 'y'
     elif comb_class is "planar_graph":
