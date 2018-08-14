@@ -441,14 +441,15 @@ class DecompositionGrammar(object):
 
                 # TODO find an optimal order of these if statements or, even better, refactor the code somehow so to not have this horrible case distinction
 
+                no_prev_or_curr_in_prev_children = prev is None or curr in prev.get_children()
                 if isinstance(curr, AliasSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         stack.append(curr._referenced_sampler)
                     else:
                         stack.pop()
 
                 elif isinstance(curr, ProdSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         stack.append(curr.lhs)
                     elif curr.lhs is prev:
                         # Left child has already been visited - visit right child.
@@ -461,7 +462,7 @@ class DecompositionGrammar(object):
                         result_stack.append(curr.builder.product(arg_lhs, arg_rhs))
 
                 elif isinstance(curr, SumSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         if bern(curr.lhs.eval(x, y) / curr.eval(x, y)):
                             stack.append(curr.lhs)
                         else:
@@ -470,7 +471,7 @@ class DecompositionGrammar(object):
                         stack.pop()
 
                 elif isinstance(curr, RejectionSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         stack.append(curr.get_children().pop())
                     else:
                         obj_to_check = result_stack.pop()
@@ -494,7 +495,7 @@ class DecompositionGrammar(object):
                     result_stack.append(curr.builder.set(set_elems))
 
                 elif isinstance(curr, USubsSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         # Save the old y to the substitution stack.
                         substitution_stack.append(y)
                         y = curr.rhs.oracle_query_string(x, y)
@@ -512,7 +513,7 @@ class DecompositionGrammar(object):
                         result_stack.append(res)
 
                 elif isinstance(curr, LSubsSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         # Save the old x to the substitution stack.
                         substitution_stack.append(x)
                         x = curr.rhs.oracle_query_string(x, y)
@@ -530,7 +531,7 @@ class DecompositionGrammar(object):
                         result_stack.append(res)
 
                 elif isinstance(curr, UDerFromLDerSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         stack.append(curr.get_children().pop())
                     else:
                         obj_to_check = result_stack.pop()
@@ -546,7 +547,7 @@ class DecompositionGrammar(object):
                             stack.append(curr.get_children().pop())
 
                 elif isinstance(curr, LDerFromUDerSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         stack.append(curr.get_children().pop())
                     else:
                         obj_to_check = result_stack.pop()
@@ -561,7 +562,7 @@ class DecompositionGrammar(object):
                             stack.append(curr.get_children().pop())
 
                 elif isinstance(curr, TransformationSampler):
-                    if prev is None or curr in prev.get_children():
+                    if no_prev_or_curr_in_prev_children:
                         stack.append(curr.get_children().pop())
                     else:
                         stack.pop()
