@@ -19,7 +19,6 @@ import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
 from math import fabs, sqrt
-import copy
 import sys
 import networkx as nx
 import networkx.algorithms.isomorphism as iso
@@ -36,23 +35,23 @@ COLOR_GREEN = '\033[92m'
 COLOR_BLUE = '\033[94m'
 COLOR_END = '\033[0m'
 
-def ___test_combinatorial_class(comb_class, data, objects, size, derived=True):
+def ___test_combinatorial_class(comb_class, data, nx_objects, size, btrees=None):
     # Calculate average number of trials to get the right size
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     ___calculate_number_of_possible_graphs(size, comb_class)
 
-    # Convert to netwokrx graphs
-    if derived and comb_class is not "planar_graph":
-        und_der = [o.underive_all() for o in objects]
-        nx_g = [u.to_networkx_graph() for u in und_der]
-    elif comb_class is not "planar_graph":
-        nx_g = [o.to_networkx_graph() for o in objects]
-    else:
-        nx_g = [bij_connected_comps(o) for o in objects]
+    # # Convert to netwokrx graphs
+    # if derived and comb_class is not "planar_graph":
+    #     und_der = [o.underive_all() for o in objects]
+    #     nx_g = [u.to_networkx_graph() for u in und_der]
+    # elif comb_class is not "planar_graph":
+    #     nx_g = [o.to_networkx_graph() for o in objects]
+    # else:
+    #     nx_g = [bij_connected_comps(o) for o in objects]
 
     # Remove all pairwise isomorphic graphs
-    nx_obj_dict = ___non_isomorphic_graphs_dict(nx_g)
+    nx_obj_dict = ___non_isomorphic_graphs_dict(nx_objects)
 
     # Calculate edges/nodes ratio for each of the sampled graphs
     ___ratio_edges_vertices(list(nx_obj_dict.keys()))
@@ -63,15 +62,14 @@ def ___test_combinatorial_class(comb_class, data, objects, size, derived=True):
     # Tests specific for a certain graph class
     if comb_class is not "binary_tree":
         ___test_for_special_graphs(nx_obj_dict, size)
-    elif comb_class is "binary_tree":
-        ___get_avr_btree_height(objects, size)
+    elif comb_class is "binary_tree" and btrees is not None:
+        ___get_avr_btree_height(btrees, size)
 
     ___draw_distribution_diagram(nx_obj_dict)
 
      # Make distribution tests
     ___test_uniform_distribution(nx_obj_dict)
     ___chi_square_test(nx_obj_dict)
-
 
 def ___chi_square_test(graphs):
     data = list(graphs.values())
@@ -100,14 +98,12 @@ def ___get_avr_time(data):
     avr = avr / len(times)
     print("Avr. comp. time..........................{}".format(avr))
 
-def ___get_avr_btree_height(data, size, derived=True):
+def ___get_avr_btree_height(graphs, size, derived=True):
     # Average height of a btree is asymptotic to 2* sqrt(pi * n)
     avr = 2 * sqrt(2 * size)
     print("Avr. binary tree height..................{}".format(avr))
 
     # Check what average height our trees have
-    # graphs = list(data.keys())
-    graphs = data
     heights = []
     for g in graphs:
         if not derived:
@@ -328,51 +324,51 @@ def ___test_for_special_graphs(graphs, size):
     passed = cycle_found and path_found and star_found and cycl_ladder_found and ladder_found and wheel_found
     return passed
 
-def ___analyse_fusys_data(all=True, bin=False, three=False, two=False, one=False, planar=False):
+def ___analyse_fusys_data(size, all=True, bin=False, three=False, two=False, one=False, planar=False):
     if bin or all:
         print("                Binary Trees               ")
-        ___analyse_fusys_results("btree", "distribution_tests_results/Fusy/fusy_graphs_btree_5.txt", "distribution_tests_results/Fusy/fusy_stat_btree_5.txt")
-    elif three or all:
+        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_btree_5.txt")
+        data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_btree_5.txt", btree=True)
+        ___test_combinatorial_class("binary_tree", data, nx_objects, size)
+    if three or all:
         print("               Three Connected             ")
-        ___analyse_fusys_results("three", "distribution_tests_results/Fusy/fusy_graphs_3conn_5.txt", "distribution_tests_results/Fusy/fusy_stat_3conn_5.txt")
-    elif two or all:
+        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_3conn_5.txt")
+        data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_3conn_5.txt")
+        ___test_combinatorial_class("three_connected", data, nx_objects, size)
+    if two or all:
         print("               Two Connected               ")
-        ___analyse_fusys_results("two", "distribution_tests_results/Fusy/fusy_graphs_2conn_5.txt", "distribution_tests_results/Fusy/fusy_stat_2conn_5.txt")
-    elif one or all:
+        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_2conn_5.txt")
+        data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_2conn_5.txt")
+        ___test_combinatorial_class("two_connected", data, nx_objects, size)
+    if one or all:
         print("               One Connected               ")
-        ___analyse_fusys_results("one", "distribution_tests_results/Fusy/fusy_graphs_1conn_5.txt", "distribution_tests_results/Fusy/fusy_stat_1conn_5.txt")
-    elif planar or all:
+        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_1conn_5.txt")
+        data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_1conn_5.txt")
+        ___test_combinatorial_class("one_connected", data, nx_objects, size)
+    if planar or all:
         print("               Planar Graphs               ")
-        ___analyse_fusys_results("planar", "distribution_tests_results/Fusy/fusy_graphs_planar_5.txt", "distribution_tests_results/Fusy/fusy_stat_planar_5.txt")
-    else:
-        raise Exception("Analyse Fusys Data Failure")
-
-def ___analyse_fusys_results(comb_class, file_graphs, file_stat):
-    nx_objects = ___fusy_graphs_to_networkx(file_graphs)
-    graphs = ___non_isomorphic_graphs_dict(nx_objects, colors=False)
-
-    ___test_uniform_distribution(graphs)
-    ___draw_distribution_diagram(graphs)
-
+        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_planar_5.txt")
+        data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_planar_5.txt")
+        ___test_combinatorial_class("planar_graph", data, nx_objects, size)
+    
+def ___parse_fusys_data(file_name, btree=False):
     data = []
-    with open(file_stat) as file:
+    with open(file_name) as file:
         for l in file:
             line_list = l.split(' ')
             data.append(tuple(line_list))
     print("No. sampled graphs.......................{}".format(len(data)))
 
     # Create data frame from statistics file
-    if comb_class is "btree":
+    if btree:
         labels = ["trials", "nodes", "time"]
     else:
         labels = ["trials", "nodes", "edges", "time"]
 
     data_frame = pd.DataFrame.from_records(data, columns = labels)
+    return data_frame
 
-    ___get_avr_num_trials(data_frame)
-    ___get_avr_time(data_frame)
-    
-    
+
 # Convert graphs sampled by our code into
 # a list.            
 def ___parse_data(file_name):
@@ -452,7 +448,6 @@ def ___ratio_edges_vertices(graphs):
     mean = mean / len(graphs)
     _, ax = plt.subplots()
     # Draw bars, position them in the center of the tick mark on the x-axis
-    # ax.plo(x_data, y_data, color = '#539caf', align = 'center')
     ax.plot(x_data, y_data, 'ro')
     ax.axhline(mean, color='green', linewidth=2)
     ax.set_ylabel("Edges/vertices ratio")
@@ -487,6 +482,7 @@ def ___vertex_degrees_distributions(graphs):
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
     argparser.add_argument('-d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
+    argparser.add_argument('-a', '--all', action='store_true', help='Make statistical tests for all combinatorial classes')
     argparser.add_argument('-b', '--binary-tree', action='store_true', help='Make statistical tests for binary trees')
     argparser.add_argument('-three', '--three_connectd', action='store_true', help='Make statistical tests for three connected graphs')
     argparser.add_argument('-two', '--two_connected', action='store_true', help='Make statistical tests for two connected graphs')
@@ -503,35 +499,42 @@ def main():
     sample_num = args.samples
     samples_size = args.size
 
-    if args.binary_tree:
-        tree_list = create_data("binary_tree", sample_num, samples_size)
+    if args.binary_tree or args.all:
+        graph_list = create_data("binary_tree", sample_num, samples_size)
+        und_der = [o.underive_all() for o in graph_list]
+        nx_g = [u.to_networkx_graph() for u in und_der] 
         data = ___file_to_data_frame("binary_tree")     
-        ___test_combinatorial_class("binary_tree", data, tree_list, samples_size)
-    elif args.three_connectd:
+        ___test_combinatorial_class("binary_tree", data, nx_g, samples_size, btrees=graph_list)
+    if args.three_connectd or args.all:
         print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
         graph_list = create_data("three_connected", sample_num, samples_size)
+        und_der = [o.underive_all() for o in graph_list]
+        nx_g = [u.to_networkx_graph() for u in und_der]
         data = ___file_to_data_frame("three_connected")
-        ___test_combinatorial_class("three_connected", data, graph_list, samples_size)
-    elif args.two_connected:
+        ___test_combinatorial_class("three_connected", data, nx_g, samples_size)
+    if args.two_connected or args.all:
         print(COLOR_BLUE + "                  TWO-CONNECTED TEST" + COLOR_END)
         graph_list = create_data("two_connected", sample_num, samples_size)
+        und_der = [o.underive_all() for o in graph_list]
+        nx_g = [u.to_networkx_graph() for u in und_der]
         data = ___file_to_data_frame("two_connected")
-        ___test_combinatorial_class("two_connected", data, graph_list, samples_size)
-    elif args.one_connected:
+        ___test_combinatorial_class("two_connected", data, nx_g, samples_size)
+    if args.one_connected or args.all:
         print(COLOR_BLUE + "                  ONE-CONNECTED TEST" + COLOR_END)
         graph_list = create_data("one_connected", sample_num, samples_size)
+        und_der = [o.underive_all() for o in graph_list]
+        nx_g = [u.to_networkx_graph() for u in und_der]
         data = ___file_to_data_frame("one_connected")
-        ___test_combinatorial_class("one_connected", data, graph_list, samples_size)
-    elif args.planar_graph:
+        ___test_combinatorial_class("one_connected", data, nx_g, samples_size)
+    if args.planar_graph or args.all:
         print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
         graph_list = create_data("planar_graph", sample_num, samples_size)
+        nx_g = [bij_connected_comps(o) for o in graph_list]
         data = ___file_to_data_frame("planar_graph")
-        ___test_combinatorial_class("planar_graph", data, graph_list, samples_size)
-    elif args.analyse_fusy:
+        ___test_combinatorial_class("planar_graph", data, nx_g, samples_size)
+    if args.analyse_fusy:
         print(COLOR_BLUE + "                ANALYSE FUSYS DATA" + COLOR_END)
-        ___analyse_fusys_data("fusy_graphs_btree_5.txt")
-    else:
-        raise Exception("Wrong combinatorial class.")
+        ___analyse_fusys_data(samples_size)
 
 if __name__ == '__main__':
     main()
