@@ -1,0 +1,35 @@
+<class 'framework.generic_samplers.ProdSampler'> 15017587092
+<class 'framework.generic_samplers.SumSampler'> 14449272728
+<class 'framework.decomposition_grammar.AliasSampler'> 12103599728
+<class 'framework.generic_samplers.AtomSampler'> 4251803161
+<class 'framework.generic_samplers.TransformationSampler'> 3166822912
+<class 'framework.generic_samplers.SetSampler'> 1539910882
+<class 'framework.generic_samplers.LDerFromUDerSampler'> 625927242
+<class 'framework.generic_samplers.LSubsSampler'> 590165000
+<class 'framework.generic_samplers.RejectionSampler'> 135175632
+<class 'framework.generic_samplers.USubsSampler'> 5736260
+<class 'framework.generic_samplers.UDerFromLDerSampler'> 862114
+
+<class 'framework.generic_samplers.ProdSampler'> 3608698185
+<class 'framework.generic_samplers.SumSampler'> 3452745080
+<class 'framework.decomposition_grammar.AliasSampler'> 2827347262
+<class 'framework.generic_samplers.AtomSampler'> 1028711229
+<class 'framework.generic_samplers.TransformationSampler'> 722871842
+<class 'framework.generic_samplers.SetSampler'> 343221964
+<class 'framework.generic_samplers.LDerFromUDerSampler'> 142784594
+<class 'framework.generic_samplers.LSubsSampler'> 133298916
+<class 'framework.generic_samplers.RejectionSampler'> 31261954
+<class 'framework.generic_samplers.USubsSampler'> 1235732
+<class 'framework.generic_samplers.UDerFromLDerSampler'> 234880
+
+<class 'framework.generic_samplers.ProdSampler'> 800875137
+<class 'framework.generic_samplers.SumSampler'> 772732974
+<class 'framework.decomposition_grammar.AliasSampler'> 464183158
+<class 'framework.generic_samplers.AtomSampler'> 257306669
+<class 'framework.generic_samplers.TransformationSampler'> 51751966
+<class 'framework.generic_samplers.SetSampler'> 25377119
+<class 'framework.generic_samplers.LDerFromUDerSampler'> 9983599
+<class 'framework.generic_samplers.LSubsSampler'> 9510250
+<class 'framework.generic_samplers.RejectionSampler'> 2414708
+<class 'framework.generic_samplers.USubsSampler'> 111090
+<class 'framework.generic_samplers.UDerFromLDerSampler'> 12170

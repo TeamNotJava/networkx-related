@@ -45,7 +45,7 @@ class TwoConnectedPlanarGraph(HalfEdgeGraph):
         nodes = self.half_edge.node_dict()
         # Sample a graph and merge it with all remaining nodes.
         for node in nodes:
-            if node in [he.node_nr for he in exceptions]:
+            if exceptions and node in [he.node_nr for he in exceptions]:
                 continue
             # Sampler is for L * G_1_dx
             plug_in = sampler.sample(x, y).second.marked_atom # base_class_object.half_edge
