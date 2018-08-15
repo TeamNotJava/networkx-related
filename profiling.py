@@ -21,7 +21,7 @@ def __generate_planar_graph():
                     end = time.time()
                     time_in_seconds = end - start
                     print(nx.info(gnx))
-                    myfile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' % (N, variances,
+                    myfile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' % (N, variance,
                         gnx.number_of_nodes(), gnx.number_of_edges(), time_in_seconds, lower_bound_errors, upper_bound_errors ))
                     myfile.flush()
 
