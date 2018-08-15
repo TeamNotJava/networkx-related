@@ -5,11 +5,11 @@ import time
 
 
 def __generate_planar_graph():
-    graphs_sizes = [100, 500, 1000, 1500, 2000, 3000, 4000, 5000, 7500, 1000]
+    graphs_sizes = [100, 500, 1000, 1500, 2000, 3000, 4000, 5000, 7500, 10000, 15000, 20000]
     variances = [50]
     how_many_graphs_per_size = 10
 
-    with open("time_statistics.txt", "a") as myfile:
+    with open(("time_statistics_%s.txt" % variances[0]), "a") as myfile:
         for N in graphs_sizes:
             for variance in variances:
                 for i in range(how_many_graphs_per_size):
