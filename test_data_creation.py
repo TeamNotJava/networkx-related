@@ -24,9 +24,10 @@ from planar_graph_sampler.grammar.one_connected_decomposition import one_connect
 from planar_graph_sampler.grammar.planar_graph_decomposition import planar_graph_grammar
 from framework.evaluation_oracle import EvaluationOracle
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals
+from planar_graph_sampler.grammar.planar_graph_decomposition import bij_connected_comps
 
 
-def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size, exact=True, derived=True):
+def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size, exact=True, derived=0):
     start_sampling = timer()
     number_trials = 0
 
@@ -57,19 +58,19 @@ def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size
             number_trials += 1
             graph = grammar.sample_iterative(comb_class, symbolic_x, symbolic_y) 
             
-            if not derived and name is not "planar_graph" and name is not "one_connected":     
+            if derived == 0 and name is not "planar_graph" and name is not "one_connected":     
                 node_num = graph.number_of_nodes
             else:
-                node_num = graph.l_size
+                node_num = graph.l_size + derived
     else:
         graph = grammar.sample_iterative(comb_class, symbolic_x, symbolic_y)
         
-        if not derived and name is not "planar_graph" and name is not "one_connected":
+        if derived == 0 and name is not "planar_graph" and name is not "one_connected":
             node_num = graph.number_of_nodes
         else:
-            node_num = graph.l_size
+            node_num = graph.l_size + derived
 
-    if not derived and name is not "planar_graph" and name is not "one_connected":
+    if derived == 0 and name is not "planar_graph" and name is not "one_connected":
         edge_num = graph.number_of_edges
     else:
         edge_num = graph.u_size
@@ -77,9 +78,25 @@ def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size
     end_sampling = timer()
     time_needed = end_sampling - start_sampling
     data = (node_num, edge_num, number_trials, time_needed)
+
+    ___save_graph_in_file(graph)
     
     return data, graph
 
+def ___save_graph_in_file(graph):
+    file = open('nx_planar_graphs', 'a')
+    file.write('\n')
+    file.write('P')
+    file.write('\n')
+
+    nx_graph =  bij_connected_comps(graph)   
+    for e in nx_graph.edges():
+        file.write(str(e[0]))
+        file.write(' ')
+        file.write(str(e[1]))
+        file.write('\n')
+    file.close()
+    
 def ___write_to_file(file_name, data_list):
     file = open(file_name,'w')
     for data in data_list:
@@ -92,32 +109,38 @@ def ___write_to_file(file_name, data_list):
 def create_data(comb_class, sample_num, samples_size):
     data = []
     obj_list = []
+    der = 0
 
     if comb_class is "binary_tree":
         sample = 'K_dx'
         symbolic_x = 'x*G_1_dx(x,y)'
         symbolic_y = 'D(x*G_1_dx(x,y),y)'
+        der = 1
     elif comb_class is "three_connected":
         sample = 'G_3_arrow_dx'
         symbolic_x = 'x*G_1_dx(x,y)'
         symbolic_y = 'D(x*G_1_dx(x,y),y)'
+        der = 1
     elif comb_class is "two_connected":
         sample = 'G_2_dx_dx'
         symbolic_x = 'x*G_1_dx(x,y)'
         symbolic_y = 'y'
+        der = 2
     elif comb_class is "one_connected":
         sample = 'G_1_dx_dx'
         symbolic_x = 'x'
         symbolic_y = 'y'
+        der = 2
     elif comb_class is "planar_graph":
         sample = 'G_dx_dx'
         symbolic_x = 'x'
         symbolic_y = 'y'
+        der = 2
     else:
         raise Exception("No such combinatorial class!")
 
     for _ in range(sample_num):
-        d, g = ___sample_combinatorial_class(comb_class, sample, symbolic_x, symbolic_y, samples_size)
+        d, g = ___sample_combinatorial_class(comb_class, sample, symbolic_x, symbolic_y, samples_size, derived=der)
         data.append(d)
         obj_list.append(g)
 

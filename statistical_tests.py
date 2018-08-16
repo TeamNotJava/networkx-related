@@ -15,6 +15,7 @@
 import argparse
 import logging
 import pandas as pd
+import random
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
@@ -40,15 +41,6 @@ def ___test_combinatorial_class(comb_class, data, nx_objects, size, btrees=None)
     ___get_avr_num_trials(data)
     ___get_avr_time(data)
     ___calculate_number_of_possible_graphs(size, comb_class)
-
-    # # Convert to netwokrx graphs
-    # if derived and comb_class is not "planar_graph":
-    #     und_der = [o.underive_all() for o in objects]
-    #     nx_g = [u.to_networkx_graph() for u in und_der]
-    # elif comb_class is not "planar_graph":
-    #     nx_g = [o.to_networkx_graph() for o in objects]
-    # else:
-    #     nx_g = [bij_connected_comps(o) for o in objects]
 
     # Remove all pairwise isomorphic graphs
     nx_obj_dict = ___non_isomorphic_graphs_dict(nx_objects)
@@ -138,40 +130,30 @@ def ___get_tree_height(init_half_edge, height=0):
 
 # Returns a dictonary of pairwise non-isomorphic graphs with
 # frequencies 
-def ___non_isomorphic_graphs_dict(objects, node_id=True, colors=True):
-    nx_objects =  [nx.relabel.convert_node_labels_to_integers(o) for o in objects]
-    graphs = dict() 
+def ___non_isomorphic_graphs_dict(nx_objects):
+    # nx_objects =  [nx.relabel.convert_node_labels_to_integers(o, label_attribute='number') for o in objects]
+
     # Add labels as attributes
     for g in nx_objects:
-        label = 0
+        node_number = len(g.nodes())
+        labels = random.sample(range(node_number), node_number)
+        i = 0
         for n in g.nodes():
-            g.nodes[n]['number'] = label
-            label += 1
+            g.nodes[n]['number'] = labels[i]
+            i += 1
+
 
     # Filter out isomorphic graphs
-    cm = iso.categorical_node_match('color',(0,'#999999'))
     nm = iso.numerical_node_match('number',0)
-    for g1 in nx_objects:
-        graphs[g1] = 1
-        for g2 in reversed(nx_objects):
-            if node_id and colors:
-                # The nodes have to have the same id and color
-                if g2 is not g1 and iso.is_isomorphic(g1,g2,node_match=cm) and iso.is_isomorphic(g1,g2,node_match=nm):
-                    nx_objects.remove(g2)
-                    graphs[g1] += 1
-            elif node_id and not colors:
-                # The nodes have to have the same id but not color
-                if g2 is not g1 and iso.is_isomorphic(g1,g2,node_match=nm):
-                    nx_objects.remove(g2)
-                    graphs[g1] += 1
-            elif not node_id and colors:
-                # The nodes have to have the same colors but not ids
-                if g2 is not g1  and iso.is_isomorphic(g1,g2,node_match=cm):
-                    nx_objects.remove(g2)
-                    graphs[g1] += 1
-            else:
-                raise Exception("Isomorphism criterion wrong!")
-        nx_objects.remove(g1)
+
+    graphs = dict() 
+    checked = []
+    for g in nx_objects:
+        if g not in checked:
+            isomorphic = [x for x in nx_objects if iso.is_isomorphic(x, g, node_match=nm)]
+            graphs[g] = len(isomorphic)
+            checked = checked + isomorphic
+
     return graphs
 
 # Tests if the graphs frequencies are uniformly distributed using
@@ -212,7 +194,7 @@ def ___test_poisson_distribution(data):
     pois = stats.poisson(1)
     #loc, scale = stats.poisson.fit(test_data)
     #pois = stats.poisson(loc=loc, scale=scale)
-    d, p = stats.kstest(test_data, pois.cdf)
+    _, p = stats.kstest(test_data, pois.cdf)
     print("KS-test p-value..........................{}".format(p))
     alpha = 0.05
     if p <= alpha:
@@ -327,27 +309,27 @@ def ___test_for_special_graphs(graphs, size):
 def ___analyse_fusys_data(size, all=True, bin=False, three=False, two=False, one=False, planar=False):
     if bin or all:
         print("                Binary Trees               ")
-        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_btree_5.txt")
+        nx_objects = ___graphs_list_to_networkx("distribution_tests results/Fusy/fusy_graphs_btree_5.txt")
         data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_btree_5.txt", btree=True)
         ___test_combinatorial_class("binary_tree", data, nx_objects, size)
     if three or all:
         print("               Three Connected             ")
-        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_3conn_5.txt")
+        nx_objects = ___graphs_list_to_networkx("distribution_tests results/Fusy/fusy_graphs_3conn_5.txt")
         data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_3conn_5.txt")
         ___test_combinatorial_class("three_connected", data, nx_objects, size)
     if two or all:
         print("               Two Connected               ")
-        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_2conn_5.txt")
+        nx_objects = ___graphs_list_to_networkx("distribution_tests results/Fusy/fusy_graphs_2conn_5.txt")
         data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_2conn_5.txt")
         ___test_combinatorial_class("two_connected", data, nx_objects, size)
     if one or all:
         print("               One Connected               ")
-        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_1conn_5.txt")
+        nx_objects = ___graphs_list_to_networkx("distribution_tests results/Fusy/fusy_graphs_1conn_5.txt")
         data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_1conn_5.txt")
         ___test_combinatorial_class("one_connected", data, nx_objects, size)
     if planar or all:
         print("               Planar Graphs               ")
-        nx_objects = ___fusy_graphs_to_networkx("distribution_tests results/Fusy/fusy_graphs_planar_5.txt")
+        nx_objects = ___graphs_list_to_networkx("distribution_tests results/Fusy/fusy_graphs_planar_5.txt")
         data = ___parse_fusys_data("distribution_tests results/Fusy/fusy_stat_planar_5.txt")
         ___test_combinatorial_class("planar_graph", data, nx_objects, size)
     
@@ -381,9 +363,8 @@ def ___parse_data(file_name):
     print("No. sampled graphs.......................{}".format(len(data)))
     return data
 
-# Convert a list of graphs sampled by Fusy's code
-# into a list.
-def ___parse_fusy_graphs(file_name):
+# Convert a list of graphs into a list.
+def ___parse_graphs(file_name):
     data = []
     create_new_list = True
     with open(file_name) as file:      
@@ -407,8 +388,8 @@ def ___parse_fusy_graphs(file_name):
 
 # Convert graphs sampled by Fusy's code into
 #  netowkrx graphs
-def ___fusy_graphs_to_networkx(file_name):
-    fusy_graphs = ___parse_fusy_graphs(file_name)
+def ___graphs_list_to_networkx(file_name):
+    fusy_graphs = ___parse_graphs(file_name)
     ntwx_graphs = []
 
     for elist in fusy_graphs:
@@ -429,7 +410,6 @@ def ___file_to_data_frame(file_name):
 
     data_frame = pd.DataFrame.from_records(data, columns = labels)
     return data_frame
-
 
 def ___ratio_edges_vertices(graphs):
     """Calculates the edges to nodes ratio for each graph and plot it."""
@@ -490,6 +470,8 @@ def main():
     argparser.add_argument('-planar', '--planar_graph', action='store_true', help='Make statistical tests for planar graphs')
     argparser.add_argument('-plot', '--plot_distribution', action='store_true', help='Plot the distribution of the different graph types')
     argparser.add_argument('-fusy', '--analyse_fusy', action='store_true', help='Analyse data produced by Fusy`s implementation')
+    argparser.add_argument('-analyse', '--analyse_nx', action='store_true', help='Only analyse already sampled nx graphs.')
+    argparser.add_argument('-data', '--create_data', action='store_true', help='Sample graphs.')
     argparser.add_argument('samples', type=int, help="Sample x number of time.")
     argparser.add_argument('size', type=int, help="Sample object of a certain size.")
 
@@ -499,26 +481,26 @@ def main():
     sample_num = args.samples
     samples_size = args.size
 
-    if args.binary_tree or args.all:
-        graph_list = create_data("binary_tree", sample_num, samples_size)
-        und_der = [o.underive_all() for o in graph_list]
-        nx_g = [u.to_networkx_graph() for u in und_der] 
-        data = ___file_to_data_frame("binary_tree")     
-        ___test_combinatorial_class("binary_tree", data, nx_g, samples_size, btrees=graph_list)
-    if args.three_connectd or args.all:
-        print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
-        graph_list = create_data("three_connected", sample_num, samples_size)
-        und_der = [o.underive_all() for o in graph_list]
-        nx_g = [u.to_networkx_graph() for u in und_der]
-        data = ___file_to_data_frame("three_connected")
-        ___test_combinatorial_class("three_connected", data, nx_g, samples_size)
-    if args.two_connected or args.all:
-        print(COLOR_BLUE + "                  TWO-CONNECTED TEST" + COLOR_END)
-        graph_list = create_data("two_connected", sample_num, samples_size)
-        und_der = [o.underive_all() for o in graph_list]
-        nx_g = [u.to_networkx_graph() for u in und_der]
-        data = ___file_to_data_frame("two_connected")
-        ___test_combinatorial_class("two_connected", data, nx_g, samples_size)
+    if args.create_data:
+        graph_list = create_data('planar_graph', sample_num, samples_size)
+
+    if args.analyse_nx:
+        nx_g = ___graphs_list_to_networkx('nx_planar_graphs')
+        for g in nx_g:
+            while len(g.nodes()) < samples_size:
+                g.add_node(len(g.nodes())+1)
+        data = ___file_to_data_frame('nx_planar_stats')
+        ___test_combinatorial_class("planar_graph", data, nx_g, samples_size) 
+
+    if args.planar_graph or args.all:
+        print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
+        graph_list = create_data("planar_graph", sample_num, samples_size)
+        nx_g = [bij_connected_comps(o) for o in graph_list]
+        for g in nx_g:
+            while len(g.nodes()) < samples_size:
+                g.add_node(len(g.nodes())+1)
+        data = ___file_to_data_frame("planar_graph")
+        ___test_combinatorial_class("planar_graph", data, nx_g, samples_size)
     if args.one_connected or args.all:
         print(COLOR_BLUE + "                  ONE-CONNECTED TEST" + COLOR_END)
         graph_list = create_data("one_connected", sample_num, samples_size)
@@ -526,12 +508,26 @@ def main():
         nx_g = [u.to_networkx_graph() for u in und_der]
         data = ___file_to_data_frame("one_connected")
         ___test_combinatorial_class("one_connected", data, nx_g, samples_size)
-    if args.planar_graph or args.all:
-        print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
-        graph_list = create_data("planar_graph", sample_num, samples_size)
-        nx_g = [bij_connected_comps(o) for o in graph_list]
-        data = ___file_to_data_frame("planar_graph")
-        ___test_combinatorial_class("planar_graph", data, nx_g, samples_size)
+    if args.two_connected or args.all:
+        print(COLOR_BLUE + "                  TWO-CONNECTED TEST" + COLOR_END)
+        graph_list = create_data("two_connected", sample_num, samples_size)
+        und_der = [o.underive_all() for o in graph_list]
+        nx_g = [u.to_networkx_graph() for u in und_der]
+        data = ___file_to_data_frame("two_connected")
+        ___test_combinatorial_class("two_connected", data, nx_g, samples_size)
+    if args.three_connectd or args.all:
+        print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
+        graph_list = create_data("three_connected", sample_num, samples_size)
+        und_der = [o.underive_all() for o in graph_list]
+        nx_g = [u.to_networkx_graph() for u in und_der]
+        data = ___file_to_data_frame("three_connected")
+        ___test_combinatorial_class("three_connected", data, nx_g, samples_size)
+    if args.binary_tree or args.all:
+        graph_list = create_data("binary_tree", sample_num, samples_size)
+        und_der = [o.underive_all() for o in graph_list]
+        nx_g = [u.to_networkx_graph() for u in und_der] 
+        data = ___file_to_data_frame("binary_tree")     
+        ___test_combinatorial_class("binary_tree", data, nx_g, samples_size, btrees=graph_list)
     if args.analyse_fusy:
         print(COLOR_BLUE + "                ANALYSE FUSYS DATA" + COLOR_END)
         ___analyse_fusys_data(samples_size)
