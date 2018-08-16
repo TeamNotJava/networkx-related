@@ -87,6 +87,11 @@ class BoltzmannSamplerBase(object):
         """
         raise NotImplementedError
 
+    # TODO experimental version to check how much the running time will be improved
+    # TODO it should reduce isinstance check and decrease the total running time for a try
+    def handle_sampling_context(self, sampling_context):
+        raise NotImplementedError
+
     def eval(self, x, y):
         """Gets the evaluation of the generating function of the class being sampled.
 
@@ -274,6 +279,11 @@ class AtomSampler(BoltzmannSamplerBase):
     def sample(self, x, y):
         raise NotImplementedError
 
+    def handle_sampling_context(self, sampling_context):
+        # Atom samplers are the leaves in the decomposition tree.
+        sampling_context.stack.pop()
+        sampling_context.result_stack.append(sampling_context.curr.sample(sampling_context.x, sampling_context.y))
+
     @return_precomp
     def eval(self, x, y):
         return self.oracle[self.oracle_query_string(x, y)]
@@ -419,6 +429,16 @@ class SumSampler(BinarySampler):
         else:
             return self.rhs.sample(x, y)
 
+    def handle_sampling_context(self, sampling_context):
+        if sampling_context.prev is None or sampling_context.curr in sampling_context.prev.get_children():
+            if bern(sampling_context.curr.lhs.eval(sampling_context.x, sampling_context.y) /
+                    sampling_context.curr.eval(sampling_context.x, sampling_context.y)):
+                sampling_context.stack.append(sampling_context.curr.lhs)
+            else:
+                sampling_context.stack.append(sampling_context.curr.rhs)
+        else:
+            sampling_context.stack.pop()
+
     @return_precomp
     def eval(self, x, y):
         # For the sum class (disjoint union) the generating function is the sum of the 2 generating functions.
@@ -434,6 +454,19 @@ class ProdSampler(BinarySampler):
     def sample(self, x, y):
         # todo
         return self._builder.product(self.lhs.sample(x, y), self.rhs.sample(x, y))
+
+    def handle_sampling_context(self, sampling_context):
+        if sampling_context.prev is None or sampling_context.curr in sampling_context.prev.get_children():
+            sampling_context.stack.append(sampling_context.curr.lhs)
+        elif sampling_context.curr.lhs is sampling_context.prev:
+            # Left child has already been visited - visit right child.
+            sampling_context.stack.append(sampling_context.curr.rhs)
+        else:
+            # Both children have been processed.
+            sampling_context.stack.pop()
+            arg_rhs = sampling_context.result_stack.pop()
+            arg_lhs = sampling_context.result_stack.pop()
+            sampling_context.result_stack.append(sampling_context.curr.builder.product(arg_lhs, arg_rhs))
 
     @return_precomp
     def eval(self, x, y):
@@ -459,6 +492,32 @@ class LSubsSampler(BinarySampler):
         gamma = gamma.replace_l_atoms(self.rhs, x, y)
         return gamma
 
+    def handle_sampling_context(self, sampling_context):
+        prev = sampling_context.prev
+        curr = sampling_context.curr
+        stack = sampling_context.stack
+        result_stack = sampling_context.result_stack
+        substitution_stack = sampling_context.substitution_stack
+        x = sampling_context.x
+        y = sampling_context.y
+
+        if prev is None or curr in prev.get_children():
+            # Save the old x to the substitution stack.
+            substitution_stack.append(x)
+            sampling_context.x = curr.rhs.oracle_query_string(x, y)
+            # Sample from lhs with substituted x.
+            stack.append(curr.lhs)
+        else:
+            stack.pop()
+            # Get the object in which the l-atoms have to be replaced from the result stack.
+            core_object = result_stack.pop()
+            # Recover the old y from the stack.
+            sampling_context.x = substitution_stack.pop()
+            # Replace the atoms and push result.
+            sampler = sampling_context.iterative_sampler.__class__(curr.rhs)
+            res = core_object.replace_l_atoms(sampler, x, y)  # Recursion for now.
+            result_stack.append(res)
+
     @return_precomp
     def eval(self, x, y):
         return self.lhs.eval(self.rhs.oracle_query_string(x, y), y)
@@ -478,6 +537,32 @@ class USubsSampler(BinarySampler):
         gamma = self.lhs.sample(x, self.rhs.oracle_query_string(x, y))
         gamma = gamma.replace_u_atoms(self.rhs, x, y)
         return gamma
+
+    def handle_sampling_context(self, sampling_context):
+        prev = sampling_context.prev
+        curr = sampling_context.curr
+        stack = sampling_context.stack
+        result_stack = sampling_context.result_stack
+        substitution_stack = sampling_context.substitution_stack
+        x = sampling_context.x
+        y = sampling_context.y
+
+        if prev is None or curr in prev.get_children():
+            # Save the old y to the substitution stack.
+            substitution_stack.append(y)
+            sampling_context.y = curr.rhs.oracle_query_string(x, y)
+            # Sample from lhs with substituted y.
+            stack.append(curr.lhs)
+        else:
+            stack.pop()
+            # Get the object in which the u-atoms have to be replaced from the result stack.
+            core_object = result_stack.pop()
+            # Recover the old y from the stack.
+            sampling_context.y = substitution_stack.pop()
+            # Replace the atoms and push result.
+            sampler = sampling_context.iterative_sampler.__class__(curr.rhs)
+            res = core_object.replace_u_atoms(sampler, x, y)  # Recursion for now.
+            result_stack.append(res)
 
     @return_precomp
     def eval(self, x, y):
@@ -558,6 +643,26 @@ class SetSampler(UnarySampler):
         k = self.draw_k(x, y)
         return self._builder.set([self._sampler.sample(x, y) for _ in range(k)])
 
+    def handle_sampling_context(self, sampling_context):
+        curr = sampling_context.curr
+        stack = sampling_context.stack
+        result_stack = sampling_context.result_stack
+        x = sampling_context.x
+        y = sampling_context.y
+        max_size = sampling_context.max_size
+        abs_tolerance = sampling_context.abs_tolerance
+
+        # We use recursion here for now.
+        stack.pop()
+        set_elems_sampler = curr.get_children().pop()
+        k = curr.draw_k(x, y)
+        sampler = sampling_context.iterative_sampler.__class__(set_elems_sampler)
+        set_elems = []
+        for _ in range(k):
+            obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
+            set_elems.append(obj)
+        result_stack.append(curr.builder.set(set_elems))
+
     @return_precomp
     def eval(self, x, y):
         # The generating function of a set class is a tail of the exponential row evaluated at the generating function
@@ -617,6 +722,23 @@ class TransformationSampler(UnarySampler):
             return self._f(self._sampler.sample(x, y))
         # Otherwise sample without transformation.
         return self._sampler.sample(x, y)
+
+    def handle_sampling_context(self, sampling_context):
+        prev = sampling_context.prev
+        curr = sampling_context.curr
+        stack = sampling_context.stack
+        result_stack = sampling_context.result_stack
+
+        if prev is None or curr in prev.get_children():
+            stack.append(curr.get_children().pop())
+        else:
+            stack.pop()
+            to_transform = result_stack.pop()
+            # A transformation may not be given.
+            if curr.transformation is not None:
+                result_stack.append(curr.transformation(to_transform))
+            else:
+                result_stack.append(to_transform)
 
     @return_precomp
     def eval(self, x, y):
@@ -716,6 +838,22 @@ class RejectionSampler(TransformationSampler):
             gamma = self._sampler.sample(x, y)
         return gamma
 
+    def handle_sampling_context(self, sampling_context):
+        prev = sampling_context.prev
+        curr = sampling_context.curr
+        stack = sampling_context.stack
+        result_stack = sampling_context.result_stack
+
+        if prev is None or curr in prev.get_children():
+            stack.append(curr.get_children().pop())
+        else:
+            obj_to_check = result_stack.pop()
+            is_acceptable = curr.transformation  # This is kind of weird ...
+            if is_acceptable(obj_to_check):
+                stack.pop()
+                result_stack.append(obj_to_check)
+            else:
+                stack.append(curr.get_children().pop())
 
 class UDerFromLDerSampler(TransformationSampler):
     """
@@ -746,6 +884,26 @@ class UDerFromLDerSampler(TransformationSampler):
             if bern(p):
                 return UDerivedClass(gamma.base_class_object)
 
+    def handle_sampling_context(self, sampling_context):
+        prev = sampling_context.prev
+        curr = sampling_context.curr
+        stack = sampling_context.stack
+        result_stack = sampling_context.result_stack
+
+        if prev is None or curr in prev.get_children():
+            stack.append(curr.get_children().pop())
+        else:
+            obj_to_check = result_stack.pop()
+
+            # TODO this code is duplicated in the recursive sampler
+            def is_acceptable(gamma):
+                return bern((1 / curr._alpha_u_l) * (gamma.u_size / (gamma.l_size + 1)))
+
+            if is_acceptable(obj_to_check):
+                stack.pop()
+                result_stack.append(UDerivedClass(obj_to_check.base_class_object))
+            else:
+                stack.append(curr.get_children().pop())
 
 class LDerFromUDerSampler(TransformationSampler):
     """
@@ -775,3 +933,23 @@ class LDerFromUDerSampler(TransformationSampler):
             p = (1 / self._alpha_l_u) * (gamma.l_size / (gamma.u_size + 1))
             if bern(p):
                 return LDerivedClass(gamma.base_class_object)
+
+    def handle_sampling_context(self, sampling_context):
+        prev = sampling_context.prev
+        curr = sampling_context.curr
+        stack = sampling_context.stack
+        result_stack = sampling_context.result_stack
+
+        if prev is None or curr in prev.get_children():
+            stack.append(curr.get_children().pop())
+        else:
+            obj_to_check = result_stack.pop()
+
+            def is_acceptable(gamma):
+                return bern((1 / curr._alpha_l_u) * (gamma.l_size / (gamma.u_size + 1)))
+
+            if is_acceptable(obj_to_check):
+                stack.pop()
+                result_stack.append(LDerivedClass(obj_to_check.base_class_object))
+            else:
+                stack.append(curr.get_children().pop())
