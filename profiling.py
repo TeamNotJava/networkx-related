@@ -2,31 +2,62 @@ from planar_graph_generator import PlanarGraphGenerator
 import networkx as nx
 import cProfile
 import time
+from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals
 
-
-def __generate_planar_graph():
-    graphs_sizes = [100, 500, 1000, 1500, 2000, 3000, 4000, 5000, 7500, 10000, 15000, 20000]
+def _time_statistics_for_different_graph_sizes():
+    graphs_sizes = [ 5000, 7500, 10000, 15000, 20000, 30000, 40000, 50000, 75000, 100000]
     variances = [50]
     how_many_graphs_per_size = 10
 
-    with open(("time_statistics_%s.txt" % variances[0]), "a") as myfile:
+    with open(("time_statistics_%s.txt" % variances[0]), "a") as stats_file:
         for N in graphs_sizes:
             for variance in variances:
                 for i in range(how_many_graphs_per_size):
                     start = time.time()
 
                     generator = PlanarGraphGenerator()
-                    gnx, lower_bound_errors, upper_bound_errors = generator.generate_planar_graph_for_profiling(N, variance)
+                    gnx, lower_bound_errors, upper_bound_errors = generator.generate_planar_graph_with_statistics(N, variance)
 
                     end = time.time()
                     time_in_seconds = end - start
                     print(nx.info(gnx))
-                    myfile.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' % (N, variance,
+                    stats_file.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\n' % (N, variance,
                         gnx.number_of_nodes(), gnx.number_of_edges(), time_in_seconds, lower_bound_errors, upper_bound_errors ))
-                    myfile.flush()
+                    stats_file.flush()
 
+
+def __time_statistics_for_graph_size_100_and_different_oracles():
+    graphs_sizes = [100]
+    variances = [10]
+    oracle_parameters = [1000, 10000]
+    how_many_graphs_per_size = 20
+
+    with open("time_statistics_oracles.txt", "a") as stats_file:
+        for N in graphs_sizes:
+            for oracle_param in oracle_parameters:
+                for variance in variances:
+                    for i in range(how_many_graphs_per_size):
+                        start = time.time()
+
+                        generator = PlanarGraphGenerator()
+                        gnx, lower_bound_errors, upper_bound_errors = \
+                            generator.generate_planar_graph_with_statistics(N, variance, planar_graph_evals[oracle_param])
+
+                        end = time.time()
+                        time_in_seconds = end - start
+                        print(nx.info(gnx))
+                        stats_file.write('%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' % (N, variance, oracle_param,
+                            gnx.number_of_nodes(), gnx.number_of_edges(), time_in_seconds, lower_bound_errors, upper_bound_errors ))
+                        stats_file.flush()
+
+
+def __generate_planar_graph_profiling():
+    generator = PlanarGraphGenerator()
+    gnx, lower_bound_errors, upper_bound_errors = generator.generate_planar_graph_with_statistics(10000, 50)
+    print(nx.info(gnx))
 
 
 if __name__ == '__main__':
-    #cProfile.run('__generate_planar_graph()')
-    __generate_planar_graph()
+    #cProfile.run('__generate_planar_graph_profiling()')
+    #__generate_planar_graph()
+    __time_statistics_for_graph_size_100_and_different_oracles()

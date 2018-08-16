@@ -83,7 +83,7 @@ class PlanarGraphGenerator:
         return gnx
 
 
-    def generate_planar_graph_for_profiling(self, node_number, variance):
+    def generate_planar_graph_with_statistics(self, node_number, variance, oracle = None):
         """This function generates a random planar graph using Boltzmann
         samplers with fixed number of nodes with the possibility to
         define a margin in which the number of nodes of the sampled
@@ -122,7 +122,9 @@ class PlanarGraphGenerator:
             lower_bound = node_number - (node_number * variance / 100)
             upper_bound = node_number + (node_number * variance / 100)
 
-        BoltzmannSamplerBase.oracle = EvaluationOracle.get_best_oracle_for_size(node_number, planar_graph_evals)
+        BoltzmannSamplerBase.oracle = oracle
+        if oracle is None:
+            BoltzmannSamplerBase.oracle = EvaluationOracle.get_best_oracle_for_size(node_number, planar_graph_evals)
 
         grammar = planar_graph_grammar()
         grammar.init()
