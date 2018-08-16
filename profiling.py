@@ -28,8 +28,8 @@ def _time_statistics_for_different_graph_sizes():
 
 def __time_statistics_for_graph_size_100_and_different_oracles():
     graphs_sizes = [100]
-    variances = [10]
-    oracle_parameters = [1000, 10000]
+    variances = [50, 10]
+    oracle_parameters = [100, 1000, 10000]
     how_many_graphs_per_size = 20
 
     with open("time_statistics_oracles.txt", "a") as stats_file:
