@@ -20,6 +20,7 @@ from framework.generic_classes import SetClass
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals
 import networkx as nx
 import datetime
+import multiprocessing as mp
 
 class PlanarGraphGenerator:
 
@@ -83,7 +84,7 @@ class PlanarGraphGenerator:
         return gnx
 
 
-    def generate_planar_graph_for_profiling(self, node_number, variance):
+    def generate_planar_graph_with_statistics(self, node_number, variance, oracle = None):
         """This function generates a random planar graph using Boltzmann
         samplers with fixed number of nodes with the possibility to
         define a margin in which the number of nodes of the sampled
@@ -122,7 +123,9 @@ class PlanarGraphGenerator:
             lower_bound = node_number - (node_number * variance / 100)
             upper_bound = node_number + (node_number * variance / 100)
 
-        BoltzmannSamplerBase.oracle = EvaluationOracle.get_best_oracle_for_size(node_number, planar_graph_evals)
+        BoltzmannSamplerBase.oracle = oracle
+        if oracle is None:
+            BoltzmannSamplerBase.oracle = EvaluationOracle.get_best_oracle_for_size(node_number, planar_graph_evals)
 
         grammar = planar_graph_grammar()
         grammar.init()
@@ -153,6 +156,31 @@ class PlanarGraphGenerator:
         # Transform to networkx graph
         gnx = bij_connected_comps(planar_graph)
         return gnx, lower_bound_restriction_error_count, upper_bound_restricctio_error_count
+
+    def multiprocessing_target_function(self, queue, N, variance):
+        result = self.generate_planar_graph_with_statistics(N, variance)
+        queue.put(result)
+
+    def initial_multiprocess_implementation(self, N, variance):
+
+        number_of_cpus = mp.cpu_count()
+        processes_queue = mp.Queue()
+        processes = [mp.Process(
+            target=self.multiprocessing_target_function,
+            args=(processes_queue, N, variance, )) for i in range(number_of_cpus)]
+
+        for p in processes:
+            p.daemon = True
+            p.start()
+
+        # Wait for the first result
+        result = processes_queue.get()
+        # Terminate the other processes
+        for p in processes:
+            p.terminate()
+        # Retrun the result
+        return result
+
 
     def generate_planar_graph_fixed_nodes_edges(self, node_num, edge_num, node_var, edge_var):
         """This function samples random planar graphs using Boltzmann
