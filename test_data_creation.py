@@ -79,17 +79,23 @@ def ___sample_combinatorial_class(name, comb_class, symbolic_x, symbolic_y, size
     time_needed = end_sampling - start_sampling
     data = (node_num, edge_num, number_trials, time_needed)
 
-    ___save_graph_in_file(graph)
+    ___save_graph_in_file(graph, name)
     
     return data, graph
 
-def ___save_graph_in_file(graph):
-    file = open('nx_planar_graphs', 'a')
+def ___save_graph_in_file(graph, name):
+    n = 'nx_' + name + '_graphs'
+    file = open(n, 'a')
     file.write('\n')
     file.write('P')
     file.write('\n')
 
-    nx_graph =  bij_connected_comps(graph)   
+    if name is 'planar_graph':
+        nx_graph =  bij_connected_comps(graph)   
+    else:
+        und_der = graph.underive_all()
+        nx_graph = und_der.to_networkx_graph()
+
     for e in nx_graph.edges():
         file.write(str(e[0]))
         file.write(' ')
@@ -97,7 +103,8 @@ def ___save_graph_in_file(graph):
         file.write('\n')
     file.close()
     
-def ___write_to_file(file_name, data_list):
+def ___write_to_file(name, data_list):
+    file_name = 'nx_' + name + '_stats'
     file = open(file_name,'w')
     for data in data_list:
         for d in data:

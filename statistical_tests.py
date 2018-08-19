@@ -213,9 +213,9 @@ def ___draw_distribution_diagram(data):
     # Draw bars, position them in the center of the tick mark on the x-axis
     ax.bar(x_data, y_data, color = '#539caf', align = 'center')
     ax.axhline(mean, color='green', linewidth=2)
-    ax.set_ylabel("Number of graphs")
+    ax.set_ylabel("Number of isomorphic graphs")
     ax.set_xlabel("Graph type")
-    ax.set_title("Occurance of Different Graph Types")
+    ax.set_title("Distribution of Graphs")
     plt.show()
 
 def ___draw_most_frequent_graph(graphs):
@@ -249,13 +249,13 @@ def ___calculate_number_of_possible_graphs(size, object_class):
         sizes = [1, 25, 1227, 84672, 7635120, 850626360, 112876089480, 17381709797760]
     elif object_class is "two_connected":
         # Number of 2-connected planar graphs on n labeled nodes
-        sizes = [1, 10, 237, 10707, 774924, 78702536, 10273189176, 1631331753120]
+        sizes = [10, 237, 10707, 774924, 78702536, 10273189176, 1631331753120]
     elif object_class is "one_connected":
         # Number of connected labeled graphs with n nodes. 
-        sizes = [1, 1, 1, 4, 38, 728, 26704, 1866256, 251548592, 66296291072, 34496488594816]
+        sizes = [1, 1, 4, 38, 728, 26704, 1866256, 251548592, 66296291072, 34496488594816]
     elif object_class is "planar_graph":
         # Number of planar graphs on n labeled nodes.
-        sizes =[1, 1, 2, 8, 64, 1023, 32071, 1823707, 163947848, 20402420291, 3209997749284]
+        sizes =[1, 2, 8, 64, 1023, 32071, 1823707, 163947848, 20402420291, 3209997749284]
     else:
         raise Exception("No such object.")
     
@@ -457,13 +457,35 @@ def ___vertex_degrees_distributions(graphs):
     ax.set_title("Distribution of Vertex Degrees")
     plt.show()   
 
+def ___analyse_nx_graphs(name, file_graphs, file_data, sample_num, samples_size):
+    graph_list = ___graphs_list_to_networkx(file_graphs)
+    if name is 'planar_graph':
+        for g in graph_list:
+            while len(g.nodes()) < samples_size:
+                g.add_node(len(g.nodes())+1)
+    data = ___file_to_data_frame(file_data)
+    ___test_combinatorial_class(name, data, graph_list, samples_size)
+
+def ___sample_and_analyse_nx_graphs(name, file_data ,sample_num, samples_size):
+    graph_list = create_data(name, sample_num, samples_size)
+
+    if name is 'planar_graph':
+        nx_g = [bij_connected_comps(o) for o in graph_list]
+    else:
+        und_der = [o.underive_all() for o in graph_list]
+        nx_g = [u.to_networkx_graph() for u in und_der] 
+
+    data = ___file_to_data_frame(file_data)
+    ___test_combinatorial_class(name, data, nx_g, samples_size)
+
+
 # This class compares different kinds of graphs sampled by our code
 # and the ones sampled by Fusy's code.
 def main():
     argparser = argparse.ArgumentParser(description='Test stuff')
     argparser.add_argument('-d', dest='loglevel', action='store_const', const=logging.DEBUG, help='Print Debug info')
     argparser.add_argument('-a', '--all', action='store_true', help='Make statistical tests for all combinatorial classes')
-    argparser.add_argument('-b', '--binary-tree', action='store_true', help='Make statistical tests for binary trees')
+    argparser.add_argument('-b', '--binary_tree', action='store_true', help='Make statistical tests for binary trees')
     argparser.add_argument('-three', '--three_connectd', action='store_true', help='Make statistical tests for three connected graphs')
     argparser.add_argument('-two', '--two_connected', action='store_true', help='Make statistical tests for two connected graphs')
     argparser.add_argument('-one', '--one_connected', action='store_true', help='Make statistical tests for one connected graphs')
@@ -472,7 +494,7 @@ def main():
     argparser.add_argument('-fusy', '--analyse_fusy', action='store_true', help='Analyse data produced by Fusy`s implementation')
     argparser.add_argument('-analyse', '--analyse_nx', action='store_true', help='Only analyse already sampled nx graphs.')
     argparser.add_argument('-data', '--create_data', action='store_true', help='Sample graphs.')
-    argparser.add_argument('samples', type=int, help="Sample x number of time.")
+    argparser.add_argument('samples', type=int, help="Sample x graphs.")
     argparser.add_argument('size', type=int, help="Sample object of a certain size.")
 
     args = argparser.parse_args()
@@ -481,56 +503,73 @@ def main():
     sample_num = args.samples
     samples_size = args.size
 
-    if args.create_data:
-        graph_list = create_data('planar_graph', sample_num, samples_size)
+    if args.create_data and args.all:      
+        #create_data('planar_graph', sample_num, samples_size)
+        create_data('one_connected', sample_num, samples_size)
+        create_data('two_connected', sample_num, samples_size)
+        create_data('three_connected', sample_num, samples_size)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         
+        create_data('binary_tree', sample_num, samples_size)
+    elif args.analyse_nx and args.all:
+        # print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
+        # ___analyse_nx_graphs('planar_graph', 'nx_planar_graph_graphs', 'nx_planar_graph_stats', sample_num, samples_size)
 
-    if args.analyse_nx:
-        nx_g = ___graphs_list_to_networkx('nx_planar_graphs')
-        for g in nx_g:
-            while len(g.nodes()) < samples_size:
-                g.add_node(len(g.nodes())+1)
-        data = ___file_to_data_frame('nx_planar_stats')
-        ___test_combinatorial_class("planar_graph", data, nx_g, samples_size) 
-
-    if args.planar_graph or args.all:
-        print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
-        graph_list = create_data("planar_graph", sample_num, samples_size)
-        nx_g = [bij_connected_comps(o) for o in graph_list]
-        for g in nx_g:
-            while len(g.nodes()) < samples_size:
-                g.add_node(len(g.nodes())+1)
-        data = ___file_to_data_frame("planar_graph")
-        ___test_combinatorial_class("planar_graph", data, nx_g, samples_size)
-    if args.one_connected or args.all:
         print(COLOR_BLUE + "                  ONE-CONNECTED TEST" + COLOR_END)
-        graph_list = create_data("one_connected", sample_num, samples_size)
-        und_der = [o.underive_all() for o in graph_list]
-        nx_g = [u.to_networkx_graph() for u in und_der]
-        data = ___file_to_data_frame("one_connected")
-        ___test_combinatorial_class("one_connected", data, nx_g, samples_size)
-    if args.two_connected or args.all:
+        ___analyse_nx_graphs('one_connected', 'nx_one_connected_graphs', 'nx_one_connected_stats', sample_num, samples_size)
+
         print(COLOR_BLUE + "                  TWO-CONNECTED TEST" + COLOR_END)
-        graph_list = create_data("two_connected", sample_num, samples_size)
-        und_der = [o.underive_all() for o in graph_list]
-        nx_g = [u.to_networkx_graph() for u in und_der]
-        data = ___file_to_data_frame("two_connected")
-        ___test_combinatorial_class("two_connected", data, nx_g, samples_size)
-    if args.three_connectd or args.all:
+        ___analyse_nx_graphs('two_connected', 'nx_two_connected_graphs', 'nx_two_connected_stats', sample_num, samples_size)
+
         print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
-        graph_list = create_data("three_connected", sample_num, samples_size)
-        und_der = [o.underive_all() for o in graph_list]
-        nx_g = [u.to_networkx_graph() for u in und_der]
-        data = ___file_to_data_frame("three_connected")
-        ___test_combinatorial_class("three_connected", data, nx_g, samples_size)
-    if args.binary_tree or args.all:
-        graph_list = create_data("binary_tree", sample_num, samples_size)
-        und_der = [o.underive_all() for o in graph_list]
-        nx_g = [u.to_networkx_graph() for u in und_der] 
-        data = ___file_to_data_frame("binary_tree")     
-        ___test_combinatorial_class("binary_tree", data, nx_g, samples_size, btrees=graph_list)
-    if args.analyse_fusy:
+        ___analyse_nx_graphs('three_connected', 'nx_three_connected_graphs', 'nx_three_connected_stats', sample_num, samples_size)
+
+        print(COLOR_BLUE + "                  BINARY TREE TEST" + COLOR_END)
+        ___analyse_nx_graphs('binary_tree', 'nx_binary_tree_graphs', 'nx_binary_tree_stats', sample_num, samples_size) 
+
+    elif args.analyse_fusy:
         print(COLOR_BLUE + "                ANALYSE FUSYS DATA" + COLOR_END)
-        ___analyse_fusys_data(samples_size)
+        if args.one_connected:
+            ___analyse_fusys_data(samples_size, all=False, one=True)
+        elif args.two_connected:
+            ___analyse_fusys_data(samples_size, all=False, two=True)
+        elif args.three_connectd:
+            ___analyse_fusys_data(samples_size, all=False, three=True)
+        elif args.binary_tree:
+            ___analyse_fusys_data(samples_size, all=False, bin=True)
+        elif args.planar_graph:
+            ___analyse_fusys_data(samples_size, all=False, planar=True)
+        else:
+            ___analyse_fusys_data(samples_size)
+    else:
+        if args.planar_graph:
+            print(COLOR_BLUE + "                 PLANAR GRAPH TEST" + COLOR_END)
+            if args.create_data:
+                ___sample_and_analyse_nx_graphs('planar_graph', 'nx_planar_graph_stats', sample_num, samples_size)
+            else:
+                ___analyse_nx_graphs('planar_graph', 'nx_planar_graph_graphs', 'nx_planar_graph_stats', sample_num, samples_size)
+        if args.one_connected:
+            print(COLOR_BLUE + "                  ONE-CONNECTED TEST" + COLOR_END)
+            if args.create_data:
+                ___sample_and_analyse_nx_graphs('one_connected', 'nx_one_connected_stats', sample_num, samples_size)
+            else:
+                ___analyse_nx_graphs('one_connected', 'nx_one_connected_graphs', 'nx_one_connected_stats', sample_num, samples_size)
+        if args.two_connected:
+            print(COLOR_BLUE + "                  TWO-CONNECTED TEST" + COLOR_END)
+            if args.create_data:
+                ___sample_and_analyse_nx_graphs('two_connected', 'nx_two_connected_stats', sample_num, samples_size)
+            else:
+                ___analyse_nx_graphs('two_connected', 'nx_two_connected_graphs', 'nx_two_connected_stats', sample_num, samples_size)
+        if args.three_connectd:
+            print(COLOR_BLUE + "              THREE-CONNECTED TEST" + COLOR_END)
+            if args.create_data:
+                ___sample_and_analyse_nx_graphs('three_connected', 'nx_three_connected_stats', sample_num, samples_size)
+            else:
+                ___analyse_nx_graphs('three_connected', 'nx_three_connected_graphs', 'nx_three_connected_stats', sample_num, samples_size)
+        if args.binary_tree:
+            print(COLOR_BLUE + "                  BINARY TREE TEST" + COLOR_END)
+            if args.create_data:
+                ___sample_and_analyse_nx_graphs('binary_tree', 'nx_binary_tree_stats', sample_num, samples_size)
+            else:
+                ___analyse_nx_graphs('binary_tree', 'nx_binary_tree_graphs', 'nx_binary_tree_stats', sample_num, samples_size)   
 
 if __name__ == '__main__':
     main()
