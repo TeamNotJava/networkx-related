@@ -27,7 +27,7 @@ def __time_statistics_for_different_graph_sizes():
 
 
 def __time_statistics_for_different_graph_sizes_with_multiprocessing():
-    graphs_sizes = [1500, 1000, 2000, 3000, 5000, 10000, 15000, 20000]
+    graphs_sizes = [30000]
     variances = [50]
     how_many_graphs_per_size = 10
 

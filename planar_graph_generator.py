@@ -144,7 +144,8 @@ class PlanarGraphGenerator:
                 else:
                     upper_bound_restricctio_error_count += 1
 
-                print(lower_bound_restriction_error_count)
+                if lower_bound_restriction_error_count % 1000 == 0:
+                    print(lower_bound_restriction_error_count)
 
                 planar_graph = grammar.sample_iterative('G_dx_dx', 'x', 'y')
                 curr_node_number = planar_graph.l_size

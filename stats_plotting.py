@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 
 class TimeStatatisticRow(object):
     """ Represents the full rows in stats files. """
@@ -10,6 +11,7 @@ class TimeStatatisticRow(object):
         self.num_edges = num_edges
         self.time = time
         self.trials = trials
+
 
 def read_stat_data(file_path, has_oracle):
     stat_data = []
@@ -25,46 +27,49 @@ def read_stat_data(file_path, has_oracle):
                                    int(parts[3]), float(parts[4]), int(parts[5]) + int(parts[6])))
     return stat_data
 
-def plot_oracle_stat_data(data):
-    data_by_variance = {d.variance:[] for d in data}
-    for d in data:
-        data_by_variance[d.variance].append(d)
 
-    data_var_50 = data_by_variance[50]
-    data_var_50_x = [d.oracle_used for d in data_var_50]
-    data_var_50_y = [d.trials for d in data_var_50]
+def plot_comparable_data(data_1, data_2, label1, label2, xlabel=None, ylabel=None, title=None):
 
-    data_var_10 = data_by_variance[10]
-    data_var_10_x = [d.oracle_used for d in data_var_10]
-    data_var_10_y = [d.trials for d in data_var_10]
+    data_1_x = [d.target_nodes for d in data_1]
+    data_1_y = [d.time for d in data_1]
+    data_2_x = [d.target_nodes for d in data_2]
+    data_2_y = [d.time for d in data_2]
 
+    plt.plot(data_1_x, data_1_y, 'ro', markersize = 4, label=label1)
+    plt.plot(data_2_x, data_2_y, 'b+', markersize = 4, label=label2)
 
-    plt.plot(data_var_10_x, data_var_10_y, 'b+', markersize = 12, label='Variance=10')
-    plt.plot(data_var_50_x, data_var_50_y, 'ro', markersize = 6, label='Variance=50')
-
-    plt.axis([-50, 10500, 1, 200000])
-    plt.xlabel('Oracles used')
-    plt.ylabel('#trials')
-    plt.title('Oracles effect over the number of trials in sampling 100 nodes graphs')
+    plt.axis([-100, 30500, 1, 3000])
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
     plt.legend()
     plt.show()
 
-def plot_stats_for_different_graph_sizes(data_50, data_20):
 
-    data_var_50_x = [d.target_nodes for d in data_50]
-    data_var_50_y = [d.time for d in data_50]
-    data_var_20_x = [d.target_nodes for d in data_20]
-    data_var_20_y = [d.time for d in data_20]
+def plot_regression_lines_on_comparable_data(data_1, data_2, label1, label2, xlabel=None, ylabel=None, title=None):
 
-    plt.plot(data_var_50_x, data_var_50_y, 'ro', markersize = 4, label='Variance=50')
-    plt.plot(data_var_20_x, data_var_20_y, 'b+', markersize = 4, label='Variance=20')
+    data_1_x = [d.target_nodes for d in data_1]
+    data_1_y = [d.time for d in data_1]
+    data_2_x = [d.target_nodes for d in data_2]
+    data_2_y = [d.time for d in data_2]
 
-    plt.axis([-100, 20500, 1, 10000])
-    plt.xlabel('#target nodes')
-    plt.ylabel('time(s)')
-    plt.title('Number of target nodes effect over needed time.')
+    fit_1 = np.polyfit(data_1_x, data_1_y, 1)
+    fit_fn_1 = np.poly1d(fit_1)
+
+    fit_2 = np.polyfit(data_2_x, data_2_y, 1)
+    fit_fn_2 = np.poly1d(fit_2)
+
+    x = [i for i in range(30000)]
+    plt.plot(x, fit_fn_1(x), '--r', label=label1)
+    plt.plot(x, fit_fn_2(x), '--b', label=label2)
+    plt.xlim(0, 30000)
+    plt.ylim(0, 2000)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
     plt.legend()
     plt.show()
+
 
 def plot_edges_nodes_ratio(data):
     more_than_500_nodes = []
@@ -78,11 +83,10 @@ def plot_edges_nodes_ratio(data):
 
     plt.plot(x_axis_data, y_axis_data, 'ro', markersize = 1)
 
-    plt.axis([-100, 20500, 2.0, 2.25])
+    plt.axis([-100, 30500, 2.0, 2.25])
     plt.xlabel('#nodes')
     plt.ylabel('ratio')
-    plt.title('Edges vs. nodes ratio in grapsh bigger than 500.')
-    #plt.legend()
+    plt.title('Edges vs. nodes ratio in graphs bigger than 500.')
     plt.show()
 
 
@@ -91,6 +95,26 @@ def plot_edges_nodes_ratio(data):
 
 sampling_data_50 = read_stat_data('time_statistics_50.txt', False)
 sampling_data_20 = read_stat_data('time_statistics_20.txt', False)
-#plot_stats_for_different_graph_sizes(sampling_data_50, sampling_data_20)
+sampling_data_parallel_50 = read_stat_data('time_statistics_parallel_impl_50.txt', False)
 
-plot_edges_nodes_ratio(sampling_data_20 + sampling_data_50)
+plot_edges_nodes_ratio(sampling_data_20 + sampling_data_50 + sampling_data_parallel_50)
+
+
+plot_comparable_data(
+    sampling_data_50,
+    sampling_data_parallel_50,
+    'Serial sampling',
+    'Sampling in parallel',
+    '#target nodes',
+    'time(s)',
+    'Serial vs. parallel sampling.')
+
+
+plot_regression_lines_on_comparable_data(
+    sampling_data_50,
+    sampling_data_parallel_50,
+    'Serial sampling',
+    'Sampling in parallel',
+    '#target nodes',
+    'time(s)',
+    'Serial vs. parallel sampling.')
