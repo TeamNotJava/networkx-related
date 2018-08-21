@@ -2,7 +2,7 @@ import networkx as nx
 from collections import defaultdict
 
 
-__all__ = ["combinatorial_embedding_to_pos"]
+__all__ = ["combinatorial_embedding_to_pos", "triangulate_embedding"]
 
 
 def combinatorial_embedding_to_pos(embedding, fully_triangulate=False):
