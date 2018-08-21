@@ -16,6 +16,7 @@ import warnings
 
 from framework.class_builder import DefaultBuilder, DummyBuilder
 from framework.generic_samplers import *
+from framework.utils import *
 import multiprocessing as mp
 import threading as threading
 from planar_graph_sampler.grammar.grammar_utils import Counter
@@ -361,7 +362,7 @@ class DecompositionGrammar(object):
             sampler = self[alias]
         except KeyError:
             DecompositionGrammar._missing_rule_error(alias)
-        return sampler.sample(x, y)
+        return OurPool.instance().pool.submit(sampler.sample, x, y)
 
     def dummy_sampling_mode(self, delete_transformations=False):
         """Changes the state of the grammar to the dummy sampling mode.
@@ -389,7 +390,7 @@ class DecompositionGrammar(object):
         The tree may be arbitrarily large and is expanded on the fly.
         """
 
-        return self._IterativeSampler(self[alias]).sample(x, y)
+        return self._IterativeSampler(self[alias]).sample(x, y=pool)
 
     class _IterativeSampler(object):
         """
@@ -418,7 +419,41 @@ class DecompositionGrammar(object):
                 # self.l_size -= obj.l_size
                 return obj
 
-        def sample(self, x, y, max_size=1000000, abs_tolerance=0):
+        class _Result(object):
+            def __init__(self, value=None):
+                self._value = value
+                self._async_result = None
+
+            @property
+            def value(self):
+                if self._async_result is None:
+                    print("accessing value: ".format(self._value))
+                    return self._value
+                else:
+                    if self._async_result.successful():
+                        return self._value
+                    else:
+                        self._async_result.wait()
+                        if self._async_result.successful():
+                            print("accessing value after wait: ".format(self._async_result.get()))
+                            return self._async_result.get()
+                        else:
+                            raise TimeoutError()
+                    
+                
+
+            def setValue(self, value):
+                self._value = value
+            
+            @property
+            def async_result(self):
+                return self._async_result
+
+            @async_result.setter
+            def async_result(self, result):
+                self._async_result = result
+
+        def sample(self, x, y, max_size=1000000, abs_tolerance=0, pool=None):
             """Invokes the iterative sampler for the given symbolic parameters.
 
             Parameters
@@ -437,8 +472,6 @@ class DecompositionGrammar(object):
             substitution_stack = []
             # The previously visited node in the decomposition tree.
             prev = None
-            if mp.current_process().name is 'MainProcess':
-                pool = mp.Pool(processes=None)
             while stack:
 
                 # Get top of stack.
@@ -457,9 +490,16 @@ class DecompositionGrammar(object):
                     else:
                         # Both children have been processed.
                         stack.pop()
-                        arg_rhs = result_stack.pop()
-                        arg_lhs = result_stack.pop()
-                        result_stack.append(curr.builder.product(arg_lhs, arg_rhs))
+                        arg_rhs = result_stack.pop().value
+                        arg_lhs = result_stack.pop().value
+                        # curr.builder.product(arg_lhs, arg_rhs)
+                        print(arg_lhs)
+                        print(arg_rhs)
+                        placeholder = self._Result()
+                        placeholder.async_result = pool.apply_async(
+                            curr.builder.product, args=(arg_lhs, arg_rhs), callback=lambda x: placeholder.setValue(x))
+                        
+                        result_stack.append(placeholder)
 
                 elif isinstance(curr, SumSampler):
                     if no_prev_or_curr_in_prev_children:
@@ -479,7 +519,8 @@ class DecompositionGrammar(object):
                 elif isinstance(curr, AtomSampler):
                     # Atom samplers are the leaves in the decomposition tree.
                     stack.pop()
-                    result_stack.append(curr.sample(x, y))
+                    placeholder = self._Result(curr.sample(x, y))
+                    result_stack.append(placeholder)
 
                 elif isinstance(curr, SetSampler):
                     # We use recursion here for now.
@@ -488,26 +529,32 @@ class DecompositionGrammar(object):
                     k = curr.draw_k(x, y)
                     sampler = self.__class__(set_elems_sampler)
                     set_elems = []   
-                    args = [(sampler, x, y, max_size - result_stack.l_size, abs_tolerance) for i in range(k)]
-                    set_elems = pool.starmap(fork_entry_set, args)
+                    # args = [(sampler, x, y, max_size - result_stack.l_size, abs_tolerance) for i in range(k)]
+                    # set_elems = pool.starmap(fork_entry_set, args)
                     # else:
-                    #     for _ in range(k):
-                    #         obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
-                    #         set_elems.append(obj)
-                    result_stack.append(curr.builder.set(set_elems))
+                    for _ in range(k):
+                        obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
+                        set_elems.append(obj)
+
+                    placeholder = self._Result()
+                    placeholder.async_result = pool.apply_async(
+                        curr.builder.set, args=(set_elems,), callback=lambda x: placeholder.setValue(x))
+                    result_stack.append(placeholder)
 
                 elif isinstance(curr, LDerFromUDerSampler):
                     if no_prev_or_curr_in_prev_children:
                         stack.append(curr.get_children().pop())
                     else:
-                        obj_to_check = result_stack.pop()
+                        obj_to_check = result_stack.pop().value
 
                         def is_acceptable(gamma):
                             return bern((1 / curr._alpha_l_u) * (gamma.l_size / (gamma.u_size + 1)))
 
                         if is_acceptable(obj_to_check):
                             stack.pop()
-                            result_stack.append(LDerivedClass(obj_to_check.base_class_object))
+                            placeholder = self._Result(LDerivedClass(obj_to_check.base_class_object))
+                            result_stack.append(placeholder)
+                            print([i.value for i in result_stack])
                         else:
                             stack.append(curr.get_children().pop())
 
@@ -521,23 +568,26 @@ class DecompositionGrammar(object):
                     else:
                         stack.pop()
                         # Get the object in which the l-atoms have to be replaced from the result stack.
-                        core_object = result_stack.pop()
+                        core_object = result_stack.pop().value
                         # Recover the old y from the stack.
                         x = substitution_stack.pop()
                         # Replace the atoms and push result.
                         sampler = self.__class__(curr.rhs)
                         res = core_object.replace_l_atoms(sampler, x, y)  # Recursion for now.
-                        result_stack.append(res)
+                        placeholder = self._Result(res)
+                        result_stack.append(placeholder)
+                        print([i.value for i in result_stack])
 
                 elif isinstance(curr, RejectionSampler):
                     if no_prev_or_curr_in_prev_children:
                         stack.append(curr.get_children().pop())
                     else:
-                        obj_to_check = result_stack.pop()
+                        obj_to_check = result_stack.pop().value
                         is_acceptable = curr.transformation  # This is kind of weird ...
                         if is_acceptable(obj_to_check):
                             stack.pop()
-                            result_stack.append(obj_to_check)
+                            placeholder = self._Result(obj_to_check)
+                            result_stack.append(placeholder)
                         else:
                             stack.append(curr.get_children().pop())
 
@@ -551,19 +601,20 @@ class DecompositionGrammar(object):
                     else:
                         stack.pop()
                         # Get the object in which the u-atoms have to be replaced from the result stack.
-                        core_object = result_stack.pop()
+                        core_object = result_stack.pop().value
                         # Recover the old y from the stack.
                         y = substitution_stack.pop()
                         # Replace the atoms and push result.
                         sampler = self.__class__(curr.rhs)
                         res = core_object.replace_u_atoms(sampler, x, y)  # Recursion for now.
-                        result_stack.append(res)
+                        placeholder = self._Result(res)
+                        result_stack.append(placeholder)
 
                 elif isinstance(curr, UDerFromLDerSampler):
                     if no_prev_or_curr_in_prev_children:
                         stack.append(curr.get_children().pop())
                     else:
-                        obj_to_check = result_stack.pop()
+                        obj_to_check = result_stack.pop().value
 
                         # TODO this code is duplicated in the recursive sampler
                         def is_acceptable(gamma):
@@ -571,7 +622,8 @@ class DecompositionGrammar(object):
 
                         if is_acceptable(obj_to_check):
                             stack.pop()
-                            result_stack.append(UDerivedClass(obj_to_check.base_class_object))
+                            placeholder = self._Result(UDerivedClass(obj_to_check.base_class_object))
+                            result_stack.append(placeholder)
                         else:
                             stack.append(curr.get_children().pop())
 
@@ -581,12 +633,14 @@ class DecompositionGrammar(object):
                         stack.append(curr.get_children().pop())
                     else:
                         stack.pop()
-                        to_transform = result_stack.pop()
+                        to_transform = result_stack.pop().value
                         # A transformation may not be given.
                         if curr.transformation is not None:
-                            result_stack.append(curr.transformation(to_transform))
+                            placeholder = self._Result(curr.transformation(to_transform))
+                            result_stack.append(placeholder)
                         else:
-                            result_stack.append(to_transform)
+                            placeholder = self._Result(to_transform)
+                            result_stack.append(placeholder)
 
                 prev = curr
 

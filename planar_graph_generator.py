@@ -17,10 +17,14 @@ from planar_graph_sampler.grammar.planar_graph_decomposition import  planar_grap
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
 from framework.generic_classes import SetClass
+from framework.utils import OurPool
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals
 import networkx as nx
 import datetime
 import multiprocessing as mp
+from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor
+
+from IPython import embed
 
 class PlanarGraphGenerator:
 
@@ -70,18 +74,24 @@ class PlanarGraphGenerator:
         grammar.init()
         grammar.precompute_evals('G_dx_dx', 'x', 'y')
         curr_node_number = 0
-        
-        planar_graph = grammar.sample_iterative('G_dx_dx', 'x', 'y')
 
-        if variance != 100:
-            curr_node_number = planar_graph.l_size
-            while(curr_node_number < lower_bound or curr_node_number > upper_bound):
-                planar_graph = grammar.sample_iterative('G_dx_dx', 'x', 'y')
-                curr_node_number = planar_graph.l_size
+        if mp.current_process().name is 'MainProcess':
+            with ProcessPoolExecutor() as pool:
+                OurPool.instance().pool = pool
 
-        # Transform to networkx graph
-        gnx = bij_connected_comps(planar_graph)
-        return gnx
+                planar_graph = grammar.sample('G_dx_dx', 'x', 'y').result()
+                print(planar_graph)
+                embed()
+
+                if variance != 100:
+                    curr_node_number = planar_graph.l_size
+                    while(curr_node_number < lower_bound or curr_node_number > upper_bound):
+                        planar_graph = grammar.sample('G_dx_dx', 'x', 'y').result()
+                        curr_node_number = planar_graph.l_size
+
+                # Transform to networkx graph
+                gnx = bij_connected_comps(planar_graph)
+                return gnx
 
 
     def generate_planar_graph_with_statistics(self, node_number, variance, oracle = None):
@@ -131,8 +141,10 @@ class PlanarGraphGenerator:
         grammar.init()
         grammar.precompute_evals('G_dx_dx', 'x', 'y')
         curr_node_number = 0
-
-        planar_graph = grammar.sample_iterative('G_dx_dx', 'x', 'y')
+        pool = None
+        if mp.current_process().name is 'MainProcess':
+            pool = mp.Pool(processes=None)
+        planar_graph = grammar.sample_iterative('G_dx_dx', 'x', 'y', pool=pool).value
 
         lower_bound_restriction_error_count = 0
         upper_bound_restricctio_error_count = 0

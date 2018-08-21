@@ -75,7 +75,7 @@ def __time_statistics_for_graph_size_100_and_different_oracles():
 
 def __generate_planar_graph_profiling():
     generator = PlanarGraphGenerator()
-    gnx, lower_bound_errors, upper_bound_errors = generator.generate_planar_graph_with_statistics(10000, 50)
+    gnx, lower_bound_errors, upper_bound_errors = generator.generate_planar_graph(1000, 50)
     print(nx.info(gnx))
 
 
@@ -84,8 +84,9 @@ def __generate_planar_graph_profiling():
 
 
 if __name__ == '__main__':
-    #cProfile.run('__generate_planar_graph_profiling()')
-    __time_statistics_for_different_graph_sizes()
+    # cProfile.run('__generate_planar_graph_profiling()')
+    __generate_planar_graph_profiling()
+    # __time_statistics_for_different_graph_sizes()
     #__time_statistics_for_graph_size_100_and_different_oracles()
     # __time_statistics_for_different_graph_sizes_with_multiprocessing()
 

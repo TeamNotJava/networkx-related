@@ -15,6 +15,7 @@
 import random as rnd
 from math import exp, pow, factorial
 import itertools
+import threading
 
 
 def nth(iterable, n, default=None):
@@ -95,3 +96,26 @@ def pois(d, l):
             return k
         k += 1
         p *= l / k
+
+
+
+class SingletonMixin(object):
+	__singleton_lock = threading.Lock()
+	__singleton_instance = None
+
+	@classmethod
+	def instance(cls):
+		if not cls.__singleton_instance:
+			with cls.__singleton_lock:
+				if not cls.__singleton_instance:
+					cls.__singleton_instance = cls()
+		return cls.__singleton_instance
+
+class OurPool(SingletonMixin):
+
+    @property
+    def pool(self):
+        return self._pool
+    @pool.setter
+    def pool(self, pool):
+        self._pool = pool

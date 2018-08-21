@@ -433,7 +433,10 @@ class ProdSampler(BinarySampler):
 
     def sample(self, x, y):
         # todo
-        return self._builder.product(self.lhs.sample(x, y), self.rhs.sample(x, y))
+        print("Creating 2 more Jobs")
+        lhs = OurPool.instance().pool.submit(self.lhs.sample, x, y)
+        rhs = OurPool.instance().pool.submit(self.rhs.sample, x, y)
+        return self._builder.product(lhs.result(), rhs.result())
 
     @return_precomp
     def eval(self, x, y):
@@ -556,7 +559,8 @@ class SetSampler(UnarySampler):
     def sample(self, x, y):
         # todo
         k = self.draw_k(x, y)
-        return self._builder.set([self._sampler.sample(x, y) for _ in range(k)])
+        print("Create {} more jobs".format(k))
+        return self._builder.set([OurPool.instance().pool.submit(self._sampler.sample, x, y).result() for _ in range(k)])
 
     @return_precomp
     def eval(self, x, y):
