@@ -84,7 +84,7 @@ class PlanarGraphGenerator:
         return gnx
 
 
-    def generate_planar_graph_with_statistics(self, node_number, variance, oracle = None):
+    def generate_planar_graph_with_statistics(self, node_number, variance, id, oracle = None):
         """This function generates a random planar graph using Boltzmann
         samplers with fixed number of nodes with the possibility to
         define a margin in which the number of nodes of the sampled
@@ -145,7 +145,7 @@ class PlanarGraphGenerator:
                     upper_bound_restricctio_error_count += 1
 
                 if lower_bound_restriction_error_count % 1000 == 0:
-                    print(lower_bound_restriction_error_count)
+                    print(str(id) + '     ' + str(lower_bound_restriction_error_count))
 
                 planar_graph = grammar.sample_iterative('G_dx_dx', 'x', 'y')
                 curr_node_number = planar_graph.l_size
@@ -158,17 +158,17 @@ class PlanarGraphGenerator:
         gnx = bij_connected_comps(planar_graph)
         return gnx, lower_bound_restriction_error_count, upper_bound_restricctio_error_count
 
-    def multiprocessing_target_function(self, queue, N, variance):
-        result = self.generate_planar_graph_with_statistics(N, variance)
+    def multiprocessing_target_function(self, queue, N, variance, id):
+        result = self.generate_planar_graph_with_statistics(N, variance, id)
         queue.put(result)
 
-    def initial_multiprocess_implementation(self, N, variance):
+    def initial_multiprocess_implementation(self, N, variance, id):
 
         number_of_cpus = mp.cpu_count()
         processes_queue = mp.Queue()
         processes = [mp.Process(
             target=self.multiprocessing_target_function,
-            args=(processes_queue, N, variance, )) for i in range(number_of_cpus)]
+            args=(processes_queue, N, variance, id, )) for i in range(number_of_cpus)]
 
         for p in processes:
             p.daemon = True

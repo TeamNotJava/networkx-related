@@ -5,11 +5,11 @@ import time
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals
 
 def __time_statistics_for_different_graph_sizes():
-    graphs_sizes = [30000, 40000, 50000, 75000, 100000]
+    graphs_sizes = [2000, 3000, 4000, 5000, 7500, 10000,]
     variances = [50]
     how_many_graphs_per_size = 10
 
-    with open(("time_statistics_%s.txt" % variances[0]), "a") as stats_file:
+    with open(("time_statistics_with_sc_%s.txt" % variances[0]), "a") as stats_file:
         for N in graphs_sizes:
             for variance in variances:
                 for i in range(how_many_graphs_per_size):
@@ -27,7 +27,7 @@ def __time_statistics_for_different_graph_sizes():
 
 
 def __time_statistics_for_different_graph_sizes_with_multiprocessing():
-    graphs_sizes = [30000]
+    graphs_sizes = [1000]
     variances = [50]
     how_many_graphs_per_size = 10
 
@@ -37,8 +37,9 @@ def __time_statistics_for_different_graph_sizes_with_multiprocessing():
                 for i in range(how_many_graphs_per_size):
                     start = time.time()
 
+                    id = str(i) + "  " + str(N)
                     generator = PlanarGraphGenerator()
-                    gnx, lower_bound_errors, upper_bound_errors = generator.initial_multiprocess_implementation(N, variance)
+                    gnx, lower_bound_errors, upper_bound_errors = generator.initial_multiprocess_implementation(N, variance, id)
 
                     end = time.time()
                     time_in_seconds = end - start
@@ -77,9 +78,6 @@ def __generate_planar_graph_profiling():
     generator = PlanarGraphGenerator()
     gnx, lower_bound_errors, upper_bound_errors = generator.generate_planar_graph_with_statistics(10000, 50)
     print(nx.info(gnx))
-
-
-
 
 
 
