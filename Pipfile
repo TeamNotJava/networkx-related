@@ -5,6 +5,8 @@ name = "pypi"
 
 [packages]
 "9d974be" = {path = "./networkx"}
+numpy = "*"
+decorator = ">=4.1.0"
 
 [dev-packages]
 
