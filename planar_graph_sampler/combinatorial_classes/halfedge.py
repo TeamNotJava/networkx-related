@@ -228,9 +228,9 @@ class ClosureHalfEdge(HalfEdge):
     Half-edges with additional attributes needed in the closure.
     """
 
-    __slots__ = 'number_proximate_inner_edges', 'color', 'is_hexagonal', 'added_by_comp_clsr'
+    __slots__ = 'number_proximate_inner_edges', 'color', 'is_hexagonal', 'added_by_comp_clsr', 'even'
 
-    def __init__(self, self_consistent=False):
+    def __init__(self, self_consistent=False, even=1):
         super(ClosureHalfEdge, self).__init__(self_consistent)
         # Number of inner edges following after the stem.
         self.number_proximate_inner_edges = 0
@@ -240,6 +240,7 @@ class ClosureHalfEdge(HalfEdge):
         self.is_hexagonal = False
         # Indicates if the half-edge is an edge added by the complete closure.
         self.added_by_comp_clsr = False
+        self.even = even
 
     def __repr__(self):
         """Represents a half-edge as a tuple (index, node_nr, opposite, next, prior, color, number_proximate)"""

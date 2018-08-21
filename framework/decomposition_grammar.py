@@ -16,6 +16,9 @@ import warnings
 
 from framework.class_builder import DefaultBuilder, DummyBuilder
 from framework.generic_samplers import *
+import multiprocessing as mp
+import threading as threading
+from planar_graph_sampler.grammar.grammar_utils import Counter
 
 
 class AliasSampler(BoltzmannSamplerBase):
@@ -434,6 +437,8 @@ class DecompositionGrammar(object):
             substitution_stack = []
             # The previously visited node in the decomposition tree.
             prev = None
+            if mp.current_process().name is 'MainProcess':
+                pool = mp.Pool(processes=None)
             while stack:
 
                 # Get top of stack.
@@ -482,10 +487,13 @@ class DecompositionGrammar(object):
                     set_elems_sampler = curr.get_children().pop()
                     k = curr.draw_k(x, y)
                     sampler = self.__class__(set_elems_sampler)
-                    set_elems = []
-                    for _ in range(k):
-                        obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
-                        set_elems.append(obj)
+                    set_elems = []   
+                    args = [(sampler, x, y, max_size - result_stack.l_size, abs_tolerance) for i in range(k)]
+                    set_elems = pool.starmap(fork_entry_set, args)
+                    # else:
+                    #     for _ in range(k):
+                    #         obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
+                    #         set_elems.append(obj)
                     result_stack.append(curr.builder.set(set_elems))
 
                 elif isinstance(curr, LDerFromUDerSampler):
@@ -743,3 +751,10 @@ class DecompositionGrammar(object):
                     self._seen_alias_samplers.add(sampler.sampled_class)
                     # Recurse further down.
                     return True
+
+
+
+def fork_entry_set(sampler, x, y, size, epsilon):
+    print("Starting fork with {}({},{})".format(sampler, x, y))
+    sampler_result = sampler.sample(x, y, size, epsilon)
+    return sampler_result

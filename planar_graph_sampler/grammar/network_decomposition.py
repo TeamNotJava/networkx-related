@@ -12,11 +12,13 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+from uuid import uuid4
+
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.generic_samplers import BoltzmannSamplerBase
-from planar_graph_sampler.grammar.grammar_utils import Counter
+
 
 from planar_graph_sampler.bijections.networks import merge_networks_in_parallel, merge_networks_in_series, \
     substitute_edge_by_network
@@ -29,16 +31,16 @@ class NetworkBuilder(DefaultBuilder):
     """Builds u-atoms of networks."""
 
     def __init__(self):
-        self._counter = Counter()
+        self._counter = None
 
     def u_atom(self):
         """Constructs the trivial link network consisting of the poles and an edge between them."""
         # Create the zero-pole of the network.
         root_half_edge = HalfEdge(self_consistent=True)
-        root_half_edge.node_nr = next(self._counter)
+        root_half_edge.node_nr = uuid4()
         # Creates the inf-pole.
         root_half_edge_opposite = HalfEdge(self_consistent=True)
-        root_half_edge_opposite.node_nr = next(self._counter)
+        root_half_edge_opposite.node_nr = uuid4()
         # Link the poles.
         root_half_edge.opposite = root_half_edge_opposite
         root_half_edge_opposite.opposite = root_half_edge

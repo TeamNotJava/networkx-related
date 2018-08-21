@@ -12,13 +12,12 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+from uuid import uuid4
 
 from planar_graph_sampler.combinatorial_classes.halfedge import ClosureHalfEdge
 from planar_graph_sampler.combinatorial_classes.dissection import \
     IrreducibleDissection
-from planar_graph_sampler.grammar.grammar_utils import Counter
 
-counter = Counter()
 
 
 class Closure:
@@ -82,7 +81,7 @@ class Closure:
         starting_half_edge = self._bicolored_partial_closure(init_half_edge)
 
         # Construct hexagon
-        hexagon = [ClosureHalfEdge() for _ in range(12)]
+        hexagon = [ClosureHalfEdge(even = 0 if (i%4) in [0,1] else 1) for i in range(12)]
         hexagon_start_half_edge = self._construct_hexagon(hexagon,
                                                           starting_half_edge)
 
@@ -178,24 +177,19 @@ class Closure:
         # Set node number.
         current_half_edge = hexagon_half_edges[11]
         while True:
-            node_num = next(counter)
+            node_num = uuid4()
             current_half_edge.node_nr = node_num
             current_half_edge.next.node_nr = node_num
             current_half_edge = current_half_edge.next.opposite
             if current_half_edge is hexagon_half_edges[11]:
                 break
 
-        if hexagon_half_edges[0].node_nr % 2 == 0:
-            # Then all even nodes have to have the inverse color
-            even_color = inv_color
-            odd_color = color
-        else:
-            even_color = color
-            odd_color = inv_color
 
         # Set color
+        even_color = color
+        odd_color = inv_color
         for i in range(12):
-            if hexagon_half_edges[i].node_nr % 2 == 0:
+            if hexagon_half_edges[i].even == 1:
                 hexagon_half_edges[i].color = even_color
             else:
                 hexagon_half_edges[i].color = odd_color

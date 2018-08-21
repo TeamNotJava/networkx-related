@@ -13,6 +13,8 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 from framework.generic_classes import UDerivedClass, LDerivedClass
+import multiprocessing as mp
+from multiprocessing.managers import BaseProxy
 
 
 def underive(obj):
@@ -48,12 +50,11 @@ def singleton(class_):
 
 
 @singleton
-class Counter(object):
+class Counter(BaseProxy):
     """
     This singleton Counter creates unique labels for combinatorial classes.
     This way we do not need to relabel the sampled elements for the product of two classes.
     """
-
     def __init__(self):
         self.count = 0
 
@@ -64,3 +65,4 @@ class Counter(object):
         count = self.count
         self.count += 1
         return count
+

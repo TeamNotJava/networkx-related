@@ -18,7 +18,7 @@ import networkx as nx
 
 from framework.generic_classes import CombinatorialClass
 
-from planar_graph_sampler.grammar.grammar_utils import Counter
+from uuid import uuid4
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 
 
@@ -180,12 +180,12 @@ class HalfEdgeGraph(CombinatorialClass):
             In this case, a new node is created and connected to the unpaired half-edge.
         """
         # Get the counter in case we have to create nodes for unpaired half-edges.
-        counter = Counter()
+
         # If this graph consists of only one unpaired half-edge we interpret this as the one-node graph.
         if self.half_edge.is_trivial:
             G = nx.Graph()
             if self.half_edge.node_nr is None:
-                self.half_edge.node_nr = next(counter)
+                self.half_edge.node_nr = uuid4()
             G.add_node(self.half_edge.node_nr)
             return G
         # Get all edges (one half-edge per edge).
@@ -196,7 +196,7 @@ class HalfEdgeGraph(CombinatorialClass):
             if half_edge.opposite is not None:
                 G.add_edge(half_edge.node_nr, half_edge.opposite.node_nr)
             else:
-                G.add_edge(half_edge.node_nr, next(counter))
+                G.add_edge(half_edge.node_nr, uuid4())
         # G = nx.relabel.convert_node_labels_to_integers(G)
         return G
 

@@ -5,7 +5,7 @@ import time
 from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals
 
 def __time_statistics_for_different_graph_sizes():
-    graphs_sizes = [30000, 40000, 50000, 75000, 100000]
+    graphs_sizes = [1000, 10000, 20000]
     variances = [50]
     how_many_graphs_per_size = 10
 
@@ -85,7 +85,7 @@ def __generate_planar_graph_profiling():
 
 if __name__ == '__main__':
     #cProfile.run('__generate_planar_graph_profiling()')
-    #__time_statistics_for_different_graph_sizes()
+    __time_statistics_for_different_graph_sizes()
     #__time_statistics_for_graph_size_100_and_different_oracles()
-    __time_statistics_for_different_graph_sizes_with_multiprocessing()
+    # __time_statistics_for_different_graph_sizes_with_multiprocessing()
 

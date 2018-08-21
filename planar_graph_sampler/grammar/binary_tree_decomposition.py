@@ -23,7 +23,7 @@ from framework.utils import bern
 from planar_graph_sampler.grammar.grammar_utils import underive, Counter
 from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.combinatorial_classes.binary_tree import Leaf
-
+from uuid import uuid4
 
 class WhiteRootedBinaryTreeBuilder(DefaultBuilder):
     """
@@ -31,7 +31,7 @@ class WhiteRootedBinaryTreeBuilder(DefaultBuilder):
     """
 
     def __init__(self):
-        self._counter = Counter()
+        self._counter = None
 
     def u_atom(self):
         # A u-atom is a leaf.
@@ -40,7 +40,7 @@ class WhiteRootedBinaryTreeBuilder(DefaultBuilder):
     def product(self, lhs, rhs):
         # Builds white-rooted tree from decomposition of the form (leaf|black)(leaf|black)
         res = BinaryTree('white')
-        res.set_root_node_nr(next(self._counter))
+        res.set_root_node_nr(uuid4())
         res.add_left_child(lhs)
         res.add_right_child(rhs)
         return res
@@ -52,12 +52,12 @@ class BlackRootedBinaryTreeBuilder(DefaultBuilder):
     """
 
     def __init__(self):
-        self._counter = Counter()
+        self._counter = None
 
     def l_atom(self):
         # An l-atom is a black rooted tree without children
         res = BinaryTree('black')
-        res.set_root_node_nr(next(self._counter))
+        res.set_root_node_nr(uuid4())
         return res
 
     def u_atom(self):

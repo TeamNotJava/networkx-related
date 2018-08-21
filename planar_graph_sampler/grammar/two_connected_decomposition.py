@@ -13,13 +13,14 @@
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
 from __future__ import division
+from uuid import uuid4
 
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.generic_samplers import BoltzmannSamplerBase
 
-from planar_graph_sampler.grammar.grammar_utils import Counter, divide_by_2, to_u_derived_class
+from planar_graph_sampler.grammar.grammar_utils import divide_by_2, to_u_derived_class
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
 from planar_graph_sampler.combinatorial_classes.two_connected_graph import EdgeRootedTwoConnectedPlanarGraph, \
     TwoConnectedPlanarGraph
@@ -30,13 +31,13 @@ class ZeroAtomGraphBuilder(DefaultBuilder):
     """Builds zero atoms of the class G_2_arrow (= link graphs)."""
 
     def __init__(self):
-        self._counter = Counter()
+        self._counter = None
 
     def zero_atom(self):
         root_half_edge = HalfEdge(self_consistent=True)
-        root_half_edge.node_nr = next(self._counter)
+        root_half_edge.node_nr = uuid4()
         root_half_edge_opposite = HalfEdge(self_consistent=True)
-        root_half_edge_opposite.node_nr = next(self._counter)
+        root_half_edge_opposite.node_nr = uuid4()
         root_half_edge.opposite = root_half_edge_opposite
         root_half_edge_opposite.opposite = root_half_edge
         return EdgeRootedTwoConnectedPlanarGraph(root_half_edge)
