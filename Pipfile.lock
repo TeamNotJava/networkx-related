@@ -1,0 +1,24 @@
+{
+    "_meta": {
+        "hash": {
+            "sha256": "9c06845286e70621d0ca52699235730d80889ad21d8f45e12ebbc7cfd5711d01"
+        },
+        "pipfile-spec": 6,
+        "requires": {
+            "python_version": "3.6"
+        },
+        "sources": [
+            {
+                "name": "pypi",
+                "url": "https://pypi.python.org/simple",
+                "verify_ssl": true
+            }
+        ]
+    },
+    "default": {
+        "9d974be": {
+            "path": "./networkx"
+        }
+    },
+    "develop": {}
+}
