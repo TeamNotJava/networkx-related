@@ -181,8 +181,8 @@ class HalfEdgeGraph(CombinatorialClass):
         """
         # Get the counter in case we have to create nodes for unpaired half-edges.
         counter = Counter()
-        # If this graph consists of only one unpaired half-edge we interpret this as the one-node graph.
-        if self.half_edge.is_trivial:
+        # If this graph consists of only unpaired half-edge which share the same node we interpret this as the one-node graph.
+        if self.half_edge.get_number_of_nodes() == 1:
             G = nx.Graph()
             if self.half_edge.node_nr is None:
                 self.half_edge.node_nr = next(counter)
