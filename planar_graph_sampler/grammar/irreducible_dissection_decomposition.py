@@ -16,30 +16,14 @@ from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
-
 from planar_graph_sampler.bijections.closure import Closure
 from planar_graph_sampler.combinatorial_classes import BinaryTree
-<<<<<<< Updated upstream
-from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar
-<<<<<<< Updated upstream
-=======
-from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
-=======
 from planar_graph_sampler.combinatorial_classes.dissection import IrreducibleDissection
 from planar_graph_sampler.grammar.binary_tree_decomposition import binary_tree_grammar, EarlyRejectionControl
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
 
 def closure(binary_tree):
     """To be used as bijection in the grammar."""
-<<<<<<< Updated upstream
-    if isinstance(binary_tree, LDerivedClass):
-        binary_tree = binary_tree.base_class_object
-    assert isinstance(binary_tree, BinaryTree), binary_tree
-    dissection = Closure().closure(binary_tree)
-    return dissection
-=======
     binary_tree = binary_tree.underive_all()
     return Closure().closure(binary_tree)
     # if isinstance(binary_tree, LDerivedClass):
@@ -55,7 +39,7 @@ def closure(binary_tree):
     # else:
     #     # not derived
     #     return Closure().closure(binary_tree)
->>>>>>> Stashed changes
+
 
 
 def add_random_root_edge(decomp):
@@ -72,26 +56,7 @@ def add_random_root_edge(decomp):
 
 def is_admissible(dissection):
     """Admissibility check for usage in the grammar."""
-<<<<<<< Updated upstream
-    # TODO used for check the cases where both implementations have different results. The problem is fixed now.
-    # if dissection.is_admissible != dissection.is_admissible_slow:
-    #     print("error root: %s    resuls: pp: %s     tob: %s"
-    #           %(dissection.half_edge.node_nr, dissection.is_admissible, dissection.is_admissible_slow))
-    #     import matplotlib.pyplot as plt
-    #     dissection.plot(with_labels=True, use_planar_drawer=False, node_size=50)
-    #     plt.show()
-    #     dissection.is_admissible
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
     return dissection.is_admissible
-=======
-    res = dissection.is_admissible
-    # assert res == dissection.is_admissible_slow
-    # print(res)
-    return res
->>>>>>> Stashed changes
-
 
 def irreducible_dissection_grammar():
     """Builds the dissection grammar. Must still be initialized with init().
@@ -160,19 +125,10 @@ def irreducible_dissection_grammar():
 
 
 if __name__ == "__main__":
-<<<<<<< Updated upstream
-    import matplotlib.pyplot as plt
-    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
-=======
-<<<<<<< Updated upstream
-    grammar = irreducible_dissection_grammar()
-    grammar.init()
-=======
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import *
     from timeit import default_timer as timer
->>>>>>> Stashed changes
->>>>>>> Stashed changes
+
 
     oracle = EvaluationOracle(my_evals_100)
     BoltzmannSamplerBase.oracle = oracle
@@ -182,34 +138,7 @@ if __name__ == "__main__":
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
-<<<<<<< Updated upstream
     sampled_class = 'J_a_dx'
-    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
-
-    # random.seed(0)
-
-    while True:
-        diss = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        if diss.l_size > 0:
-            print(diss)
-            diss = diss.underive_all()
-            assert diss.is_consistent
-            diss.plot(with_labels=False, use_planar_drawer=True, node_size=25)
-            plt.show()
-=======
-<<<<<<< Updated upstream
-
-    sampled_class = 'J_a_dx'
-
-    diss = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-    print(diss)
-    assert diss.is_consistent
-
-    import matplotlib.pyplot as plt
-    diss.plot()
-    plt.show()
-=======
-    sampled_class = 'J_a_dx_dx'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
     try:
@@ -258,5 +187,3 @@ if __name__ == "__main__":
     #
     # admissible = len([diss for diss in samples if diss.is_admissible])
     # print(admissible / num_samples)
->>>>>>> Stashed changes
->>>>>>> Stashed changes

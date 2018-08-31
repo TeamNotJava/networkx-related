@@ -85,19 +85,10 @@ def merge_networks_in_series(network, network_for_plugging):
         second_net_inf_pole_edge.remove()
 
     # After a serial merge the poles are never linked.
-<<<<<<< Updated upstream
-    return Network(new_root_half_edge, is_linked=False,
-                   l_size=new_l_size, u_size=new_u_size)
-=======
-<<<<<<< Updated upstream
-    return Network(new_root_half_edge, is_linked=False, l_size=new_l_size, u_size=new_u_size)
-=======
     res = Network(new_root_half_edge, is_linked=False,
                    l_size=new_l_size, u_size=new_u_size)
     res.type = 'S'
     return res
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
 
 def merge_networks_in_parallel(network, network_for_plugging):
@@ -117,10 +108,7 @@ def merge_networks_in_parallel(network, network_for_plugging):
         The network resulting from the parallel merge operation.
     """
     # This operation is not defined if both networks are linked.
-    #assert not (network.is_linked and network_for_plugging.is_linked), (network, network_for_plugging)
-    if (network.is_linked and network_for_plugging.is_linked):
-        a = 123
-        print(a)
+    assert not (network.is_linked and network_for_plugging.is_linked), (network, network_for_plugging)
 
     new_l_size = network.l_size + network_for_plugging.l_size
     new_u_size = network.u_size + network_for_plugging.u_size
@@ -163,19 +151,10 @@ def merge_networks_in_parallel(network, network_for_plugging):
         half_edge_walker.node_nr = first_net_inf_pole_edge.node_nr
         half_edge_walker = half_edge_walker.next
 
-<<<<<<< Updated upstream
-    return Network(first_net_zero_pole_edge, res_is_linked,
-                   new_l_size, new_u_size)
-=======
-<<<<<<< Updated upstream
-    return Network(first_net_zero_pole_edge, res_is_linked, new_l_size, new_u_size)
-=======
     res = Network(first_net_zero_pole_edge, res_is_linked,
                    new_l_size, new_u_size)
     res.type = 'P'
     return res
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
 
 def substitute_edge_by_network(half_edge_for_sub, network):

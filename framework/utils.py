@@ -1,23 +1,3 @@
-<<<<<<< Updated upstream
-# -*- coding: utf-8 -*-
-#    Copyright (C) 2018 by
-#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
-#    Petre Petrov <petrepp4@gmail.com>
-#    Rudi Floren <rudi.floren@gmail.com>
-#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
-#    All rights reserved.
-#    BSD license.
-#
-# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
-#           Petre Petrov <petrepp4@gmail.com>
-#           Rudi Floren <rudi.floren@gmail.com>
-#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
-
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-import random as rnd
-=======
 # -*- coding: utf-8 -*-
 #    Copyright (C) 2018 by
 #    Marta Grobelna <marta.grobelna@rwth-aachen.de>
@@ -34,7 +14,6 @@ import random as rnd
 
 import random
 
->>>>>>> Stashed changes
 from math import exp, pow, factorial
 import itertools
 

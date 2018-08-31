@@ -25,25 +25,6 @@ from planar_graph_sampler.combinatorial_classes import BinaryTree
 from planar_graph_sampler.combinatorial_classes.binary_tree import Leaf
 
 
-<<<<<<< Updated upstream
-class WhiteRootedBinaryTreeBuilder(DefaultBuilder):
-=======
-<<<<<<< Updated upstream
-# noinspection PyAbstractClass
-class WhiteRootedBinaryTreeBuilder(CombinatorialClassBuilder):
->>>>>>> Stashed changes
-    """
-    Builds white-rooted binary trees (rules 'R_w', 'R_w_head', 'R_w_as', 'R_b_head_help').
-    """
-
-    def __init__(self):
-        self._counter = Counter()
-
-    def u_atom(self):
-<<<<<<< Updated upstream
-        # A u-atom is a leaf.
-=======
-=======
 class EarlyRejectionControl:
     """
     Needed to implement the early rejection for class K.
@@ -80,8 +61,6 @@ class BinaryTreeBuilder(DefaultBuilder):
             L = EarlyRejectionControl.L
             if L > 1 and not bern(L / (L + 1)):
                 EarlyRejectionControl.grammar.restart_sampler()
->>>>>>> Stashed changes
->>>>>>> Stashed changes
         return Leaf()
 
 
@@ -97,67 +76,19 @@ class WhiteRootedBinaryTreeBuilder(BinaryTreeBuilder):
         return res
 
 
-<<<<<<< Updated upstream
-class BlackRootedBinaryTreeBuilder(DefaultBuilder):
-=======
-<<<<<<< Updated upstream
-# noinspection PyAbstractClass
-class BlackRootedBinaryTreeBuilder(CombinatorialClassBuilder):
->>>>>>> Stashed changes
-    """
-    Builds black-rooted binary trees (rules 'R_b', 'R_b_head', 'R_b_as').
-    """
-
-    def __init__(self):
-        self._counter = Counter()
-
-    def l_atom(self):
-<<<<<<< Updated upstream
-        # An l-atom is a black rooted tree without children
-=======
-=======
 class BlackRootedBinaryTreeBuilder(BinaryTreeBuilder):
     """Builds black-rooted binary trees (rules 'R_b', 'R_b_head', 'R_b_as')."""
 
     def l_atom(self):
         # An l-atom is a black rooted tree without children.
->>>>>>> Stashed changes
->>>>>>> Stashed changes
         res = BinaryTree('black')
         res.set_root_node_nr(next(self._counter))
         return res
 
-<<<<<<< Updated upstream
     def u_atom(self):
         # A u-atom is a leaf.
         return Leaf()
 
-    def product(self, lhs, rhs):
-        # Builds black rooted tree from decompositions of the form
-        # (1) black(leaf|white) or (2) (leaf|white)black.
-        if not lhs.is_leaf and lhs.is_black_rooted:
-            # Form (1)
-            lhs.add_right_child(rhs)
-            res = lhs
-        else:
-            # Form (2)
-            rhs.add_left_child(lhs)
-            res = rhs
-        return res
-
-
-def rej_to_K(u_derived_tree):
-    return bern(2 / (u_derived_tree.u_size + 1))
-
-
-<<<<<<< Updated upstream
-def to_K_dy(tree):
-    tree.leaves_count += 1
-    return UDerivedClass(tree)
-=======
-def get_base_class(obj):
-    return obj.base_class_object
-=======
     def product(self, lhs, rhs):
         # Builds black rooted tree from decompositions of the form
         # (1) black(leaf|white) or (2) (leaf|white)black or (3) (leaf|white)(leaf|white)
@@ -178,9 +109,16 @@ def get_base_class(obj):
         return res
 
 
+def rej_to_K(u_derived_tree):
+    return bern(2 / (u_derived_tree.u_size + 1))
+
+
 def to_K_dy(tree):
     tree.leaves_count += 1
     return UDerivedClass(tree)
+
+def get_base_class(obj):
+    return obj.base_class_object
 
 
 def to_K_dy_dx(tree):
@@ -188,8 +126,7 @@ def to_K_dy_dx(tree):
     tree.leaves_count += 1
     tree = LDerivedClass(tree)
     return UDerivedClass(tree)
->>>>>>> Stashed changes
->>>>>>> Stashed changes
+
 
 
 def binary_tree_grammar():
@@ -230,20 +167,6 @@ def binary_tree_grammar():
     # Add the decomposition rules.
     grammar.rules = {
 
-<<<<<<< Updated upstream
-        'K': Bij(Rej(K_dy, rej_to_K), underive),  # See 4.1.6.
-=======
-<<<<<<< Updated upstream
-        # See section 4.1.6. for this rejection.
-        'K': Bij(Rej(K_dy, lambda gamma: bern(2 / (gamma.u_size + 1))), get_base_class),
->>>>>>> Stashed changes
-
-        'K_dx': DxFromDy(K_dy, alpha_l_u=2 / 3),  # See 5.3.1
-
-        'K_dy': Bij(R_b_as + R_w_as, to_K_dy),
-
-        'R_b_as': R_w * L() * U() + U() * L() * R_w + R_w * L() * R_w,
-=======
         # Underived and derived binary trees.
 
         'K':
@@ -353,7 +276,6 @@ def binary_tree_grammar():
         'R_w_dx':
             R_b_dx * (U() + R_b)
             + (U() + R_b) * R_b_dx,
->>>>>>> Stashed changes
 
     }
 
@@ -371,17 +293,6 @@ def binary_tree_grammar():
 
 
 if __name__ == '__main__':
-<<<<<<< Updated upstream
-    import matplotlib.pyplot as plt
-    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
-
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
-    BoltzmannSamplerBase.debug_mode = False
-=======
-<<<<<<< Updated upstream
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
-    BoltzmannSamplerBase.debug_mode = True
-=======
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import *
     from timeit import default_timer as timer
@@ -389,47 +300,14 @@ if __name__ == '__main__':
     oracle = EvaluationOracle(my_evals_100)
     BoltzmannSamplerBase.oracle = oracle
     BoltzmannSamplerBase.debug_mode = False
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     grammar = binary_tree_grammar()
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
-    sampled_class = 'K_dx'
+    sampled_class = 'K'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
-<<<<<<< Updated upstream
-    # random.seed(0)
-=======
-<<<<<<< Updated upstream
-    print("Expected size of K: {}".format(BoltzmannSamplerBase.oracle.get_expected_l_size('K', symbolic_x, symbolic_y)))
->>>>>>> Stashed changes
-
-    while True:
-        try:
-            tree = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-            if tree.l_size > 0:
-                print(tree)
-                tree = tree.underive_all()
-                assert tree.is_consistent
-                tree.plot(draw_leaves=False, node_size=50)
-                plt.show()
-        except RecursionError:
-<<<<<<< Updated upstream
-            print("Recursion error")
-=======
-            pass
-        if tree.l_size() == l_size:
-            assert tree.is_consistent()
-            c[tree.u_size()] += 1
-            i += 1
-    print(c)
-    a = BoltzmannSampler.oracle.get_probability(sampled_class, symbolic_x, symbolic_y, l_size, 3)
-    b = BoltzmannSampler.oracle.get_probability(sampled_class, symbolic_x, symbolic_y, l_size, 4)
-    print(a / (a + b))
-    print(b / (a + b))
-=======
     try:
         print("expected: {}\n".format(oracle.get_expected_l_size(sampled_class, symbolic_x, symbolic_y)))
     except BoltzmannFrameworkError:
@@ -440,7 +318,7 @@ if __name__ == '__main__':
 
     l_sizes = []
     i = 0
-    samples = 10000
+    samples = 1000
     start = timer()
     while i < samples:
         tree = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
@@ -456,5 +334,3 @@ if __name__ == '__main__':
     print()
     print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
     print("time: {}".format(end - start))
->>>>>>> Stashed changes
->>>>>>> Stashed changes

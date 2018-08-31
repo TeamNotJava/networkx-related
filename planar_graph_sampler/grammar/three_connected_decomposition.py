@@ -90,25 +90,17 @@ def three_connected_graph_grammar():
 
         'G_3_arrow': Trans(M_3_arrow, eval_transform=divide_by_2),  # See 4.1.9.
 
-<<<<<<< Updated upstream
-        'G_3_arrow_dx': Trans(M_3_arrow_dx, to_l_derived_class, eval_transform=divide_by_2),
-=======
-<<<<<<< Updated upstream
-        'G_3_arrow_dx': Trans(M_3_arrow_dx, to_l_derived_class, eval_transform=lambda evl, x, y: 0.5 * evl),
-=======
         # Derived 3-connected rooted planar maps/graphs.
 
         'M_3_arrow_dx': Bij(J_a_dx, primal_map),
 
         'G_3_arrow_dx': Trans(M_3_arrow_dx, to_l_derived_class, eval_transform=divide_by_2),
->>>>>>> Stashed changes
 
         'G_3_arrow_dy':
             Bij(
                 DyFromDx(G_3_arrow_dx, alpha_u_l=3),  # See 5.3.3.
                 mark_u_atom
             ),
->>>>>>> Stashed changes
 
         # Bi-derived 3-connected rooted planar maps/graphs.
 
@@ -140,19 +132,9 @@ def three_connected_graph_grammar():
 
 
 if __name__ == "__main__":
-<<<<<<< Updated upstream
-    import matplotlib.pyplot as plt
-    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
-=======
-<<<<<<< Updated upstream
-    grammar = three_connected_graph_grammar()
-    grammar.init()
-=======
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import *
     from timeit import default_timer as timer
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
     oracle = EvaluationOracle(my_evals_100)
     BoltzmannSamplerBase.oracle = oracle
@@ -161,38 +143,6 @@ if __name__ == "__main__":
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
-<<<<<<< Updated upstream
-    sampled_class = 'G_3_arrow_dy'
-    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
-
-    # random.seed(0)
-
-    while True:
-        try:
-            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 0:
-                print(g)
-                g = g.underive_all()
-                assert g.is_consistent
-                g.plot(node_size=25, use_planar_drawer=True)
-                plt.show()
-        except RecursionError:
-            print("Recursion error")
-=======
-<<<<<<< Updated upstream
-
-    sampled_class = 'G_3_arrow_dy'
-
-    g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-    g = g.base_class_object
-    print(g)
-    assert g.is_consistent
-
-    import matplotlib.pyplot as plt
-
-    g.plot(node_size=50)
-    plt.show()
-=======
     sampled_class = 'G_3_arrow_dy_dy'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
@@ -227,5 +177,3 @@ if __name__ == "__main__":
     #         # assert g.is_consistent
     #         # g.plot(node_size=25, use_planar_drawer=True)
     #         # plt.show()
->>>>>>> Stashed changes
->>>>>>> Stashed changes

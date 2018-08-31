@@ -1,26 +1,3 @@
-<<<<<<< Updated upstream
-# -*- coding: utf-8 -*-
-#    Copyright (C) 2018 by
-#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
-#    Petre Petrov <petrepp4@gmail.com>
-#    Rudi Floren <rudi.floren@gmail.com>
-#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
-#    All rights reserved.
-#    BSD license.
-#
-# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
-#           Petre Petrov <petrepp4@gmail.com>
-#           Rudi Floren <rudi.floren@gmail.com>
-#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
-
-import random as rnd
-from collections import deque
-
-import networkx as nx
-=======
-<<<<<<< Updated upstream
-import random as rnd
-=======
 # -*- coding: utf-8 -*-
 #    Copyright (C) 2018 by
 #    Marta Grobelna <marta.grobelna@rwth-aachen.de>
@@ -39,8 +16,6 @@ import random
 from collections import deque
 
 import networkx as nx
->>>>>>> Stashed changes
->>>>>>> Stashed changes
 
 from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 
@@ -91,11 +66,6 @@ class IrreducibleDissection(HalfEdgeGraph):
         # self.is_rooted = True
 
     @property
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-=======
->>>>>>> Stashed changes
     def is_admissible_slow(self):
         """Checks if there is a path of length 3 with an inner edge from the root to the opposite outer vertex."""
 
@@ -108,11 +78,7 @@ class IrreducibleDissection(HalfEdgeGraph):
 
         g = self.to_networkx_graph()
 
-<<<<<<< Updated upstream
-        # There are always 2 path of length 4 (meaning 4 nodes) from start to end (on the hexagon boundary).
-=======
         # There are always 2 paths of length 4 (meaning 4 nodes) from start to end (on the hexagon boundary).
->>>>>>> Stashed changes
         # If there is one more, then this is a forbidden path!
         paths = nx.shortest_simple_paths(g, start_node, end_node)
         path_1 = next(paths)
@@ -122,13 +88,7 @@ class IrreducibleDissection(HalfEdgeGraph):
         path_3 = next(paths)
         return len(path_3) > 4
 
-<<<<<<< Updated upstream
-
     @property
-=======
-    @property
->>>>>>> Stashed changes
->>>>>>> Stashed changes
     def is_admissible(self):
         """Checks if there is a path of length 3 with an inner edge from the root to the opposite outer vertex."""
 
@@ -194,17 +154,8 @@ class IrreducibleDissection(HalfEdgeGraph):
 
     @property
     def l_size(self):
-<<<<<<< Updated upstream
-        """The l-size is the number of black inner vertices."""
-<<<<<<< Updated upstream
-        node_dict = self.half_edge.node_dict()
-=======
-        node_dict = self.half_edge.get_node_list()
-=======
         """Number of inner black vertices (I), number of inner black vertices and root vertex (J)."""
         node_dict = self.half_edge.node_dict()
->>>>>>> Stashed changes
->>>>>>> Stashed changes
         black_vertices = len([node_nr for node_nr in node_dict if node_dict[node_nr][0].color is 'black'])
         # There are always 3 hexagonal outer black vertices.
         res = black_vertices - 3

@@ -1,4 +1,3 @@
-<<<<<<< Updated upstream
 # -*- coding: utf-8 -*-
 #    Copyright (C) 2018 by
 #    Marta Grobelna <marta.grobelna@rwth-aachen.de>
@@ -13,34 +12,7 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-import random as rn
-
-from framework.utils import nth
-=======
-# -*- coding: utf-8 -*-
-#    Copyright (C) 2018 by
-#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
-#    Petre Petrov <petrepp4@gmail.com>
-#    Rudi Floren <rudi.floren@gmail.com>
-#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
-#    All rights reserved.
-#    BSD license.
-#
-# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
-#           Petre Petrov <petrepp4@gmail.com>
-#           Rudi Floren <rudi.floren@gmail.com>
-#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
-
-# import random
-# print(id(random))
-#
-# from framework.utils import nth
->>>>>>> Stashed changes
 from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
-
 
 class Network(HalfEdgeGraph):
     """

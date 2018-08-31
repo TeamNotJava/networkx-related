@@ -16,17 +16,9 @@ from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.generic_samplers import BoltzmannSamplerBase
-<<<<<<< Updated upstream
-from planar_graph_sampler.grammar.grammar_utils import Counter
-=======
-<<<<<<< Updated upstream
-from framework.utils import Counter
-=======
+
 from planar_graph_sampler.grammar.binary_tree_decomposition import EarlyRejectionControl
 from planar_graph_sampler.grammar.grammar_utils import Counter
->>>>>>> Stashed changes
->>>>>>> Stashed changes
-
 from planar_graph_sampler.bijections.networks import merge_networks_in_parallel, merge_networks_in_series, \
     substitute_edge_by_network
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
@@ -91,31 +83,15 @@ class PNetworkBuilder(NetworkBuilder):
 
     def product(self, n1, n2):
         """Merges the set {n1, n2} of networks in parallel."""
-<<<<<<< Updated upstream
-        # n2 might be the zero-atom resulting from an empty set of networks.
-        if isinstance(n2, ZeroAtomClass):
-=======
-<<<<<<< Updated upstream
-        if n2 is None:
-=======
         # n2 might be the zero-atom resulting from an empty set of networks.
         assert not isinstance(n1, ZeroAtomClass)
         if isinstance(n2, ZeroAtomClass):
->>>>>>> Stashed changes
->>>>>>> Stashed changes
             return n1
         assert isinstance(n1, Network) and isinstance(n2, Network), n2
         return self.set([n1, n2])
 
 
 def g_3_arrow_to_network(decomp):
-<<<<<<< Updated upstream
-    """To be used as a bijection in the rules H and H_dx."""
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-    if isinstance(decomp, ProdClass):
-=======
     """To be used as a bijection in the rules H, H_dx and H_dx_dx."""
     # decomp = graph (1) | (network,graph_dy) (2) | ((network, network),graph_dy_dy) (3)
     if not isinstance(decomp, ProdClass):
@@ -125,7 +101,6 @@ def g_3_arrow_to_network(decomp):
         res = Network(link_edge, is_linked=False)
     elif isinstance(decomp.first, Network):
         # Form (2)
->>>>>>> Stashed changes
         network = decomp.first
         marked_atom = decomp.second.marked_atom
         g = decomp.second.underive_all()
@@ -240,16 +215,6 @@ def network_grammar():
             ),
 
     }
-
-<<<<<<< Updated upstream
-    # Set up builders.
-=======
-<<<<<<< Updated upstream
->>>>>>> Stashed changes
-    grammar.set_builder(['D', 'S', 'P', 'H', 'D_dx', 'S_dx', 'P_dx', 'H_dx'], NetworkBuilder())
-    grammar.set_builder(['P', 'P_dx'], PNetworkBuilder())
-    grammar.set_builder(['S', 'S_dx'], SNetworkBuilder())
-=======
     # Set up builders.
     grammar.set_builder(['D', 'S', 'P', 'H',
                          'D_dx', 'S_dx', 'P_dx', 'H_dx',
@@ -257,25 +222,11 @@ def network_grammar():
     grammar.set_builder(['P', 'P_dx', 'P_dx_dx'], PNetworkBuilder())
     grammar.set_builder(['S', 'S_dx', 'S_dx_dx'], SNetworkBuilder())
     EarlyRejectionControl.grammar = grammar
->>>>>>> Stashed changes
 
     return grammar
 
 
 if __name__ == '__main__':
-<<<<<<< Updated upstream
-    import matplotlib.pyplot as plt
-    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
-=======
-<<<<<<< Updated upstream
-    grammar = network_grammar()
-    grammar.init()
-    #grammar.dummy_sampling_mode()
->>>>>>> Stashed changes
-
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
-    BoltzmannSamplerBase.debug_mode = True
-=======
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import *
     from timeit import default_timer as timer
@@ -283,51 +234,11 @@ if __name__ == '__main__':
     oracle = EvaluationOracle(my_evals_100)
     BoltzmannSamplerBase.oracle = oracle
     BoltzmannSamplerBase.debug_mode = False
->>>>>>> Stashed changes
 
     grammar = network_grammar()
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-
->>>>>>> Stashed changes
-    sampled_class = 'D_dx'
-    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
-
-    # random.seed(0)
-
-    while True:
-        try:
-            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 0:
-                print(g)
-                assert g.is_consistent
-                g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
-                plt.show()
-        except RecursionError:
-<<<<<<< Updated upstream
-            print("RecursionError")
-=======
-            pass
-
-    c = [0, 0, 0, 0, 0, 0, 0, 0]
-    samples = 1000
-    i = 0
-    while i < samples:
-        try:
-            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size() == 2:
-                assert g.is_consistent()
-                c[g.u_size()] += 1
-                i += 1
-        except RecursionError:
-            pass
-
-    print(c)
-=======
     sampled_class = 'D_dx_dx'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
@@ -361,5 +272,3 @@ if __name__ == '__main__':
             # assert g.is_consistent
             #g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
             #plt.show()
->>>>>>> Stashed changes
->>>>>>> Stashed changes
