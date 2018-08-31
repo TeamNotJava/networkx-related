@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # -*- coding: utf-8 -*-
 #    Copyright (C) 2018 by
 #    Marta Grobelna <marta.grobelna@rwth-aachen.de>
@@ -12,9 +13,28 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 import random
 
 from framework.settings_global import Settings
+=======
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2018 by
+#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#    Petre Petrov <petrepp4@gmail.com>
+#    Rudi Floren <rudi.floren@gmail.com>
+#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+#    All rights reserved.
+#    BSD license.
+#
+# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#           Petre Petrov <petrepp4@gmail.com>
+#           Rudi Floren <rudi.floren@gmail.com>
+#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+
+>>>>>>> Stashed changes
 from framework.utils import *
 
 
@@ -62,12 +82,12 @@ class CombinatorialClass(object):
 
     def random_l_atom(self):
         """Returns a random l-atom within this object or the object itself."""
-        rand_index = random.randrange(self.l_size)
+        rand_index = boltzmann_framework_random_gen.randrange(self.l_size)
         return nth(self.l_atoms(), rand_index)
 
     def random_u_atom(self):
         """Returns a random l-atom within this object or the object itself."""
-        rand_index = random.randrange(self.u_size)
+        rand_index = boltzmann_framework_random_gen.randrange(self.u_size)
         return nth(self.u_atoms(), rand_index)
 
     def replace_l_atoms(self, sampler, x, y, exceptions=None):
@@ -96,7 +116,7 @@ class CombinatorialClass(object):
         -----
         ...
         """
-        labels = random.sample(range(self.l_size), self.l_size)
+        labels = boltzmann_framework_random_gen.sample(range(self.l_size), self.l_size)
         for atom in self.l_atoms():
             atom.label = labels.pop()
 
@@ -129,6 +149,8 @@ class DummyClass(CombinatorialClass):
     l_size: int, optional (default=0)
     u_size: int, optional (default=0)
     """
+
+    __slots__ = '_l_size', '_u_size'
 
     def __init__(self, l_size=0, u_size=0):
         self._l_size = l_size
@@ -189,7 +211,7 @@ class DummyClass(CombinatorialClass):
         return self
 
     def __str__(self):
-        return "(l: {}, u: {}".format(self.l_size, self.u_size)
+        return "(l: {}, u: {})".format(self.l_size, self.u_size)
 
 
 class ZeroAtomClass(CombinatorialClass):
@@ -413,12 +435,12 @@ class DerivedClass(CombinatorialClass):
     @marked_atom.setter
     def marked_atom(self, atom):
         """Sets the marked atom."""
-        if atom is not None:
-            # TODO is the check expensive?
-            atoms = itertools.chain(self.base_class_object.l_atoms(), self.base_class_object.u_atoms())
-            if self.marked_atom not in atoms:
-                raise BoltzmannFrameworkError("Given atom does not exist in base class object")
-            self._marked_atom = atom
+        # if atom is not None:
+        #     # TODO is the check expensive?
+        #     atoms = itertools.chain(self.base_class_object.l_atoms(), self.base_class_object.u_atoms())
+        #     if self.marked_atom not in atoms:
+        #         raise BoltzmannFrameworkError("Given atom does not exist in base class object")
+        self._marked_atom = atom
 
     @property
     def base_class_object(self):

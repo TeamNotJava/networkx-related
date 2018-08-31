@@ -101,15 +101,27 @@ def one_connected_graph_grammar():
 
     }
     grammar.set_builder(['G_1_dx'], Merger())
+    grammar['R_w'].builder.grammar = grammar
+    grammar['R_b'].builder.grammar = grammar
 
     return grammar
 
 
 if __name__ == '__main__':
+<<<<<<< Updated upstream
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
+=======
+<<<<<<< Updated upstream
+    grammar = one_connected_graph_grammar()
+    grammar.init()
+=======
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals, reference_evals
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
     BoltzmannSamplerBase.debug_mode = False
 
     grammar = one_connected_graph_grammar()
@@ -121,7 +133,14 @@ if __name__ == '__main__':
 
     # random.seed(0)
 
+    i = 0
+    l_sizes = []
     while True:
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+
+>>>>>>> Stashed changes
         try:
             g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
             if g.l_size > 0:
@@ -131,4 +150,24 @@ if __name__ == '__main__':
                 g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
                 plt.show()
         except RecursionError:
+<<<<<<< Updated upstream
             print("Recursion error")
+=======
+            pass
+=======
+        g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        g = g.underive_all()
+        l_sizes.append(g.l_size)
+        i += 1
+        if g.l_size >= 1000:
+            g = g.underive_all()
+            print(g)
+            print(g.u_size / g.l_size)
+            #assert g.is_consistent
+            #g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
+            #plt.show()
+
+    print(sum(l_sizes) / len(l_sizes))
+
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes

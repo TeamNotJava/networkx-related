@@ -12,6 +12,15 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+import networkx as nx
+=======
+from collections import OrderedDict
+
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 class HalfEdge(object):
     """
@@ -74,13 +83,10 @@ class HalfEdge(object):
         There is no a half-edge which has connection to it after the removal.
         """
         # Connect corresponding next and prior half edges.
-        self._connect_next_and_prior()
-        # Clear the half edge object.
-        self.clear()
-
-    def _connect_next_and_prior(self):
         self.next.prior = self.prior
         self.prior.next = self.next
+        # Clear the half edge object.
+        self.clear()
 
     def clear(self):
         """Clear all the half_edge connections and data from it."""
@@ -152,6 +158,7 @@ class HalfEdge(object):
             id(self), self.node_nr, id(self.opposite), id(self.next), id(self.prior))
         return repr
 
+<<<<<<< Updated upstream
     def node_dict_rec(self, res=None):
         """Returns a dictionary that maps nodes to a list of half-edges in ccw order around the node."""
         if res is None:
@@ -185,6 +192,31 @@ class HalfEdge(object):
         return res
 
     def get_all_half_edges_rec(self, edge_set=None, include_opp=True, include_unpaired=True):
+=======
+<<<<<<< Updated upstream
+    def list_half_edges(self, edge_list=None):
+        """Returns a list with half-edges."""
+        # TODO Deprecated?
+        if edge_list is None:
+            edge_list = []
+        edge_list.append(self)
+        current_half_edge = self
+        while True:
+            if current_half_edge.next is not None:
+                current_half_edge = current_half_edge.next
+                if current_half_edge is not self and current_half_edge not in edge_list:
+                    edge_list.append(current_half_edge)
+                    if current_half_edge.opposite is not None:
+                        if current_half_edge.opposite not in edge_list:
+                            current_half_edge.opposite.list_half_edges(edge_list)
+                else:
+                    break
+            else:
+                break
+        return edge_list
+
+    def get_all_half_edges(self, edge_set=None, include_opp=True, include_unpaired=True):
+>>>>>>> Stashed changes
         """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False."""
         if edge_set is None:
             edge_set = set()
@@ -198,22 +230,93 @@ class HalfEdge(object):
                         he.opposite.get_all_half_edges(edge_set, include_opp, include_unpaired)
         return edge_set
 
+<<<<<<< Updated upstream
     def get_all_half_edges(self, include_opp=True, include_unpaired=True):
         """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False."""
         result = set()
+=======
+=======
+    # def node_dict_rec(self, res=None):
+    #     """Returns a dictionary that maps nodes to a list of half-edges in ccw order around the node."""
+    #     if res is None:
+    #         res = {}
+    #     node_nr = self.node_nr
+    #     if node_nr in res:
+    #         # Current node was already visited.
+    #         return res
+    #     incident = self.incident_half_edges()
+    #     res[node_nr] = incident
+    #     for he in incident:
+    #         if he.opposite is not None:
+    #             res = he.opposite.node_dict(res)
+    #     return res
+
+    def node_dict(self):
+        """Returns a dictionary that maps nodes to a list of half-edges in ccw order around the node."""
+        res = OrderedDict()
+        stack = [self]
+        while stack:
+            curr = stack.pop()
+            node_nr = curr.node_nr
+            if node_nr not in res:
+                # curr has not been visited yet.
+                incident = [h for h in curr.incident()]
+                # incident are the half-edges in the right order.
+                res[node_nr] = incident
+                for he in incident:
+                    if he.opposite is not None:
+                        stack.append(he.opposite)
+        return res
+
+    # def get_all_half_edges_rec(self, edge_set=None, include_opp=True, include_unpaired=True):
+    #     """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False"""
+    #     if edge_set is None:
+    #         edge_set = set()
+    #     for he in self.incident_half_edges():
+    #         if he not in edge_set:
+    #             if he.opposite is None and include_unpaired:
+    #                 edge_set.add(he)
+    #             elif include_opp or (he.opposite is not None and he.opposite not in edge_set):
+    #                 edge_set.add(he)
+    #                 if he.opposite is not None:
+    #                     he.opposite.get_all_half_edges(edge_set, include_opp, include_unpaired)
+    #     return edge_set
+
+    def get_all_half_edges(self, include_opp=True, include_unpaired=True):
+        """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False."""
+        # result = set()
+        result = []
+        seen = set()
+>>>>>>> Stashed changes
         stack = [self]
         while stack:
             curr = stack.pop()
             for he in curr.incident():
+<<<<<<< Updated upstream
                 if he not in result:
                     if he.opposite is None and include_unpaired:
                         result.add(he)
                     elif include_opp or (he.opposite is not None and he.opposite not in result):
                         result.add(he)
+=======
+                if he not in seen:
+                    if he.opposite is None and include_unpaired:
+                        # result.add(he)
+                        result.append(he)
+                        seen.add(he)
+                    elif include_opp or (he.opposite is not None and he.opposite not in seen):
+                        # result.add(he)
+                        result.append(he)
+                        seen.add(he)
+>>>>>>> Stashed changes
                         if he.opposite is not None:
                             stack.append(he.opposite)
         return result
 
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     def get_number_of_nodes(self):
         """Returns the number of nodes in the graph."""
         return len(self.node_dict())

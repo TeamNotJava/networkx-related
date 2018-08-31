@@ -14,8 +14,10 @@
 
 import warnings
 
+from framework.settings_global import Settings
 from framework.class_builder import DefaultBuilder, DummyBuilder
 from framework.generic_samplers import *
+
 
 
 class AliasSampler(BoltzmannSamplerBase):
@@ -131,6 +133,7 @@ class DecompositionGrammar(object):
             rules = {}
         self._rules = rules
         self._recursive_rules = None
+        self._restart_flag = False
 
     @staticmethod
     def _grammar_not_initialized_error():
@@ -193,6 +196,10 @@ class DecompositionGrammar(object):
                 sampler = sampler.get_children()[0]
             if isinstance(sampler, TransformationSampler):
                 sampler.sampled_class = alias
+
+    def restart_sampler(self):
+        """Restarts the iterative sampler."""
+        self._restart_flag = True
 
     def set_builder(self, rules=None, builder=DefaultBuilder()):
         """Sets a builder for a given set of rules.
@@ -370,11 +377,28 @@ class DecompositionGrammar(object):
         if v.overwrites_builder and Settings.debug_mode:
             warnings.warn("dummy_sampling_mode has overwritten existing builders")
 
+<<<<<<< Updated upstream
         if delete_transformations:
             def apply_to_each(sampler):
                 if isinstance(sampler, TransformationSampler) and not isinstance(sampler, RejectionSampler):
                     sampler.transformation = lambda x: x
 
+=======
+<<<<<<< Updated upstream
+        def apply_to_each(sampler):
+            if isinstance(sampler, TransformationSampler) and not isinstance(sampler, RejectionSampler):
+                sampler.transformation = lambda x: x
+
+        for alias in self.rules:
+            v = self._DFSVisitor(apply_to_each)
+            self[alias].accept(v)
+=======
+        if delete_transformations:
+            def apply_to_each(sampler):
+                if isinstance(sampler, TransformationSampler) and not isinstance(sampler, RejectionSampler):
+                    sampler.transformation = lambda x: x
+
+>>>>>>> Stashed changes
             for alias in self.rules:
                 v = self._DFSVisitor(apply_to_each)
                 self[alias].accept(v)
@@ -385,8 +409,12 @@ class DecompositionGrammar(object):
         Traverses the decomposition tree in post-order.
         The tree may be arbitrarily large and is expanded on the fly.
         """
+<<<<<<< Updated upstream
 
         return self._IterativeSampler(self[alias]).sample(x, y)
+=======
+        return self._IterativeSampler(self[alias], self).sample(x, y)
+>>>>>>> Stashed changes
 
     class _IterativeSampler(object):
         """
@@ -397,8 +425,15 @@ class DecompositionGrammar(object):
 
         """
 
+<<<<<<< Updated upstream
         def __init__(self, sampler):
             self.sampler = sampler
+=======
+        def __init__(self, sampler, grammar, is_restartable=False):
+            self.sampler = sampler
+            self.grammar = grammar
+            self.is_restartable = is_restartable
+>>>>>>> Stashed changes
 
         class _ResultStack(list):
             """Modified stack that keeps track of the total l-size it contains."""
@@ -409,8 +444,14 @@ class DecompositionGrammar(object):
             def append(self, obj):
                 list.append(self, obj)
                 # self.l_size += obj.l_size
+<<<<<<< Updated upstream
 
             def pop(self):
+=======
+                # print(self.l_size)
+
+            def pop(self, **kwargs):
+>>>>>>> Stashed changes
                 obj = list.pop(self)
                 # self.l_size -= obj.l_size
                 return obj
@@ -436,6 +477,21 @@ class DecompositionGrammar(object):
             prev = None
             while stack:
 
+<<<<<<< Updated upstream
+=======
+                # Check if the sampler should be restarted.
+                if self.grammar._restart_flag:
+                    if not self.is_restartable:
+                        raise BoltzmannFrameworkError("Trying to restart a non-restartable sampler.")
+                    # print("Restarting ...")
+                    self.grammar._restart_flag = False
+                    stack = [self.sampler]
+                    result_stack = self._ResultStack()
+                    substitution_stack = []
+                    prev = None
+                    continue
+
+>>>>>>> Stashed changes
                 # Get top of stack.
                 curr = stack[-1]
 
@@ -444,7 +500,11 @@ class DecompositionGrammar(object):
                 no_prev_or_curr_in_prev_children = prev is None or curr in prev.get_children()
 
                 if isinstance(curr, ProdSampler):
+<<<<<<< Updated upstream
                     if no_prev_or_curr_in_prev_children:
+=======
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         stack.append(curr.lhs)
                     elif curr.lhs is prev:
                         # Left child has already been visited - visit right child.
@@ -457,7 +517,11 @@ class DecompositionGrammar(object):
                         result_stack.append(curr.builder.product(arg_lhs, arg_rhs))
 
                 elif isinstance(curr, SumSampler):
+<<<<<<< Updated upstream
                     if no_prev_or_curr_in_prev_children:
+=======
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         if bern(curr.lhs.eval(x, y) / curr.eval(x, y)):
                             stack.append(curr.lhs)
                         else:
@@ -466,7 +530,11 @@ class DecompositionGrammar(object):
                         stack.pop()
 
                 elif isinstance(curr, AliasSampler):
+<<<<<<< Updated upstream
                     if no_prev_or_curr_in_prev_children:
+=======
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         stack.append(curr._referenced_sampler)
                     else:
                         stack.pop()
@@ -481,7 +549,11 @@ class DecompositionGrammar(object):
                     stack.pop()
                     set_elems_sampler = curr.get_children().pop()
                     k = curr.draw_k(x, y)
+<<<<<<< Updated upstream
                     sampler = self.__class__(set_elems_sampler)
+=======
+                    sampler = self.__class__(set_elems_sampler, self.grammar)
+>>>>>>> Stashed changes
                     set_elems = []
                     for _ in range(k):
                         obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
@@ -489,7 +561,11 @@ class DecompositionGrammar(object):
                     result_stack.append(curr.builder.set(set_elems))
 
                 elif isinstance(curr, LDerFromUDerSampler):
+<<<<<<< Updated upstream
                     if no_prev_or_curr_in_prev_children:
+=======
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         stack.append(curr.get_children().pop())
                     else:
                         obj_to_check = result_stack.pop()
@@ -504,7 +580,11 @@ class DecompositionGrammar(object):
                             stack.append(curr.get_children().pop())
 
                 elif isinstance(curr, LSubsSampler):
+<<<<<<< Updated upstream
                     if no_prev_or_curr_in_prev_children:
+=======
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         # Save the old x to the substitution stack.
                         substitution_stack.append(x)
                         x = curr.rhs.oracle_query_string(x, y)
@@ -517,12 +597,20 @@ class DecompositionGrammar(object):
                         # Recover the old y from the stack.
                         x = substitution_stack.pop()
                         # Replace the atoms and push result.
+<<<<<<< Updated upstream
                         sampler = self.__class__(curr.rhs)
+=======
+                        sampler = self.__class__(curr.rhs, self.grammar)
+>>>>>>> Stashed changes
                         res = core_object.replace_l_atoms(sampler, x, y)  # Recursion for now.
                         result_stack.append(res)
 
                 elif isinstance(curr, RejectionSampler):
+<<<<<<< Updated upstream
                     if no_prev_or_curr_in_prev_children:
+=======
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         stack.append(curr.get_children().pop())
                     else:
                         obj_to_check = result_stack.pop()
@@ -534,7 +622,11 @@ class DecompositionGrammar(object):
                             stack.append(curr.get_children().pop())
 
                 elif isinstance(curr, USubsSampler):
+<<<<<<< Updated upstream
                     if no_prev_or_curr_in_prev_children:
+=======
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         # Save the old y to the substitution stack.
                         substitution_stack.append(y)
                         y = curr.rhs.oracle_query_string(x, y)
@@ -547,12 +639,20 @@ class DecompositionGrammar(object):
                         # Recover the old y from the stack.
                         y = substitution_stack.pop()
                         # Replace the atoms and push result.
+<<<<<<< Updated upstream
                         sampler = self.__class__(curr.rhs)
+=======
+                        sampler = self.__class__(curr.rhs, self.grammar)
+>>>>>>> Stashed changes
                         res = core_object.replace_u_atoms(sampler, x, y)  # Recursion for now.
                         result_stack.append(res)
 
                 elif isinstance(curr, UDerFromLDerSampler):
+<<<<<<< Updated upstream
                     if no_prev_or_curr_in_prev_children:
+=======
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         stack.append(curr.get_children().pop())
                     else:
                         obj_to_check = result_stack.pop()
@@ -567,9 +667,33 @@ class DecompositionGrammar(object):
                         else:
                             stack.append(curr.get_children().pop())
 
+<<<<<<< Updated upstream
                 else:
                     assert isinstance(curr, TransformationSampler)
                     if no_prev_or_curr_in_prev_children:
+=======
+                elif isinstance(curr, HookSampler):
+                    if prev is None or curr in prev.get_children():
+                        stack.append(curr.get_children().pop())
+                        # Execute the before-hook.
+                        curr.before()
+                    else:
+                        stack.pop()
+                        # Execute the after-hook.
+                        if curr.after is not None:
+                            curr.after()
+
+                elif isinstance(curr, RestartableSampler):
+                    stack.pop()
+                    wrapped_sampler = curr.get_children().pop()
+                    restartable_sampler = self.__class__(wrapped_sampler, self.grammar, is_restartable=True)
+                    obj = restartable_sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
+                    result_stack.append(obj)
+
+                else:
+                    assert isinstance(curr, TransformationSampler)
+                    if prev is None or curr in prev.get_children():
+>>>>>>> Stashed changes
                         stack.append(curr.get_children().pop())
                     else:
                         stack.pop()
@@ -583,7 +707,13 @@ class DecompositionGrammar(object):
                 prev = curr
 
             assert len(result_stack) == 1
+<<<<<<< Updated upstream
             return result_stack[0]
+=======
+            assert result_stack[0] is not None
+            return result_stack[0]
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
     class _DFSVisitor:
         """

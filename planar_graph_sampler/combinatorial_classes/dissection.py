@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # -*- coding: utf-8 -*-
 #    Copyright (C) 2018 by
 #    Marta Grobelna <marta.grobelna@rwth-aachen.de>
@@ -16,14 +17,38 @@ import random as rnd
 from collections import deque
 
 import networkx as nx
+=======
+<<<<<<< Updated upstream
+import random as rnd
+=======
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2018 by
+#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#    Petre Petrov <petrepp4@gmail.com>
+#    Rudi Floren <rudi.floren@gmail.com>
+#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+#    All rights reserved.
+#    BSD license.
+#
+# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#           Petre Petrov <petrepp4@gmail.com>
+#           Rudi Floren <rudi.floren@gmail.com>
+#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+
+import random
+from collections import deque
+
+import networkx as nx
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 
 
 class IrreducibleDissection(HalfEdgeGraph):
     """
-    Represents the class 'I' of irreducible dissections from the paper.
-    It is however also used for rooted and derived dissections (sizes are incorrect then).
+    Represents the classes 'I', 'J' and 'J_a' of irreducible dissection, rooted irreducible dissection and admissible
+    rooted irreducible dissections.
 
     Parameters
     ----------
@@ -36,6 +61,7 @@ class IrreducibleDissection(HalfEdgeGraph):
         if half_edge.color is not 'black':
             half_edge = half_edge.opposite.next
         assert half_edge.color is 'black'
+        self.is_rooted = False
         super(IrreducibleDissection, self).__init__(half_edge)
 
     @property
@@ -61,9 +87,15 @@ class IrreducibleDissection(HalfEdgeGraph):
 
     def root_at_random_hexagonal_edge(self):
         """Selects a random hexagonal half-edge and makes it the root."""
-        self._half_edge = rnd.choice(self.hexagonal_edges)
+        self.half_edge = random.choice(self.hexagonal_edges)
+        # self.is_rooted = True
 
     @property
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+=======
+>>>>>>> Stashed changes
     def is_admissible_slow(self):
         """Checks if there is a path of length 3 with an inner edge from the root to the opposite outer vertex."""
 
@@ -76,7 +108,11 @@ class IrreducibleDissection(HalfEdgeGraph):
 
         g = self.to_networkx_graph()
 
+<<<<<<< Updated upstream
         # There are always 2 path of length 4 (meaning 4 nodes) from start to end (on the hexagon boundary).
+=======
+        # There are always 2 paths of length 4 (meaning 4 nodes) from start to end (on the hexagon boundary).
+>>>>>>> Stashed changes
         # If there is one more, then this is a forbidden path!
         paths = nx.shortest_simple_paths(g, start_node, end_node)
         path_1 = next(paths)
@@ -86,8 +122,13 @@ class IrreducibleDissection(HalfEdgeGraph):
         path_3 = next(paths)
         return len(path_3) > 4
 
+<<<<<<< Updated upstream
 
     @property
+=======
+    @property
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     def is_admissible(self):
         """Checks if there is a path of length 3 with an inner edge from the root to the opposite outer vertex."""
 
@@ -145,16 +186,31 @@ class IrreducibleDissection(HalfEdgeGraph):
 
     @property
     def u_size(self):
-        """The u-size is the number of inner faces."""
-        return (self.number_of_half_edges - 6) / 4
+        """Number of inner faces (I), number of faces including outer (J)."""
+        res = (self.number_of_half_edges - 6) / 4
+        if self.is_rooted:
+            res += 1
+        return res
 
     @property
     def l_size(self):
+<<<<<<< Updated upstream
         """The l-size is the number of black inner vertices."""
+<<<<<<< Updated upstream
         node_dict = self.half_edge.node_dict()
+=======
+        node_dict = self.half_edge.get_node_list()
+=======
+        """Number of inner black vertices (I), number of inner black vertices and root vertex (J)."""
+        node_dict = self.half_edge.node_dict()
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
         black_vertices = len([node_nr for node_nr in node_dict if node_dict[node_nr][0].color is 'black'])
         # There are always 3 hexagonal outer black vertices.
-        return black_vertices - 3
+        res = black_vertices - 3
+        if self.is_rooted:
+            res += 1
+        return res
 
     # Networkx related functionality.
 

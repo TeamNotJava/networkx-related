@@ -18,7 +18,6 @@ import math
 from framework.decomposition_grammar import *
 from framework.evaluation_oracle import EvaluationOracle
 
-# TODO make some reasonable things here or delete
 from framework.generic_samplers import BoltzmannSamplerBase
 
 
@@ -85,7 +84,7 @@ def natural_numbers():
     })
     grammar.init()
 
-    y = 0.95
+    y = 0.999
     N = 1 / (1 - y)
     N_dy = 1 / (1 - y) ** 2
     oracle = EvaluationOracle({
@@ -96,9 +95,9 @@ def natural_numbers():
     grammar.precompute_evals('N', 'x', 'y')
     print("expected number: {}".format(y * N_dy / N))
     num_samples = 10
-    numbers = [grammar.sample('N', 'x', 'y') for _ in range(num_samples)]
-    avg_size = sum(n.u_size for n in numbers) / num_samples
-    print("average in {} trials: {}".format(num_samples, avg_size))
+    numbers = [grammar.sample_iterative('N', 'x', 'y') for _ in range(num_samples)]
+    #avg_size = sum(n.u_size for n in numbers) / num_samples
+    #print("average in {} trials: {}".format(num_samples, avg_size))
 
 
 def integer_partitions():
@@ -176,14 +175,16 @@ def set_partitions():
     grammar.init()
 
     oracle = EvaluationOracle({
-        'x': 1.05
+        'x': 2.0
     })
     BoltzmannSamplerBase.oracle = oracle
-    partition = grammar.sample('P', 'x', 'y')
+    # partition = grammar.sample('P', 'x', 'y')
+    partition = grammar.sample_iterative('P', 'x', 'y')
     partition.assign_random_labels()
 
     print("expected size of set: {}\n".format(expected_size(oracle.get('x'))))
     print(partition)
+    print("(size {})".format(partition.l_size))
 
 
 def binary_trees():
@@ -223,9 +224,13 @@ def binary_trees():
     def eval_T_dx(x):
         return (1 / (math.sqrt(1 - 4 * x ** 2)) + 1) / (2 * x ** 2)
 
-    target_size = 10
-    x = get_x_for_size(target_size)
+    # TODO something is weird here ...
+    target_size = 2
+    # x = get_x_for_size(target_size)
+    x = 0.499999999
+    print(x)
     T = eval_T(x)
+    print(x * T ** 2 / (x + x * T ** 2))
     T_dx = eval_T_dx(x)
     tree_oracle = EvaluationOracle({
         'x': x,
@@ -236,6 +241,9 @@ def binary_trees():
     BoltzmannSamplerBase.oracle = tree_oracle
 
     print("expected size of the trees: {}\n".format(tree_oracle.get_expected_l_size('T', 'x', 'y')))
+
+    print(tree_grammar.sample_iterative('T', 'x', 'y'))
+
     print("needed oracle entries for sampling: {}\n".format(tree_grammar.collect_oracle_queries('T', 'x', 'y')))
 
     num_samples = 10
@@ -244,6 +252,7 @@ def binary_trees():
             trees = [tree_grammar.sample('T', 'x', 'y') for _ in range(num_samples)]
             break
         except RecursionError:
+            # print("Recursion error")
             pass
     avg_size = sum([tree.l_size for tree in trees]) / num_samples
     print("average size in {} trials: {}".format(num_samples, avg_size))
@@ -256,10 +265,21 @@ def binary_trees():
 def test_examples():
     examples = [
         natural_numbers,
+<<<<<<< Updated upstream
         binary_trees,
         integer_partitions,
         set_partitions,
+<<<<<<< Updated upstream
         dummy_sampling
+=======
+        test_dummy_size
+=======
+        # binary_trees,
+        # integer_partitions,
+        # set_partitions,
+        # dummy_sampling
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
     ]
     for example in examples:
         example()
@@ -267,5 +287,5 @@ def test_examples():
 
 
 if __name__ == "__main__":
-    # random.seed(123456)
+    # random.seed(0)
     test_examples()

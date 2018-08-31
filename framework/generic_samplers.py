@@ -17,6 +17,7 @@ from __future__ import division
 from framework.class_builder import DefaultBuilder
 from framework.generic_classes import *
 from framework.utils import *
+from framework.settings_global import Settings
 
 
 def return_precomp(func):
@@ -674,6 +675,50 @@ class BijectionSampler(TransformationSampler):
 
     def oracle_query_string(self, x, y):
         return self._sampler.oracle_query_string(x, y)
+
+
+class HookSampler(BijectionSampler):
+    """
+    Special bijection used to inject arbitrary code into the sampling process.
+
+    Code could for example modify global settings.
+
+    Parameters
+    ----------
+    before: function
+        Code executed before the underlying sampler is called.
+    after: function, optional (default=None)
+        Code executed after the underlying sampler has terminated.
+    """
+
+    def __init__(self, sampler, before, after=None):
+        super(HookSampler, self).__init__(sampler, None, None)
+        self.before = before
+        self.after = after
+
+    def sample(self, x, y):
+        # Recursive sampler not implemented.
+        raise NotImplementedError
+
+
+class RestartableSampler(BijectionSampler):
+    """
+    Wrapper to indicate that a sampler can be restarted.
+
+    Parameters
+    ----------
+    before: function
+        Code executed before the underlying sampler is called.
+    after: function, optional (default=None)
+        Code executed after the underlying sampler has terminated.
+    """
+
+    def __init__(self, sampler):
+        super(RestartableSampler, self).__init__(sampler, None, None)
+
+    def sample(self, x, y):
+        # Recursive sampler not implemented.
+        raise NotImplementedError
 
 
 class RejectionSampler(TransformationSampler):

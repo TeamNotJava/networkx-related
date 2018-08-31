@@ -86,9 +86,12 @@ class DummyBuilder(CombinatorialClassBuilder):
         return DummyClass(u_size=1)
 
     def product(self, lhs, rhs):
-        l_size = lhs.l_size + rhs.l_size
-        u_size = lhs.u_size + rhs.u_size
-        return DummyClass(l_size, u_size)
+        # l_size = lhs.l_size + rhs.l_size
+        # u_size = lhs.u_size + rhs.u_size
+        # return DummyClass(l_size, u_size)
+        lhs._l_size += rhs._l_size
+        lhs._u_size += rhs._u_size
+        return lhs
 
     def set(self, elements):
         l_size = 0

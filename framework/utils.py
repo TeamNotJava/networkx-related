@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # -*- coding: utf-8 -*-
 #    Copyright (C) 2018 by
 #    Marta Grobelna <marta.grobelna@rwth-aachen.de>
@@ -12,9 +13,32 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 import random as rnd
+=======
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2018 by
+#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#    Petre Petrov <petrepp4@gmail.com>
+#    Rudi Floren <rudi.floren@gmail.com>
+#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+#    All rights reserved.
+#    BSD license.
+#
+# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#           Petre Petrov <petrepp4@gmail.com>
+#           Rudi Floren <rudi.floren@gmail.com>
+#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+
+import random
+
+>>>>>>> Stashed changes
 from math import exp, pow, factorial
 import itertools
+
+boltzmann_framework_random_gen = random.Random()
 
 
 def nth(iterable, n, default=None):
@@ -33,7 +57,7 @@ def bern(p):
     -------
     bool
     """
-    return rnd.uniform(0, 1) <= p
+    return boltzmann_framework_random_gen.uniform(0, 1) <= p
 
 
 def exp_tail(d, x):
@@ -85,7 +109,7 @@ def pois(d, l):
     -------
     int
     """
-    u = rnd.uniform(0, 1)
+    u = boltzmann_framework_random_gen.uniform(0, 1)
     s = 0
     k = d
     p = pois_prob(d, k, l)

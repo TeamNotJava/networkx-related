@@ -16,7 +16,16 @@ from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.generic_samplers import BoltzmannSamplerBase
+<<<<<<< Updated upstream
 from planar_graph_sampler.grammar.grammar_utils import Counter
+=======
+<<<<<<< Updated upstream
+from framework.utils import Counter
+=======
+from planar_graph_sampler.grammar.binary_tree_decomposition import EarlyRejectionControl
+from planar_graph_sampler.grammar.grammar_utils import Counter
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 from planar_graph_sampler.bijections.networks import merge_networks_in_parallel, merge_networks_in_series, \
     substitute_edge_by_network
@@ -51,14 +60,17 @@ class SNetworkBuilder(NetworkBuilder):
 
     def product(self, lhs, rhs):
         """Merges the given networks in series."""
+        # Form is either (lhs,rhs) = (network, network) (1) or (lhs,rhs) = (network, l-atom) (2)
         if isinstance(lhs, Network) and isinstance(rhs, Network):
-            return merge_networks_in_series(lhs, rhs)
-        if isinstance(lhs, Network):
-            # rhs is an l-atom.
-            assert isinstance(rhs, LAtomClass)
-            return lhs
-        # Other case is symmetric.
-        return self.product(rhs, lhs)
+            # Form (1)
+            res = merge_networks_in_series(lhs, rhs)
+        else:
+            # Form (2)
+            assert isinstance(rhs, LAtomClass), rhs
+            # The l-atom can be discarded.
+            res = lhs
+        assert not res.is_linked
+        return res
 
 
 class PNetworkBuilder(NetworkBuilder):
@@ -71,7 +83,7 @@ class PNetworkBuilder(NetworkBuilder):
             # We use the generic zero atom here as a zero-atom-network cannot be defined.
             return ZeroAtomClass()
         # TODO Without reversing the list of networks, weird things happen, find out why.
-        networks.reverse()
+        # networks.reverse()
         res = networks.pop()
         for nw in networks:
             res = merge_networks_in_parallel(res, nw)
@@ -79,27 +91,58 @@ class PNetworkBuilder(NetworkBuilder):
 
     def product(self, n1, n2):
         """Merges the set {n1, n2} of networks in parallel."""
+<<<<<<< Updated upstream
         # n2 might be the zero-atom resulting from an empty set of networks.
         if isinstance(n2, ZeroAtomClass):
+=======
+<<<<<<< Updated upstream
+        if n2 is None:
+=======
+        # n2 might be the zero-atom resulting from an empty set of networks.
+        assert not isinstance(n1, ZeroAtomClass)
+        if isinstance(n2, ZeroAtomClass):
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
             return n1
-        assert isinstance(n1, Network) and isinstance(n2, Network)
+        assert isinstance(n1, Network) and isinstance(n2, Network), n2
         return self.set([n1, n2])
 
 
 def g_3_arrow_to_network(decomp):
+<<<<<<< Updated upstream
     """To be used as a bijection in the rules H and H_dx."""
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
     if isinstance(decomp, ProdClass):
+=======
+    """To be used as a bijection in the rules H, H_dx and H_dx_dx."""
+    # decomp = graph (1) | (network,graph_dy) (2) | ((network, network),graph_dy_dy) (3)
+    if not isinstance(decomp, ProdClass):
+        # Form (1)
+        g = decomp.underive_all()
+        link_edge = g.half_edge
+        res = Network(link_edge, is_linked=False)
+    elif isinstance(decomp.first, Network):
+        # Form (2)
+>>>>>>> Stashed changes
         network = decomp.first
-        u_der_graph = decomp.second
-        substitute_edge_by_network(u_der_graph.marked_atom, network)
-        return Network(u_der_graph.base_class_object.half_edge, is_linked=False)
+        marked_atom = decomp.second.marked_atom
+        g = decomp.second.underive_all()
+        substitute_edge_by_network(marked_atom, network)
+        res = Network(g.half_edge, is_linked=False)
     else:
-        graph = decomp
-        if isinstance(decomp, LDerivedClass):
-            graph = decomp.base_class_object
-        link_edge = graph.half_edge
-        # Create and return the network.
-        return Network(link_edge, is_linked=False)
+        # Form (3)
+        network1 = decomp.first.first
+        network2 = decomp.first.second
+        marked_atom1 = decomp.second.marked_atom
+        marked_atom2 = decomp.second.base_class_object.marked_atom
+        g = decomp.second.underive_all()
+        substitute_edge_by_network(marked_atom1, network1)
+        substitute_edge_by_network(marked_atom2, network2)
+        res = Network(g.half_edge, is_linked=False)
+    res.type = 'H'
+    return res
 
 
 def network_grammar():
@@ -124,6 +167,13 @@ def network_grammar():
     P_dx = AliasSampler('P_dx')
     H = AliasSampler('H')
     H_dx = AliasSampler('H_dx')
+    D_dx_dx = AliasSampler('D_dx_dx')
+    S_dx_dx = AliasSampler('S_dx_dx')
+    P_dx_dx = AliasSampler('P_dx_dx')
+    H_dx_dx = AliasSampler('H_dx_dx')
+    G_3_arrow_dx_dx = AliasSampler('G_3_arrow_dx_dx')
+    G_3_arrow_dx_dy = AliasSampler('G_3_arrow_dx_dy')
+    G_3_arrow_dy_dy = AliasSampler('G_3_arrow_dy_dy')
     Bij = BijectionSampler
     Set = SetSampler
     USubs = USubsSampler
@@ -137,7 +187,7 @@ def network_grammar():
 
         'D': U() + S + P + H,
 
-        'S': (U() + P + H) * L() * D,
+        'S': (U() + P + H) * D * L(),
 
         'P': U() * Set(1, S + H) + Set(2, S + H),
 
@@ -147,33 +197,103 @@ def network_grammar():
 
         'D_dx': S_dx + P_dx + H_dx,
 
-        'S_dx': (P_dx + H_dx) * L() * D + (U() + P + H) * (D + L() * D_dx),
+        'S_dx':
+            (P_dx + H_dx) * D * L()
+            + (U() + P + H) * D_dx * L()
+            + (U() + P + H) * D,
 
-        'P_dx': U() * (S_dx + H_dx) * Set(0, S + H) + (S_dx + H_dx) * Set(1, S + H),
+        'P_dx':
+            U() * (S_dx + H_dx) * Set(0, S + H)
+            + (S_dx + H_dx) * Set(1, S + H),
 
-        'H_dx': Bij(USubs(G_3_arrow_dx, D) + D_dx * USubs(G_3_arrow_dy, D), g_3_arrow_to_network),
+        'H_dx':
+            Bij(
+                USubs(G_3_arrow_dx, D) + D_dx * USubs(G_3_arrow_dy, D),
+                g_3_arrow_to_network
+            ),
+
+        # bi-l-derived networks
+
+        'D_dx_dx':
+            S_dx_dx + P_dx_dx + H_dx_dx,
+
+        'S_dx_dx':
+            (P_dx_dx + H_dx_dx) * D * L()
+            + 2 * (P_dx + H_dx) * D_dx * L()
+            + (U() + P + H) * D_dx_dx * L()
+            + 2 * (P_dx + H_dx) * D
+            + 2 * (U() + P + H) * D_dx,
+
+        'P_dx_dx':
+            U() * (S_dx_dx + H_dx_dx) * Set(0, S + H)
+            + U() * (S_dx + H_dx) ** 2 * Set(0, S + H)
+            + (S_dx_dx + H_dx_dx) * Set(1, S + H)
+            + (S_dx + H_dx) ** 2 * Set(0, S + H),
+
+        'H_dx_dx':
+            Bij(
+                USubs(G_3_arrow_dx_dx, D)
+                + 2 * D_dx * USubs(G_3_arrow_dx_dy, D)
+                + D_dx_dx * USubs(G_3_arrow_dy, D)
+                + D_dx ** 2 * USubs(G_3_arrow_dy_dy, D),
+                g_3_arrow_to_network
+            ),
 
     }
 
+<<<<<<< Updated upstream
     # Set up builders.
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
     grammar.set_builder(['D', 'S', 'P', 'H', 'D_dx', 'S_dx', 'P_dx', 'H_dx'], NetworkBuilder())
     grammar.set_builder(['P', 'P_dx'], PNetworkBuilder())
     grammar.set_builder(['S', 'S_dx'], SNetworkBuilder())
+=======
+    # Set up builders.
+    grammar.set_builder(['D', 'S', 'P', 'H',
+                         'D_dx', 'S_dx', 'P_dx', 'H_dx',
+                         'D_dx_dx', 'S_dx_dx', 'P_dx_dx', 'H_dx_dx'], NetworkBuilder())
+    grammar.set_builder(['P', 'P_dx', 'P_dx_dx'], PNetworkBuilder())
+    grammar.set_builder(['S', 'S_dx', 'S_dx_dx'], SNetworkBuilder())
+    EarlyRejectionControl.grammar = grammar
+>>>>>>> Stashed changes
 
     return grammar
 
 
 if __name__ == '__main__':
+<<<<<<< Updated upstream
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
+=======
+<<<<<<< Updated upstream
+    grammar = network_grammar()
+    grammar.init()
+    #grammar.dummy_sampling_mode()
+>>>>>>> Stashed changes
 
     BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n1000)
     BoltzmannSamplerBase.debug_mode = True
+=======
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import *
+    from timeit import default_timer as timer
+
+    oracle = EvaluationOracle(my_evals_100)
+    BoltzmannSamplerBase.oracle = oracle
+    BoltzmannSamplerBase.debug_mode = False
+>>>>>>> Stashed changes
 
     grammar = network_grammar()
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+
+>>>>>>> Stashed changes
     sampled_class = 'D_dx'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
@@ -188,4 +308,58 @@ if __name__ == '__main__':
                 g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
                 plt.show()
         except RecursionError:
+<<<<<<< Updated upstream
             print("RecursionError")
+=======
+            pass
+
+    c = [0, 0, 0, 0, 0, 0, 0, 0]
+    samples = 1000
+    i = 0
+    while i < samples:
+        try:
+            g = grammar.sample(sampled_class, symbolic_x, symbolic_y)
+            if g.l_size() == 2:
+                assert g.is_consistent()
+                c[g.u_size()] += 1
+                i += 1
+        except RecursionError:
+            pass
+
+    print(c)
+=======
+    sampled_class = 'D_dx_dx'
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+
+    try:
+        print("expected avg. size: {}\n".format(oracle.get_expected_l_size(sampled_class, symbolic_x, symbolic_y)))
+    except BoltzmannFrameworkError:
+        pass
+
+    random.seed(0)
+    boltzmann_framework_random_gen.seed(13)
+
+    # l_sizes = []
+    # i = 0
+    # samples = 100
+    # start = timer()
+    # while i < samples:
+    #     obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+    #     l_sizes.append(obj.l_size)
+    #     i += 1
+    # end = timer()
+    # print()
+    # print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
+    # print("time: {}".format(end - start))
+
+    while True:
+        g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        if g.l_size > 0:
+            print(g.l_size)
+            #print("is linked: {}".format(g.is_linked))
+            #print(g.u_size / g.l_size)
+            # assert g.is_consistent
+            #g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
+            #plt.show()
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes

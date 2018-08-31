@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 # -*- coding: utf-8 -*-
 #    Copyright (C) 2018 by
 #    Marta Grobelna <marta.grobelna@rwth-aachen.de>
@@ -12,7 +13,27 @@
 #           Rudi Floren <rudi.floren@gmail.com>
 #           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
 
+=======
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
 import random as rnd
+=======
+# -*- coding: utf-8 -*-
+#    Copyright (C) 2018 by
+#    Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#    Petre Petrov <petrepp4@gmail.com>
+#    Rudi Floren <rudi.floren@gmail.com>
+#    Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+#    All rights reserved.
+#    BSD license.
+#
+# Authors:  Marta Grobelna <marta.grobelna@rwth-aachen.de>
+#           Petre Petrov <petrepp4@gmail.com>
+#           Rudi Floren <rudi.floren@gmail.com>
+#           Tobias Winkler <tobias.winkler1@rwth-aachen.de>
+
+import random
+>>>>>>> Stashed changes
 
 from planar_graph_sampler.bijections.networks import substitute_edge_by_network
 from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
@@ -54,9 +75,20 @@ class EdgeRootedThreeConnectedPlanarGraph(HalfEdgeGraph):
         raise NotImplementedError
 
     def random_u_atom(self):
-        possible_edges = self.root_half_edge.get_all_half_edges(include_unpaired=False) - {self.root_half_edge,
-                                                                                           self.root_half_edge.opposite}
-        return rnd.choice(list(possible_edges))
+        possible_edges = self.root_half_edge.get_all_half_edges(include_unpaired=False)
+        possible_edges.remove(self.root_half_edge)
+        possible_edges.remove(self.root_half_edge.opposite)
+        return random.choice(list(possible_edges))
+
+    def two_random_u_atoms(self):
+        possible_edges = self.root_half_edge.get_all_half_edges(include_unpaired=False)
+        possible_edges.remove(self.root_half_edge)
+        possible_edges.remove(self.root_half_edge.opposite)
+        he1 = random.choice(possible_edges)
+        possible_edges.remove(he1)
+        possible_edges.remove(he1.opposite)
+        he2 = random.choice(possible_edges)
+        return he1, he2
 
     def replace_u_atoms(self, sampler, x, y, exceptions=None):
         """Needed in the u-substitution that occurs in the network decomposition."""
@@ -70,7 +102,8 @@ class EdgeRootedThreeConnectedPlanarGraph(HalfEdgeGraph):
             for excp in exceptions:
                 try:
                     edges_for_subs.remove(excp)
-                except KeyError:
+                #except KeyError:
+                except ValueError:
                     edges_for_subs.remove(excp.opposite)
         # Substitute the edges with a newly sampled network one by one.
         for edge_for_substitution in edges_for_subs:

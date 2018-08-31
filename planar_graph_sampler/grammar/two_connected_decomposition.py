@@ -33,6 +33,7 @@ class ZeroAtomGraphBuilder(DefaultBuilder):
         self._counter = Counter()
 
     def zero_atom(self):
+        # TODO is this really the correct zero atom?
         root_half_edge = HalfEdge(self_consistent=True)
         root_half_edge.node_nr = next(self._counter)
         root_half_edge_opposite = HalfEdge(self_consistent=True)
@@ -55,6 +56,7 @@ def to_G_2_dx(decomp):
 
 
 def to_G_2_arrow(network):
+    # TODO isn't network already EdgeRootedTwoConnectedPlanarGraph when sampling from Z?
     return EdgeRootedTwoConnectedPlanarGraph(network.half_edge)
 
 
@@ -92,6 +94,8 @@ def two_connected_graph_grammar():
 
     grammar = DecompositionGrammar()
     grammar.rules = network_grammar().rules
+    grammar['R_w'].builder.grammar = grammar
+    grammar['R_b'].builder.grammar = grammar
 
     grammar.rules = {
 

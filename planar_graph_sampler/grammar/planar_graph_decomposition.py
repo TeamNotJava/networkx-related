@@ -67,17 +67,36 @@ def planar_graph_grammar():
         'G_dx_dx': G_1_dx_dx * G + G_1_dx * G_dx,
 
     }
+<<<<<<< Updated upstream
     grammar.set_builder(['G', 'G_dx', 'G_dx_dx'], PlanarGraphBuilder())
+=======
+<<<<<<< Updated upstream
+=======
+    grammar.set_builder(['G', 'G_dx', 'G_dx_dx'], PlanarGraphBuilder())
+    grammar['R_w'].builder.grammar = grammar
+    grammar['R_b'].builder.grammar = grammar
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
     return grammar
 
 
 if __name__ == '__main__':
+<<<<<<< Updated upstream
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000, \
         reference_evals
+=======
+<<<<<<< Updated upstream
+    grammar = planar_graph_grammar()
+    grammar.init()
+=======
+    import matplotlib.pyplot as plt
+    from planar_graph_sampler.evaluations_planar_graph import *
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
+    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals[10000])
     BoltzmannSamplerBase.debug_mode = False
 
     grammar = planar_graph_grammar()
@@ -90,6 +109,11 @@ if __name__ == '__main__':
     # random.seed(0)
 
     while True:
+<<<<<<< Updated upstream
+=======
+<<<<<<< Updated upstream
+
+>>>>>>> Stashed changes
         try:
             g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
             if g.l_size > 0:
@@ -98,4 +122,19 @@ if __name__ == '__main__':
                 nx.draw(g, pos=nx.combinatorial_embedding_to_pos(g), node_size=10, use_planar_drawer=True)
                 plt.show()
         except RecursionError:
+<<<<<<< Updated upstream
             print("Recursion error")
+=======
+            print("Recursion error occurred, continuing")
+            pass
+=======
+        g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        if g.l_size > 0:
+            g = bij_connected_comps(g)
+            print(g.number_of_nodes())
+            print()
+            # nx.draw(g, pos=nx.combinatorial_embedding_to_pos(g), node_size=10, use_planar_drawer=True)
+            # plt.show()
+
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
