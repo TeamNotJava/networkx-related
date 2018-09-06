@@ -39,7 +39,9 @@ class Network(HalfEdgeGraph):
         super_ok = super(Network, self).is_consistent
         # Only the linked networks are 2-connected.
         is_two_connected = True #not self.is_linked or self.is_connected(2)
-        return all([super_ok, is_two_connected])
+        u_size_ok = self._u_size == self.number_of_edges - (not self.is_linked)
+        l_size_ok = self._l_size == self.number_of_nodes - 2
+        return all([super_ok, is_two_connected, u_size_ok])
 
     @property
     def is_link_graph(self):

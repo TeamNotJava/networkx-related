@@ -34,7 +34,7 @@ class Merger(DefaultBuilder):
             return LDerivedClass(OneConnectedPlanarGraph(), g.half_edge)
         result = graphs.pop()
         for g in graphs:
-            result.marked_atom.insert_all(g.marked_atom)
+            result.marked_atom.insert_all_after(g.marked_atom)
         assert isinstance(result, LDerivedClass)
         return result
 
@@ -45,7 +45,7 @@ def merge(prod):
     lhs = prod.first
     rhs = prod.second
     if not lhs.base_class_object.marked_atom.is_trivial:
-        rhs.marked_atom.insert_all(lhs.base_class_object.marked_atom)
+        rhs.marked_atom.insert_all_after(lhs.base_class_object.marked_atom)
     return lhs
 
 
@@ -56,7 +56,7 @@ def subs_marked_vertex(decomp):
     else:
         plug_in_he = decomp.first.second.marked_atom  # or ... .base_class_object.marked_atom ?
     if not plug_in_he.is_trivial:
-        decomp.second.base_class_object.marked_atom.insert_all(plug_in_he)
+        decomp.second.base_class_object.marked_atom.insert_all_after(plug_in_he)
     return decomp.second
 
 
@@ -71,9 +71,9 @@ def subs_marked_vertex_2(decomp):
     else:
         plug_in_he2 = decomp.first.second.second.marked_atom
     if not plug_in_he1.is_trivial:
-        decomp.second.base_class_object.base_class_object.marked_atom.insert_all(plug_in_he1)
+        decomp.second.base_class_object.base_class_object.marked_atom.insert_all_after(plug_in_he1)
     if not plug_in_he2.is_trivial:
-        decomp.second.base_class_object.marked_atom.insert_all(plug_in_he2)
+        decomp.second.base_class_object.marked_atom.insert_all_after(plug_in_he2)
     return decomp.second
 
 
@@ -171,6 +171,7 @@ if __name__ == '__main__':
     import matplotlib.pyplot as plt
     from planar_graph_sampler.evaluations_planar_graph import *
     from timeit import default_timer as timer
+    from framework.settings_global import Stats
 
     oracle = EvaluationOracle(my_evals_100)
     BoltzmannSamplerBase.oracle = oracle
@@ -211,10 +212,14 @@ if __name__ == '__main__':
 
     while True:
         g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        if g.l_size > 200:
-            g = g.underive_all()
-            print(g.l_size)
-            print(g.u_size / g.l_size)
-            # assert g.is_consistent
-            #g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
-            #plt.show()
+        print(g)
+        for key, value in sorted(Stats.rules.items(), key=lambda x: x[1]):
+            print("{} : {}".format(key, value))
+        print()
+        # if g.l_size >= 1000:
+        #     g = g.underive_all()
+        #     print(g)
+        #     print(g.u_size / g.l_size)
+        #     # assert g.is_consistent
+        #     #g.plot(with_labels=False, use_planar_drawer=False, node_size=13)
+        #     #plt.show()

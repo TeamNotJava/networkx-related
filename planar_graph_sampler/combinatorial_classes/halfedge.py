@@ -79,7 +79,7 @@ class HalfEdge(object):
         self.next.prior = self.prior
         self.prior.next = self.next
         # Clear the half edge object.
-        self.clear()
+        # self.clear()
 
     def clear(self):
         """Clear all the half_edge connections and data from it."""
@@ -88,7 +88,7 @@ class HalfEdge(object):
         self.next = None
         self.node_nr = -1
 
-    def insert_all(self, other):
+    def insert_all_after(self, other):
         """Inserts the given half-edge and all its incident half-edges after this half-edge."""
         # Set node numbers.
         for he in other.incident_half_edges():
@@ -102,6 +102,18 @@ class HalfEdge(object):
         old_next.prior = old_other_prior
         old_other_prior.next = old_next
         assert self.degree() == other_degree + old_degree
+
+    def insert_all_before(self, other):
+        """Inserts the given half-edge and all its incident half-edges after this half-edge."""
+        # Set node numbers.
+        for he in other.incident_half_edges():
+            he.node_nr = self.node_nr
+        old_prior = self.prior
+        self.prior = other
+        old_other_next = other.next
+        other.next = self
+        old_prior.next = old_other_next
+        old_other_next.prior = old_prior
 
     def invert(self):
         """Inverts order."""

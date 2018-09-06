@@ -52,7 +52,7 @@ class TwoConnectedPlanarGraph(HalfEdgeGraph):
             if not plug_in.is_trivial:
                 # Get an arbitrary half-edge incident to the current node.
                 he = nodes[node][0]
-                he.insert_all(plug_in)
+                he.insert_all_after(plug_in)
         return OneConnectedPlanarGraph(self.half_edge)
 
     def __str__(self):
@@ -71,3 +71,6 @@ class EdgeRootedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
     @property
     def l_size(self):
         return super(EdgeRootedTwoConnectedPlanarGraph, self).l_size - 2
+
+    def __str__(self):
+        return "edge-rooted 2-connected planar graph (l: {}, u: {})".format(self.number_of_nodes, self.number_of_edges)

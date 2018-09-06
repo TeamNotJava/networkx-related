@@ -196,7 +196,7 @@ if __name__ == '__main__':
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
-    sampled_class = 'G_2_dx'
+    sampled_class = 'G_2_arrow'
     # print(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
     end = timer()
@@ -210,26 +210,25 @@ if __name__ == '__main__':
     # random.seed(0)
     # boltzmann_framework_random_gen.seed(13)
 
-    l_sizes = []
-    i = 0
-    samples = 10
-    start = timer()
-    while i < samples:
-        obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        l_sizes.append(obj.l_size)
-        # print(obj.l_size)
-        i += 1
-    end = timer()
-    print()
-    print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
-    print("time: {}".format(end - start))
+    # l_sizes = []
+    # i = 0
+    # samples = 10
+    # start = timer()
+    # while i < samples:
+    #     obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+    #     l_sizes.append(obj.l_size)
+    #     # print(obj.l_size)
+    #     i += 1
+    # end = timer()
+    # print()
+    # print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
+    # print("time: {}".format(end - start))
 
-    # while True:
-    #     g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-    #     if g.l_size > 0:
-    #         print(g.l_size)
-    #         #print("is linked: {}".format(g.is_linked))
-    #         #print(g.u_size / g.l_size)
-    #         # assert g.is_consistent
-    #         #g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
-    #         #plt.show()
+    while True:
+        g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        if g.l_size == 1:
+            g = g.underive_all()
+            print(g)
+            assert g.is_consistent
+            g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
+            plt.show()
