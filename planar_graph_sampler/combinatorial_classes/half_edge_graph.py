@@ -61,14 +61,22 @@ class HalfEdgeGraph(CombinatorialClass):
         """Number of half-edges in the graph."""
         return len(self.half_edge.get_all_half_edges(include_unpaired=True, include_opp=True))
 
-    def random_node_half_edge(self):
+    def random_node_half_edge(self, count=1):
         """Returns a half-edge incident to a node chosen uniformly at random.
 
         This is not the same as choosing a random half-edge!
         """
         nodes = self.half_edge.node_dict()
-        random_node = random.choice(list(nodes.keys()))
-        return nodes[random_node][0]
+        if count is 1:
+            random_node = random.choice(list(nodes.keys()))
+            return nodes[random_node][0]
+        else:
+            res = []
+            for _ in range(count):
+                random_node = random.choice(list(nodes.keys()))
+                res.append(nodes[random_node][0])
+                nodes.pop(random_node)
+        return res
 
     @property
     def is_consistent(self):

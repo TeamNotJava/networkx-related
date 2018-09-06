@@ -54,9 +54,26 @@ def subs_marked_vertex(decomp):
     if isinstance(decomp.first, LDerivedClass):
         plug_in_he = decomp.first.marked_atom
     else:
-        plug_in_he = decomp.first.second.base_class_object.marked_atom # or ... .base_class_object.marked_atom ?
+        plug_in_he = decomp.first.second.marked_atom  # or ... .base_class_object.marked_atom ?
     if not plug_in_he.is_trivial:
-        decomp.second.marked_atom.insert_all(plug_in_he)
+        decomp.second.base_class_object.marked_atom.insert_all(plug_in_he)
+    return decomp.second
+
+
+def subs_marked_vertex_2(decomp):
+    # decomp is of form ((G_1_dx + L * G_1_dx_dx) * (G_1_dx + L * G_1_dx_dx)) * G_2_dx_dx_dx.
+    if isinstance(decomp.first.first, LDerivedClass):
+        plug_in_he1 = decomp.first.first.marked_atom
+    else:
+        plug_in_he1 = decomp.first.first.second.marked_atom
+    if isinstance(decomp.first.second, LDerivedClass):
+        plug_in_he2 = decomp.first.second.marked_atom
+    else:
+        plug_in_he2 = decomp.first.second.second.marked_atom
+    if not plug_in_he1.is_trivial:
+        decomp.second.base_class_object.base_class_object.marked_atom.insert_all(plug_in_he1)
+    if not plug_in_he2.is_trivial:
+        decomp.second.base_class_object.marked_atom.insert_all(plug_in_he2)
     return decomp.second
 
 
@@ -77,8 +94,10 @@ def one_connected_graph_grammar():
     L = LAtomSampler
     G_2_dx = AliasSampler('G_2_dx')
     G_2_dx_dx = AliasSampler('G_2_dx_dx')
+    G_2_dx_dx_dx = AliasSampler('G_2_dx_dx_dx')
     G_1_dx = AliasSampler('G_1_dx')
     G_1_dx_dx = AliasSampler('G_1_dx_dx')
+    G_1_dx_dx_dx = AliasSampler('G_1_dx_dx_dx')
     Set = SetSampler
     LSubs = LSubsSampler
     Bij = BijectionSampler
@@ -88,16 +107,57 @@ def one_connected_graph_grammar():
     grammar.rules = two_connected_graph_grammar().rules
     grammar.rules = {
 
-        # 1 connected planar graphs
+        'G_1':
+            Bij(
+                Rej(
+                    G_1_dx,
+                    rej_to_G_1  # See lemma 15.
+                ),
+                underive
+            ),
 
-        'G_1_dx': Set(0, LSubs(G_2_dx, L() * G_1_dx)),
+        'G_1_dx':
+            Set(
+                0,
+                LSubs(
+                    G_2_dx,
+                    L() * G_1_dx
+                )
+            ),
 
         'G_1_dx_dx':
             Bij(
-                Bij((G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx), subs_marked_vertex) * G_1_dx,
-            merge),
+                Bij(
+                    (G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx),
+                    subs_marked_vertex
+                ) * G_1_dx,
+                merge
+            ),
 
-        'G_1': Bij(Rej(G_1_dx, rej_to_G_1), underive)  # See lemma 15.
+        'G_1_dx_dx_dx':
+            Bij(
+                Bij(
+                    (2 * G_1_dx_dx + L() * G_1_dx_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx),
+                    subs_marked_vertex
+                ) * G_1_dx,
+                merge
+            )
+
+            + Bij(
+                Bij(
+                    (G_1_dx + L() * G_1_dx_dx) ** 2 * LSubs(G_2_dx_dx_dx, L() * G_1_dx),
+                    subs_marked_vertex_2
+                ) * G_1_dx,
+                merge
+            )
+
+            + Bij(
+                Bij(
+                    (G_1_dx + L() * G_1_dx_dx) * LSubs(G_2_dx_dx, L() * G_1_dx),
+                    subs_marked_vertex
+                ) * G_1_dx_dx,
+                merge
+            ),
 
     }
     grammar.set_builder(['G_1_dx'], Merger())
@@ -108,66 +168,53 @@ def one_connected_graph_grammar():
 
 
 if __name__ == '__main__':
-<<<<<<< Updated upstream
     import matplotlib.pyplot as plt
-    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100, planar_graph_evals_n1000
-=======
-<<<<<<< Updated upstream
-    grammar = one_connected_graph_grammar()
-    grammar.init()
-=======
-    import matplotlib.pyplot as plt
-    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals, reference_evals
->>>>>>> Stashed changes
->>>>>>> Stashed changes
+    from planar_graph_sampler.evaluations_planar_graph import *
+    from timeit import default_timer as timer
 
-    BoltzmannSamplerBase.oracle = EvaluationOracle(reference_evals)
+    oracle = EvaluationOracle(my_evals_100)
+    BoltzmannSamplerBase.oracle = oracle
     BoltzmannSamplerBase.debug_mode = False
 
+    start = timer()
     grammar = one_connected_graph_grammar()
     grammar.init()
     symbolic_x = 'x'
     symbolic_y = 'y'
-    sampled_class = 'G_1_dx_dx'
+    sampled_class = 'G_1_dx_dx_dx'
+    # print(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+    end = timer()
+    print("Time init: {}".format(end - start))
+
+    try:
+        print("expected avg. size: {}\n".format(oracle.get_expected_l_size(sampled_class, symbolic_x, symbolic_y)))
+    except BoltzmannFrameworkError:
+        pass
 
     # random.seed(0)
+    # boltzmann_framework_random_gen.seed(13)
 
-    i = 0
-    l_sizes = []
+    # l_sizes = []
+    # i = 0
+    # samples = 100
+    # start = timer()
+    # while i < samples:
+    #     obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+    #     l_sizes.append(obj.l_size)
+    #     # print(obj.l_size)
+    #     i += 1
+    # end = timer()
+    # print()
+    # print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
+    # print("time: {}".format(end - start))
+
     while True:
-<<<<<<< Updated upstream
-=======
-<<<<<<< Updated upstream
-
->>>>>>> Stashed changes
-        try:
-            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 0:
-                g = g.underive_all()
-                print(g)
-                assert g.is_consistent
-                g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
-                plt.show()
-        except RecursionError:
-<<<<<<< Updated upstream
-            print("Recursion error")
-=======
-            pass
-=======
         g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        g = g.underive_all()
-        l_sizes.append(g.l_size)
-        i += 1
-        if g.l_size >= 1000:
+        if g.l_size > 200:
             g = g.underive_all()
-            print(g)
+            print(g.l_size)
             print(g.u_size / g.l_size)
-            #assert g.is_consistent
-            #g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
+            # assert g.is_consistent
+            #g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
             #plt.show()
-
-    print(sum(l_sizes) / len(l_sizes))
-
->>>>>>> Stashed changes
->>>>>>> Stashed changes

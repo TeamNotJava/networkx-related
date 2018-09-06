@@ -48,7 +48,7 @@ def to_G_2(decomp):
 
 
 def to_G_2_dx(decomp):
-    g = decomp.second.derive_all()
+    g = decomp.second.underive_all()
     assert isinstance(g, EdgeRootedTwoConnectedPlanarGraph), g
     return LDerivedClass(TwoConnectedPlanarGraph(g.half_edge))
 
@@ -79,6 +79,26 @@ def to_G_2_arrow_dx_dx(network):
 def divide_by_1_plus_y(evl, x, y):
     """Needed as an eval-transform for rules G_2_arrow and G_2_arrow_dx."""
     return evl / (1 + BoltzmannSamplerBase.oracle.get(y))
+
+
+def mark_l_atom(g_dx):
+    g_dx.marked_atom = g_dx.underive_all().random_node_half_edge(1)
+    return g_dx
+
+
+def mark_2_l_atoms(g_dx_dx):
+    atoms = g_dx_dx.underive_all().random_node_half_edge(2)
+    g_dx_dx.marked_atom = atoms[0]
+    g_dx_dx.base_class_object.marked_atom = atoms[1]
+    return g_dx_dx
+
+
+def mark_3_l_atoms(g_dx_dx_dx):
+    atoms = g_dx_dx_dx.underive_all().random_node_half_edge(3)
+    g_dx_dx_dx.marked_atom = atoms[0]
+    g_dx_dx_dx.base_class_object.marked_atom = atoms[1]
+    g_dx_dx_dx.base_class_object.base_class_object.marked_atom = atoms[2]
+    return g_dx_dx_dx
 
 
 def two_connected_graph_grammar():
@@ -123,7 +143,11 @@ def two_connected_graph_grammar():
 
         'G_2_dy': Trans(F, to_u_derived_class, eval_transform=divide_by_2),
 
-        'G_2_dx': DxFromDy(G_2_dy, alpha_l_u=1.0),  # see p. 26 TODO check this, error in paper?
+        'G_2_dx':
+            Bij(
+                DxFromDy(G_2_dy, alpha_l_u=1.0),  # see p. 26 TODO check this, error in paper?
+                mark_l_atom
+            ),
 
         # l-derived two connected
 
@@ -133,7 +157,11 @@ def two_connected_graph_grammar():
 
         'G_2_dx_dy': Trans(F_dx, to_u_derived_class, eval_transform=divide_by_2),
 
-        'G_2_dx_dx': DxFromDy(G_2_dx_dy, alpha_l_u=1.0),  # see 5.5
+        'G_2_dx_dx':
+            Bij(
+                DxFromDy(G_2_dx_dy, alpha_l_u=1.0),  # see 5.5
+                mark_2_l_atoms
+            ),
 
         # bi-l-derived two connected
 
@@ -143,7 +171,11 @@ def two_connected_graph_grammar():
 
         'G_2_dx_dx_dy': Trans(F_dx_dx, to_u_derived_class, eval_transform=divide_by_2),
 
-        'G_2_dx_dx_dx': DxFromDy(G_2_dx_dx_dy, alpha_l_u=1.0),
+        'G_2_dx_dx_dx':
+            Bij(
+                DxFromDy(G_2_dx_dx_dy, alpha_l_u=1.0),
+                mark_3_l_atoms
+            ),
 
     }
     grammar.set_builder(['G_2_arrow'], ZeroAtomGraphBuilder())
@@ -164,9 +196,9 @@ if __name__ == '__main__':
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
-    sampled_class = 'G_2_dx_dx_dx'
+    sampled_class = 'G_2_dx'
     # print(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))
-    # grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
     end = timer()
     print("Time init: {}".format(end - start))
 
@@ -180,12 +212,12 @@ if __name__ == '__main__':
 
     l_sizes = []
     i = 0
-    samples = 100
+    samples = 10
     start = timer()
     while i < samples:
         obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
         l_sizes.append(obj.l_size)
-        print(obj.l_size)
+        # print(obj.l_size)
         i += 1
     end = timer()
     print()
