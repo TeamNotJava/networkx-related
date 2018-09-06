@@ -48,11 +48,19 @@ def to_G_2(decomp):
 
 
 def to_G_2_dx(decomp):
-    g = decomp.second
-    assert isinstance(g, EdgeRootedTwoConnectedPlanarGraph) or isinstance(g, LDerivedClass)
-    if isinstance(g, LDerivedClass):
-        g = g.base_class_object
+    g = decomp.second.derive_all()
+    assert isinstance(g, EdgeRootedTwoConnectedPlanarGraph), g
     return LDerivedClass(TwoConnectedPlanarGraph(g.half_edge))
+
+
+def to_G_2_dx_dx(decomp):
+    if isinstance(decomp, ProdClass):
+        g = decomp.second
+    else:
+        g = decomp
+    g = g.underive_all()
+    assert isinstance(g, EdgeRootedTwoConnectedPlanarGraph), g
+    return LDerivedClass(LDerivedClass(TwoConnectedPlanarGraph(g.half_edge)))
 
 
 def to_G_2_arrow(network):
@@ -61,7 +69,11 @@ def to_G_2_arrow(network):
 
 
 def to_G_2_arrow_dx(network):
-    return LDerivedClass(EdgeRootedTwoConnectedPlanarGraph(network.half_edge))
+    return LDerivedClass(to_G_2_arrow(network))
+
+
+def to_G_2_arrow_dx_dx(network):
+    return LDerivedClass(to_G_2_arrow_dx(network))
 
 
 def divide_by_1_plus_y(evl, x, y):
@@ -82,12 +94,16 @@ def two_connected_graph_grammar():
     L = LAtomSampler
     D = AliasSampler('D')
     D_dx = AliasSampler('D_dx')
+    D_dx_dx = AliasSampler('D_dx_dx')
     F = AliasSampler('F')
     F_dx = AliasSampler('F_dx')
+    F_dx_dx = AliasSampler('F_dx_dx')
     G_2_dy = AliasSampler('G_2_dy')
     G_2_dx_dy = AliasSampler('G_2_dx_dy')
+    G_2_dx_dx_dy = AliasSampler('G_2_dx_dx_dy')
     G_2_arrow = AliasSampler('G_2_arrow')
     G_2_arrow_dx = AliasSampler('G_2_arrow_dx')
+    G_2_arrow_dx_dx = AliasSampler('G_2_arrow_dx_dx')
     Trans = TransformationSampler
     Bij = BijectionSampler
     DxFromDy = LDerFromUDerSampler
@@ -107,7 +123,7 @@ def two_connected_graph_grammar():
 
         'G_2_dy': Trans(F, to_u_derived_class, eval_transform=divide_by_2),
 
-        'G_2_dx': DxFromDy(G_2_dy, alpha_l_u=2.0),  # see p. 26
+        'G_2_dx': DxFromDy(G_2_dy, alpha_l_u=1.0),  # see p. 26 TODO check this, error in paper?
 
         # l-derived two connected
 
@@ -119,6 +135,16 @@ def two_connected_graph_grammar():
 
         'G_2_dx_dx': DxFromDy(G_2_dx_dy, alpha_l_u=1.0),  # see 5.5
 
+        # bi-l-derived two connected
+
+        'G_2_arrow_dx_dx': Trans(D_dx_dx, to_G_2_arrow_dx_dx, eval_transform=divide_by_1_plus_y),
+
+        'F_dx_dx': Bij(L() ** 2 * G_2_arrow_dx_dx + 4 * L() * G_2_arrow_dx + 2 * G_2_arrow, to_G_2_dx_dx),
+
+        'G_2_dx_dx_dy': Trans(F_dx_dx, to_u_derived_class, eval_transform=divide_by_2),
+
+        'G_2_dx_dx_dx': DxFromDy(G_2_dx_dx_dy, alpha_l_u=1.0),
+
     }
     grammar.set_builder(['G_2_arrow'], ZeroAtomGraphBuilder())
     return grammar
@@ -126,26 +152,52 @@ def two_connected_graph_grammar():
 
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
-    from planar_graph_sampler.evaluations_planar_graph import planar_graph_evals_n100
+    from planar_graph_sampler.evaluations_planar_graph import *
+    from timeit import default_timer as timer
 
-    BoltzmannSamplerBase.oracle = EvaluationOracle(planar_graph_evals_n100)
-    BoltzmannSamplerBase.debug_mode = True
+    oracle = EvaluationOracle(my_evals_100)
+    BoltzmannSamplerBase.oracle = oracle
+    BoltzmannSamplerBase.debug_mode = False
 
+    start = timer()
     grammar = two_connected_graph_grammar()
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
-    sampled_class = 'G_2_dx_dx'
-    grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+    sampled_class = 'G_2_dx_dx_dx'
+    # print(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))
+    # grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
+    end = timer()
+    print("Time init: {}".format(end - start))
 
-    while True:
-        try:
-            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-            if g.l_size > 0:
-                g = g.underive_all()
-                assert g.is_consistent
-                print(g)
-                g.plot(with_labels=False, node_size=25, use_planar_drawer=False)
-                plt.show()
-        except RecursionError:
-            print("Recursion error")
+    try:
+        print("expected avg. size: {}\n".format(oracle.get_expected_l_size(sampled_class, symbolic_x, symbolic_y)))
+    except BoltzmannFrameworkError:
+        pass
+
+    # random.seed(0)
+    # boltzmann_framework_random_gen.seed(13)
+
+    l_sizes = []
+    i = 0
+    samples = 100
+    start = timer()
+    while i < samples:
+        obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        l_sizes.append(obj.l_size)
+        print(obj.l_size)
+        i += 1
+    end = timer()
+    print()
+    print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
+    print("time: {}".format(end - start))
+
+    # while True:
+    #     g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+    #     if g.l_size > 0:
+    #         print(g.l_size)
+    #         #print("is linked: {}".format(g.is_linked))
+    #         #print(g.u_size / g.l_size)
+    #         # assert g.is_consistent
+    #         #g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
+    #         #plt.show()

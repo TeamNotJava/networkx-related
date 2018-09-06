@@ -236,6 +236,8 @@ class BoltzmannSamplerBase(object):
             return self + self
         if other == 3:
             return self + self + self
+        if other == 4:
+            return self + self + self + self
         else:
             raise ValueError("Multiplication with a constant only implemented for integers 2 and 3")
 

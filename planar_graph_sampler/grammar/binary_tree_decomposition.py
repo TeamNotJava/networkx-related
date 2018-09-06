@@ -87,6 +87,11 @@ class BlackRootedBinaryTreeBuilder(BinaryTreeBuilder):
 
     def u_atom(self):
         # A u-atom is a leaf.
+        if EarlyRejectionControl.rejection_activated:
+            EarlyRejectionControl.L += 1
+            L = EarlyRejectionControl.L
+            if L > 1 and not bern(L / (L + 1)):
+                EarlyRejectionControl.grammar.restart_sampler()
         return Leaf()
 
     def product(self, lhs, rhs):
@@ -109,16 +114,9 @@ class BlackRootedBinaryTreeBuilder(BinaryTreeBuilder):
         return res
 
 
-def rej_to_K(u_derived_tree):
-    return bern(2 / (u_derived_tree.u_size + 1))
-
-
 def to_K_dy(tree):
     tree.leaves_count += 1
     return UDerivedClass(tree)
-
-def get_base_class(obj):
-    return obj.base_class_object
 
 
 def to_K_dy_dx(tree):
@@ -126,7 +124,6 @@ def to_K_dy_dx(tree):
     tree.leaves_count += 1
     tree = LDerivedClass(tree)
     return UDerivedClass(tree)
-
 
 
 def binary_tree_grammar():
@@ -318,7 +315,7 @@ if __name__ == '__main__':
 
     l_sizes = []
     i = 0
-    samples = 1000
+    samples = 10000
     start = timer()
     while i < samples:
         tree = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
