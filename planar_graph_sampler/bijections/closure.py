@@ -61,8 +61,8 @@ class Closure:
 
         if init_half_edge.opposite is not None:
             # Iterate to first stem
-            half_edge_list = init_half_edge.get_all_half_edges()
-            for edge in half_edge_list:
+            # half_edge_list = init_half_edge.get_all_half_edges_gen()
+            for edge in init_half_edge.get_all_half_edges_gen():
                 if edge.opposite is None:
                     return edge
         else:
@@ -150,10 +150,7 @@ class Closure:
     def _construct_hexagon(self, hexagon_half_edges, partial_closure_edge):
         """Constructs a hexagon from a list of half_edges."""
         color = partial_closure_edge.color
-        if color is 'white':
-            inv_color = 'black'
-        else:
-            inv_color = 'white'
+        inv_color = 1 - color
 
         # Indicate that they belong to the hexagon
         for i in range(12):

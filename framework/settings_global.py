@@ -25,3 +25,7 @@ class Settings(object):
         raise RuntimeError("This class is not meant to be instantiated")
 
     debug_mode = False
+
+
+class Stats(object):
+    rules = {}

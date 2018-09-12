@@ -115,7 +115,7 @@ if __name__ == '__main__':
 
 >>>>>>> Stashed changes
         try:
-            g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+            g = grammar.sample_iterative(sampled_class, symbolic_y,,,,,,, None,
             if g.l_size > 0:
                 print(g)
                 g = bij_connected_comps(g)
@@ -128,7 +128,7 @@ if __name__ == '__main__':
             print("Recursion error occurred, continuing")
             pass
 =======
-        g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        g = grammar.sample_iterative(sampled_class, symbolic_y,,,,,,, None,
         if g.l_size > 0:
             g = bij_connected_comps(g)
             print(g.number_of_nodes())

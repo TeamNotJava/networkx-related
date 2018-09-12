@@ -73,4 +73,4 @@ class EdgeRootedTwoConnectedPlanarGraph(TwoConnectedPlanarGraph):
         return super(EdgeRootedTwoConnectedPlanarGraph, self).l_size - 2
 
     def __str__(self):
-        return "edge-rooted 2-connected planar graph (l: {}, u: {})".format(self.number_of_nodes, self.number_of_edges)
+        return "edge-rooted 2-connected planar graph (l: {}, u: {})".format(self.l_size, self.u_size)

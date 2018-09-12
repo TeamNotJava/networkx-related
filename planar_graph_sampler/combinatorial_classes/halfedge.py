@@ -27,17 +27,11 @@ class HalfEdge(object):
 
     __slots__ = 'opposite', 'next', 'prior', 'node_nr'
 
-    def __init__(self, self_consistent=False):
+    def __init__(self):
         # Contains the opposite half-edge.
         self.opposite = None
-        # Contains the next half-edge in ccw order around the incident node.
         self.next = None
-        if self_consistent:
-            self.next = self
-        # Contains the prior half-edge in cw order around the incident node.
         self.prior = None
-        if self_consistent:
-            self.prior = self
         # Label of the node the half-edge is assigned to.
         self.node_nr = -1
 
@@ -202,6 +196,23 @@ class HalfEdge(object):
                             stack.append(he.opposite)
         return result
 
+    def get_all_half_edges_gen(self, include_opp=True, include_unpaired=True):
+        """The half-edge on which this was first called is guaranteed to be in the result when include_opp is False."""
+        seen = set()
+        stack = [self]
+        while stack:
+            curr = stack.pop()
+            for he in curr.incident():
+                if he not in seen:
+                    if he.opposite is None and include_unpaired:
+                        yield he
+                        seen.add(he)
+                    elif include_opp or (he.opposite is not None and he.opposite not in seen):
+                        yield he
+                        seen.add(he)
+                        if he.opposite is not None:
+                            stack.append(he.opposite)
+
     def get_number_of_nodes(self):
         """Returns the number of nodes in the graph."""
         return len(self.node_dict())
@@ -218,8 +229,16 @@ class ClosureHalfEdge(HalfEdge):
 
     __slots__ = 'number_proximate_inner_edges', 'color', 'is_hexagonal', 'added_by_comp_clsr'
 
-    def __init__(self, self_consistent=False):
-        super(ClosureHalfEdge, self).__init__(self_consistent)
+    def __init__(self):
+        # super(ClosureHalfEdge, self).__init__(self_consistent)
+
+        # Contains the opposite half-edge.
+        self.opposite = None
+        self.next = None
+        self.prior = None
+        # Label of the node the half-edge is assigned to.
+        self.node_nr = -1
+
         # Number of inner edges following after the stem.
         self.number_proximate_inner_edges = 0
         # Color that indicates what color the incident node has (0 - black, 1 -white).

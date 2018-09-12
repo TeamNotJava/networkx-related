@@ -17,6 +17,7 @@ import warnings
 from framework.settings_global import Settings
 from framework.class_builder import DefaultBuilder, DummyBuilder
 from framework.generic_samplers import *
+from framework.iterative_sampler import _IterativeSampler
 
 
 class AliasSampler(BoltzmannSamplerBase):
@@ -38,6 +39,7 @@ class AliasSampler(BoltzmannSamplerBase):
         self._alias = alias
         self._grammar = None
         self._referenced_sampler = None  # The referenced sampler.
+        self.children = None
 
     def _grammar_not_initialized_error_msg(self):
         return "{}: you have to set the grammar this AliasSampler belongs to before using it".format(self._alias)
@@ -116,6 +118,16 @@ class AliasSampler(BoltzmannSamplerBase):
             for child in self.get_children():
                 child.accept(visitor)
 
+    @property
+    def is_alias_sampler(self):
+        return True
+
+    def sample_iterative(self, stack, result_stack, prev, grammar, stack_append, stack_pop):
+        if prev is None or self in prev.get_children():
+            stack.append(self._referenced_sampler)
+        else:
+            stack.pop()
+
 
 class DecompositionGrammar(object):
     """
@@ -163,6 +175,7 @@ class DecompositionGrammar(object):
             if isinstance(sampler, AliasSampler):
                 sampler.grammar = self
                 sampler._referenced_sampler = self[sampler.sampled_class]
+                sampler.children = sampler._referenced_sampler,  # 1-tuple.
 
         for alias in self._rules:
             v = self._DFSVisitor(apply_to_each)
@@ -392,238 +405,260 @@ class DecompositionGrammar(object):
         The tree may be arbitrarily large and is expanded on the fly.
         """
 
-        return self._IterativeSampler(self[alias], self).sample(x, y)
+        return _IterativeSampler(self[alias], self).sample(x, y)
 
-    class _IterativeSampler(object):
-        """
 
-        Parameters
-        ----------
-        sampler: BoltzmannSamplerBase
-
-        """
-
-        def __init__(self, sampler, grammar, is_restartable=False):
-            self.sampler = sampler
-            self.grammar = grammar
-            self.is_restartable = is_restartable
-
-        class _ResultStack(list):
-            """Modified stack that keeps track of the total l-size it contains."""
-
-            def __init__(self):
-                self.l_size = 0
-
-            def append(self, obj):
-                list.append(self, obj)
-                # self.l_size += obj.l_size
-                # print(self.l_size)
-
-            def pop(self, **kwargs):
-                obj = list.pop(self)
-                # self.l_size -= obj.l_size
-                return obj
-
-        def sample(self, x, y, max_size=1000000, abs_tolerance=0):
-            """Invokes the iterative sampler for the given symbolic parameters.
-
-            Parameters
-            ----------
-            x: str
-            y: str
-            max_size: int # TODO implement this
-            abs_tolerance: int
-
-            """
-            # Main stack.
-            stack = [self.sampler]
-            # Stack that holds the intermediate sampling results.
-            result_stack = self._ResultStack()
-            # Stack that records variable substitutions.
-            substitution_stack = []
-            # The previously visited node in the decomposition tree.
-            prev = None
-            while stack:
-
-                # Check if the sampler should be restarted.
-                if self.grammar._restart_flag:
-                    if not self.is_restartable:
-                        raise BoltzmannFrameworkError("Trying to restart a non-restartable sampler.")
-                    # print("Restarting ...")
-                    self.grammar._restart_flag = False
-                    stack = [self.sampler]
-                    result_stack = self._ResultStack()
-                    substitution_stack = []
-                    prev = None
-                    continue
-
-                # Get top of stack.
-                curr = stack[-1]
-
-                # TODO find an optimal order of these if statements or, even better, refactor the code somehow so to not have this horrible case distinction
-
-                no_prev_or_curr_in_prev_children = prev is None or curr in prev.get_children()
-
-                if isinstance(curr, ProdSampler):
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr.lhs)
-                    elif curr.lhs is prev:
-                        # Left child has already been visited - visit right child.
-                        stack.append(curr.rhs)
-                    else:
-                        # Both children have been processed.
-                        stack.pop()
-                        arg_rhs = result_stack.pop()
-                        arg_lhs = result_stack.pop()
-                        result_stack.append(curr.builder.product(arg_lhs, arg_rhs))
-
-                elif isinstance(curr, SumSampler):
-                    if prev is None or curr in prev.get_children():
-                        if bern(curr.lhs.eval(x, y) / curr.eval(x, y)):
-                            stack.append(curr.lhs)
-                        else:
-                            stack.append(curr.rhs)
-                    else:
-                        stack.pop()
-
-                elif isinstance(curr, AliasSampler):
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr._referenced_sampler)
-                    else:
-                        stack.pop()
-
-                elif isinstance(curr, AtomSampler):
-                    # Atom samplers are the leaves in the decomposition tree.
-                    stack.pop()
-                    result_stack.append(curr.sample(x, y))
-
-                elif isinstance(curr, SetSampler):
-                    # We use recursion here for now.
-                    stack.pop()
-                    set_elems_sampler = curr.get_children().pop()
-                    k = curr.draw_k(x, y)
-                    sampler = self.__class__(set_elems_sampler, self.grammar)
-                    set_elems = []
-                    for _ in range(k):
-                        obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
-                        set_elems.append(obj)
-                    result_stack.append(curr.builder.set(set_elems))
-
-                elif isinstance(curr, LDerFromUDerSampler):
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr.get_children().pop())
-                    else:
-                        obj_to_check = result_stack.pop()
-
-                        def is_acceptable(gamma):
-                            return bern((1 / curr._alpha_l_u) * (gamma.l_size / (gamma.u_size + 1)))
-
-                        if is_acceptable(obj_to_check):
-                            stack.pop()
-                            result_stack.append(LDerivedClass(obj_to_check.base_class_object))
-                        else:
-                            stack.append(curr.get_children().pop())
-
-                elif isinstance(curr, LSubsSampler):
-                    if prev is None or curr in prev.get_children():
-                        # Save the old x to the substitution stack.
-                        substitution_stack.append(x)
-                        x = curr.rhs.oracle_query_string(x, y)
-                        # Sample from lhs with substituted x.
-                        stack.append(curr.lhs)
-                    else:
-                        stack.pop()
-                        # Get the object in which the l-atoms have to be replaced from the result stack.
-                        core_object = result_stack.pop()
-                        # Recover the old y from the stack.
-                        x = substitution_stack.pop()
-                        # Replace the atoms and push result.
-                        sampler = self.__class__(curr.rhs, self.grammar)
-                        res = core_object.replace_l_atoms(sampler, x, y)  # Recursion for now.
-                        result_stack.append(res)
-
-                elif isinstance(curr, RejectionSampler):
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr.get_children().pop())
-                    else:
-                        obj_to_check = result_stack.pop()
-                        is_acceptable = curr.transformation  # This is kind of weird ...
-                        if is_acceptable(obj_to_check):
-                            stack.pop()
-                            result_stack.append(obj_to_check)
-                        else:
-                            stack.append(curr.get_children().pop())
-
-                elif isinstance(curr, USubsSampler):
-                    if prev is None or curr in prev.get_children():
-                        # Save the old y to the substitution stack.
-                        substitution_stack.append(y)
-                        y = curr.rhs.oracle_query_string(x, y)
-                        # Sample from lhs with substituted y.
-                        stack.append(curr.lhs)
-                    else:
-                        stack.pop()
-                        # Get the object in which the u-atoms have to be replaced from the result stack.
-                        core_object = result_stack.pop()
-                        # Recover the old y from the stack.
-                        y = substitution_stack.pop()
-                        # Replace the atoms and push result.
-                        sampler = self.__class__(curr.rhs, self.grammar)
-                        res = core_object.replace_u_atoms(sampler, x, y)  # Recursion for now.
-                        result_stack.append(res)
-
-                elif isinstance(curr, UDerFromLDerSampler):
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr.get_children().pop())
-                    else:
-                        obj_to_check = result_stack.pop()
-
-                        # TODO this code is duplicated in the recursive sampler
-                        def is_acceptable(gamma):
-                            return bern((1 / curr._alpha_u_l) * (gamma.u_size / (gamma.l_size + 1)))
-
-                        if is_acceptable(obj_to_check):
-                            stack.pop()
-                            result_stack.append(UDerivedClass(obj_to_check.base_class_object))
-                        else:
-                            stack.append(curr.get_children().pop())
-
-                elif isinstance(curr, HookSampler):
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr.get_children().pop())
-                        # Execute the before-hook.
-                        curr.before()
-                    else:
-                        stack.pop()
-                        # Execute the after-hook.
-                        if curr.after is not None:
-                            curr.after()
-
-                elif isinstance(curr, RestartableSampler):
-                    stack.pop()
-                    wrapped_sampler = curr.get_children().pop()
-                    restartable_sampler = self.__class__(wrapped_sampler, self.grammar, is_restartable=True)
-                    obj = restartable_sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
-                    result_stack.append(obj)
-
-                else:
-                    assert isinstance(curr, TransformationSampler)
-                    if prev is None or curr in prev.get_children():
-                        stack.append(curr.get_children().pop())
-                    else:
-                        stack.pop()
-                        to_transform = result_stack.pop()
-                        # A transformation may not be given.
-                        if curr.transformation is not None:
-                            result_stack.append(curr.transformation(to_transform))
-                        else:
-                            result_stack.append(to_transform)
-
-                prev = curr
-
-            assert len(result_stack) == 1
-            assert result_stack[0] is not None
-            return result_stack[0]
+    # class _IterativeSampler(object):
+    #     """
+    #
+    #     Parameters
+    #     ----------
+    #     sampler: BoltzmannSamplerBase
+    #
+    #     """
+    #
+    #     def __init__(self, sampler, grammar, is_restartable=False):
+    #         self.sampler = sampler
+    #         self.grammar = grammar
+    #         self.is_restartable = is_restartable
+    #
+    #     class _ResultStack(list):
+    #         """Modified stack that keeps track of the total l-size it contains."""
+    #
+    #         def __init__(self):
+    #             self.l_size = 0
+    #
+    #         def append(self, obj):
+    #             list.append(self, obj)
+    #             # self.l_size += obj.l_size
+    #             # print(self.l_size)
+    #
+    #         def pop(self, **kwargs):
+    #             obj = list.pop(self)
+    #             # self.l_size -= obj.l_size
+    #             return obj
+    #
+    #     def sample(self, x=None, y=None, max_size=1000000, abs_tolerance=0):
+    #         """Invokes the iterative sampler for the given symbolic parameters.
+    #
+    #         Parameters
+    #         ----------
+    #         x: str
+    #         y: str
+    #         max_size: int # TODO implement this
+    #         abs_tolerance: int
+    #
+    #         """
+    #         from framework.settings_global import Stats
+    #
+    #         # Main stack.
+    #         stack = [self.sampler]
+    #         # Stack that holds the intermediate sampling results.
+    #         result_stack = self._ResultStack()
+    #         # result_stack = []
+    #         # Stack that records variable substitutions.
+    #         substitution_stack = []
+    #         # The previously visited node in the decomposition tree.
+    #         prev = None
+    #
+    #         # Introduce some references to avoid dot-operator in the loop (small speedup).
+    #         stack_append = stack.append
+    #         stack_pop = stack.pop
+    #         result_stack_append = result_stack.append
+    #         result_stack_pop = result_stack.pop
+    #
+    #         while stack:
+    #
+    #             # Check if the sampler should be restarted.
+    #             if self.grammar._restart_flag:
+    #                 if not self.is_restartable:
+    #                     raise BoltzmannFrameworkError("Trying to restart a non-restartable sampler.")
+    #                 # print("Restarting ...")
+    #                 self.grammar._restart_flag = False
+    #                 stack = [self.sampler]
+    #                 result_stack = self._ResultStack()
+    #                 substitution_stack = []
+    #                 prev = None
+    #                 continue
+    #
+    #             # Get top of stack.
+    #             curr = stack[-1]
+    #
+    #             curr.sample_iterative(stack, result_stack, prev, self.grammar)
+    #
+    #
+    #
+    #             # # TODO find an optimal order of these if statements or, even better, refactor the code somehow so to not have this horrible case distinction
+    #             #
+    #             # # if curr.is_prod_sampler:
+    #             # if isinstance(curr, ProdSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         stack_append(curr.lhs)
+    #             #     elif curr.lhs is prev:
+    #             #         # Left child has already been visited - visit right child.
+    #             #         stack_append(curr.rhs)
+    #             #     else:
+    #             #         # Both children have been processed.
+    #             #         stack_pop()
+    #             #         arg_rhs = result_stack_pop()
+    #             #         arg_lhs = result_stack_pop()
+    #             #         result_stack_append(curr.builder.product(arg_lhs, arg_rhs))
+    #             #
+    #             # # elif curr.is_sum_sampler:
+    #             # elif isinstance(curr, SumSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         if bern(curr.lhs.eval(x, y) / curr.eval(x, y)):
+    #             #             stack_append(curr.lhs)
+    #             #         else:
+    #             #             stack_append(curr.rhs)
+    #             #     else:
+    #             #         stack_pop()
+    #             #
+    #             # # elif curr.is_alias_sampler:
+    #             # elif isinstance(curr, AliasSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         stack_append(curr._referenced_sampler)
+    #             #         if curr.sampled_class not in Stats.rules:
+    #             #             Stats.rules[curr.sampled_class] = 0
+    #             #         else:
+    #             #             Stats.rules[curr.sampled_class] += 1
+    #             #
+    #             #     else:
+    #             #         stack_pop()
+    #             #
+    #             # # elif curr.is_atom_sampler:
+    #             # elif isinstance(curr, AtomSampler):
+    #             #     # Atom samplers are the leaves in the decomposition tree.
+    #             #     stack_pop()
+    #             #     result_stack_append(curr.sample(x, y))
+    #             #
+    #             # elif isinstance(curr, SetSampler):
+    #             #     # We use recursion here for now.
+    #             #     stack.pop()
+    #             #     set_elems_sampler = curr.get_children().pop()
+    #             #     k = curr.draw_k(x, y)
+    #             #     sampler = self.__class__(set_elems_sampler, self.grammar)
+    #             #     set_elems = []
+    #             #     for _ in range(k):
+    #             #         obj = sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
+    #             #         set_elems.append(obj)
+    #             #     result_stack.append(curr.builder.set(set_elems))
+    #             #
+    #             # elif isinstance(curr, LDerFromUDerSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         stack.append(curr.get_children().pop())
+    #             #     else:
+    #             #         obj_to_check = result_stack.pop()
+    #             #
+    #             #         def is_acceptable(gamma):
+    #             #             return bern((1 / curr._alpha_l_u) * (gamma.l_size / (gamma.u_size + 1)))
+    #             #
+    #             #         if is_acceptable(obj_to_check):
+    #             #             stack.pop()
+    #             #             result_stack.append(LDerivedClass(obj_to_check.base_class_object))
+    #             #         else:
+    #             #             stack.append(curr.get_children().pop())
+    #             #
+    #             # elif isinstance(curr, LSubsSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         # Save the old x to the substitution stack.
+    #             #         substitution_stack.append(x)
+    #             #         x = curr.rhs.oracle_query_string(x, y)
+    #             #         # Sample from lhs with substituted x.
+    #             #         stack.append(curr.lhs)
+    #             #     else:
+    #             #         stack.pop()
+    #             #         # Get the object in which the l-atoms have to be replaced from the result stack.
+    #             #         core_object = result_stack.pop()
+    #             #         # Recover the old y from the stack.
+    #             #         x = substitution_stack.pop()
+    #             #         # Replace the atoms and push result.
+    #             #         sampler = self.__class__(curr.rhs, self.grammar)
+    #             #         res = core_object.replace_l_atoms(sampler, x, y)  # Recursion for now.
+    #             #         result_stack.append(res)
+    #             #
+    #             # elif isinstance(curr, RejectionSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         stack.append(curr.get_children().pop())
+    #             #     else:
+    #             #         obj_to_check = result_stack.pop()
+    #             #         is_acceptable = curr.transformation  # This is kind of weird ...
+    #             #         if is_acceptable(obj_to_check):
+    #             #             stack.pop()
+    #             #             result_stack.append(obj_to_check)
+    #             #         else:
+    #             #             stack.append(curr.get_children().pop())
+    #             #
+    #             # elif isinstance(curr, USubsSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         # Save the old y to the substitution stack.
+    #             #         substitution_stack.append(y)
+    #             #         y = curr.rhs.oracle_query_string(x, y)
+    #             #         # Sample from lhs with substituted y.
+    #             #         stack.append(curr.lhs)
+    #             #     else:
+    #             #         stack.pop()
+    #             #         # Get the object in which the u-atoms have to be replaced from the result stack.
+    #             #         core_object = result_stack.pop()
+    #             #         # Recover the old y from the stack.
+    #             #         y = substitution_stack.pop()
+    #             #         # Replace the atoms and push result.
+    #             #         sampler = self.__class__(curr.rhs, self.grammar)
+    #             #         res = core_object.replace_u_atoms(sampler, x, y)  # Recursion for now.
+    #             #         result_stack.append(res)
+    #             #
+    #             # elif isinstance(curr, UDerFromLDerSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         stack.append(curr.get_children().pop())
+    #             #     else:
+    #             #         obj_to_check = result_stack.pop()
+    #             #
+    #             #         # TODO this code is duplicated in the recursive sampler
+    #             #         def is_acceptable(gamma):
+    #             #             return bern((1 / curr._alpha_u_l) * (gamma.u_size / (gamma.l_size + 1)))
+    #             #
+    #             #         if is_acceptable(obj_to_check):
+    #             #             stack.pop()
+    #             #             result_stack.append(UDerivedClass(obj_to_check.base_class_object))
+    #             #         else:
+    #             #             stack.append(curr.get_children().pop())
+    #             #
+    #             # elif isinstance(curr, HookSampler):
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         stack.append(curr.get_children().pop())
+    #             #         # Execute the before-hook.
+    #             #         curr.before()
+    #             #     else:
+    #             #         stack.pop()
+    #             #         # Execute the after-hook.
+    #             #         if curr.after is not None:
+    #             #             curr.after()
+    #             #
+    #             # elif isinstance(curr, RestartableSampler):
+    #             #     stack.pop()
+    #             #     wrapped_sampler = curr.get_children().pop()
+    #             #     restartable_sampler = self.__class__(wrapped_sampler, self.grammar, is_restartable=True)
+    #             #     obj = restartable_sampler.sample(x, y, max_size - result_stack.l_size, abs_tolerance)
+    #             #     result_stack.append(obj)
+    #             #
+    #             # else:
+    #             #     assert isinstance(curr, TransformationSampler)
+    #             #     if prev is None or curr in prev.get_children():
+    #             #         stack.append(curr.get_children().pop())
+    #             #     else:
+    #             #         stack.pop()
+    #             #         to_transform = result_stack.pop()
+    #             #         # A transformation may not be given.
+    #             #         if curr.transformation is not None:
+    #             #             result_stack.append(curr.transformation(to_transform))
+    #             #         else:
+    #             #             result_stack.append(to_transform)
+    #
+    #             prev = curr
+    #
+    #         assert len(result_stack) == 1
+    #         assert result_stack[0] is not None
+    #         return result_stack[0]
 
     class _DFSVisitor:
         """
@@ -783,3 +818,5 @@ class DecompositionGrammar(object):
                     self._seen_alias_samplers.add(sampler.sampled_class)
                     # Recurse further down.
                     return True
+
+

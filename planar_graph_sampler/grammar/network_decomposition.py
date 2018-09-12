@@ -35,10 +35,14 @@ class NetworkBuilder(DefaultBuilder):
     def u_atom(self):
         """Constructs the trivial link network consisting of the poles and an edge between them."""
         # Create the zero-pole of the network.
-        root_half_edge = HalfEdge(self_consistent=True)
+        root_half_edge = HalfEdge()
+        root_half_edge.next = root_half_edge
+        root_half_edge.prior = root_half_edge
         root_half_edge.node_nr = next(self._counter)
         # Creates the inf-pole.
-        root_half_edge_opposite = HalfEdge(self_consistent=True)
+        root_half_edge_opposite = HalfEdge()
+        root_half_edge_opposite.next = root_half_edge_opposite
+        root_half_edge_opposite.prior = root_half_edge_opposite
         root_half_edge_opposite.node_nr = next(self._counter)
         # Link the poles.
         root_half_edge.opposite = root_half_edge_opposite
@@ -253,26 +257,30 @@ if __name__ == '__main__':
     # random.seed(0)
     # boltzmann_framework_random_gen.seed(13)
 
-    # l_sizes = []
-    # i = 0
-    # samples = 100
-    # start = timer()
-    # while i < samples:
-    #     obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-    #     l_sizes.append(obj.l_size)
-    #     i += 1
-    # end = timer()
-    # print()
-    # print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
-    # print("time: {}".format(end - start))
+    l_sizes = []
+    i = 0
+    samples = 100000
+    start = timer()
+    while i < samples:
+        obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        l_size = obj.l_size
+        # print(l_size)
+        l_sizes.append(l_size)
+        # if obj.l_size == 4:
+        #    i += 1
+        i += 1
+    end = timer()
+    print()
+    print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
+    print("time: {}".format(end - start))
 
-    while True:
-        g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        if g.l_size >= 10000000:
-            g = g.underive_all()
-            print(g)
-            print(g.number_of_edges)
-            print("is linked: {}".format(g.is_linked))
-            assert g.is_consistent
-            g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
-            plt.show()
+    # while True:
+    #     g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+    #     if g.l_size == 2:
+    #         g = g.underive_all()
+    #         print(g)
+    #         print(g.number_of_edges)
+    #         print("is linked: {}".format(g.is_linked))
+    #         assert g.is_consistent
+    #         g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
+    #         plt.show()

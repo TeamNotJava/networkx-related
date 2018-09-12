@@ -18,6 +18,7 @@ from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import *
 from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.generic_samplers import BoltzmannSamplerBase
+from planar_graph_sampler.grammar.binary_tree_decomposition import EarlyRejectionControl
 
 from planar_graph_sampler.grammar.grammar_utils import Counter, divide_by_2, to_u_derived_class
 from planar_graph_sampler.combinatorial_classes.halfedge import HalfEdge
@@ -34,9 +35,13 @@ class ZeroAtomGraphBuilder(DefaultBuilder):
 
     def zero_atom(self):
         # TODO is this really the correct zero atom?
-        root_half_edge = HalfEdge(self_consistent=True)
+        root_half_edge = HalfEdge()
+        root_half_edge.next = root_half_edge
+        root_half_edge.prior = root_half_edge
         root_half_edge.node_nr = next(self._counter)
-        root_half_edge_opposite = HalfEdge(self_consistent=True)
+        root_half_edge_opposite = HalfEdge()
+        root_half_edge_opposite.next = root_half_edge_opposite
+        root_half_edge_opposite.prior = root_half_edge_opposite
         root_half_edge_opposite.node_nr = next(self._counter)
         root_half_edge.opposite = root_half_edge_opposite
         root_half_edge_opposite.opposite = root_half_edge
@@ -130,8 +135,7 @@ def two_connected_graph_grammar():
 
     grammar = DecompositionGrammar()
     grammar.rules = network_grammar().rules
-    grammar['R_w'].builder.grammar = grammar
-    grammar['R_b'].builder.grammar = grammar
+    EarlyRejectionControl.grammar = grammar
 
     grammar.rules = {
 
@@ -145,7 +149,7 @@ def two_connected_graph_grammar():
 
         'G_2_dx':
             Bij(
-                DxFromDy(G_2_dy, alpha_l_u=1.0),  # see p. 26 TODO check this, error in paper?
+                DxFromDy(G_2_dy, alpha_l_u=2.0),  # see p. 26 TODO check this, error in paper? (no error, 2 is caused by the link graph)
                 mark_l_atom
             ),
 
@@ -179,6 +183,8 @@ def two_connected_graph_grammar():
 
     }
     grammar.set_builder(['G_2_arrow'], ZeroAtomGraphBuilder())
+
+
     return grammar
 
 
@@ -196,7 +202,7 @@ if __name__ == '__main__':
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'y'
-    sampled_class = 'G_2_arrow'
+    sampled_class = 'G_2_dx'
     # print(grammar.collect_oracle_queries(sampled_class, symbolic_x, symbolic_y))
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
     end = timer()
@@ -210,25 +216,25 @@ if __name__ == '__main__':
     # random.seed(0)
     # boltzmann_framework_random_gen.seed(13)
 
-    # l_sizes = []
-    # i = 0
-    # samples = 10
-    # start = timer()
-    # while i < samples:
-    #     obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-    #     l_sizes.append(obj.l_size)
-    #     # print(obj.l_size)
-    #     i += 1
-    # end = timer()
-    # print()
-    # print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
-    # print("time: {}".format(end - start))
+    l_sizes = []
+    i = 0
+    samples = 10000
+    start = timer()
+    while i < samples:
+        obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+        l_sizes.append(obj.l_size)
+        # print(obj.l_size)
+        i += 1
+    end = timer()
+    print()
+    print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
+    print("time: {}".format(end - start))
 
-    while True:
-        g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        if g.l_size == 1:
-            g = g.underive_all()
-            print(g)
-            assert g.is_consistent
-            g.plot(with_labels=False, use_planar_drawer=False, node_size=25)
-            plt.show()
+    # while True:
+    #     g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+    #     g = g.underive_all()
+    #     if g.l_size == 4:
+    #         print(g)
+    #         # assert g.is_consistent
+    #         g.plot(with_labels=True, use_planar_drawer=False, node_size=25)
+    #         plt.show()

@@ -69,7 +69,7 @@ class WhiteRootedBinaryTreeBuilder(BinaryTreeBuilder):
 
     def product(self, lhs, rhs):
         # Builds white-rooted tree from decomposition of the form (leaf|black)(leaf|black)
-        res = BinaryTree('white')
+        res = BinaryTree(1)
         res.set_root_node_nr(next(self._counter))
         res.add_left_child(lhs)
         res.add_right_child(rhs)
@@ -81,7 +81,7 @@ class BlackRootedBinaryTreeBuilder(BinaryTreeBuilder):
 
     def l_atom(self):
         # An l-atom is a black rooted tree without children.
-        res = BinaryTree('black')
+        res = BinaryTree(0)
         res.set_root_node_nr(next(self._counter))
         return res
 
@@ -107,7 +107,7 @@ class BlackRootedBinaryTreeBuilder(BinaryTreeBuilder):
             res = rhs
         else:
             # Form (3)
-            res = BinaryTree('black')
+            res = BinaryTree(0)
             res.set_root_node_nr(next(self._counter))
             res.add_left_child(lhs)
             res.add_right_child(rhs)
@@ -315,15 +315,15 @@ if __name__ == '__main__':
 
     l_sizes = []
     i = 0
-    samples = 10000
+    samples = 1000
     start = timer()
     while i < samples:
         tree = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        if tree.l_size < 0:
-            print(tree.l_size)
-            tree = tree.underive_all()
-            tree.plot()
-            plt.show()
+        # if tree.l_size > 100000:
+        #     print(tree.l_size)
+        #     tree = tree.underive_all()
+        #     tree.plot()
+        #     plt.show()
         l_sizes.append(tree.l_size)
         i += 1
     end = timer()

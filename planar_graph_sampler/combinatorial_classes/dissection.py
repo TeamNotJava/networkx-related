@@ -33,16 +33,16 @@ class IrreducibleDissection(HalfEdgeGraph):
 
     def __init__(self, half_edge):
         assert half_edge.is_hexagonal
-        if half_edge.color is not 'black':
+        if half_edge.color is not 0:
             half_edge = half_edge.opposite.next
-        assert half_edge.color is 'black'
+        assert half_edge.color is 0
         self.is_rooted = False
         super(IrreducibleDissection, self).__init__(half_edge)
 
     @property
     def is_consistent(self):
         super_ok = super(IrreducibleDissection, self).is_consistent
-        root_is_black = self.half_edge.color is 'black'
+        root_is_black = self.half_edge.color is 0
         root_is_hex = self.half_edge.is_hexagonal
         twelve_hex_he = len([he for he in self.half_edge.get_all_half_edges() if he.is_hexagonal]) == 12
         return all([super_ok, root_is_black, root_is_hex, twelve_hex_he, self.is_admissible])
@@ -57,7 +57,7 @@ class IrreducibleDissection(HalfEdgeGraph):
         third = second.opposite.next.opposite.next
         res.append(third)
         for he in res:
-            assert he.is_hexagonal and he.color is 'black'
+            assert he.is_hexagonal and he.color is 0
         return res
 
     def root_at_random_hexagonal_edge(self):
@@ -70,9 +70,9 @@ class IrreducibleDissection(HalfEdgeGraph):
         """Checks if there is a path of length 3 with an inner edge from the root to the opposite outer vertex."""
 
         start_node = self.half_edge
-        assert start_node.color is 'black'
+        assert start_node.color is 0
         end_node = self.half_edge.opposite.next.opposite.next.opposite
-        assert end_node.color is 'white'
+        assert end_node.color is 1
         start_node = start_node.node_nr
         end_node = end_node.node_nr
 
@@ -93,9 +93,9 @@ class IrreducibleDissection(HalfEdgeGraph):
         """Checks if there is a path of length 3 with an inner edge from the root to the opposite outer vertex."""
 
         start_node = self.half_edge
-        assert start_node.color is 'black'
+        assert start_node.color is 0
         end_node = self.half_edge.opposite.next.opposite.next.opposite
-        assert end_node.color is 'white'
+        assert end_node.color is 1
 
         # Creates the queue for the BFS.
         queue = deque(list())
@@ -156,7 +156,7 @@ class IrreducibleDissection(HalfEdgeGraph):
     def l_size(self):
         """Number of inner black vertices (I), number of inner black vertices and root vertex (J)."""
         node_dict = self.half_edge.node_dict()
-        black_vertices = len([node_nr for node_nr in node_dict if node_dict[node_nr][0].color is 'black'])
+        black_vertices = len([node_nr for node_nr in node_dict if node_dict[node_nr][0].color is 0])
         # There are always 3 hexagonal outer black vertices.
         res = black_vertices - 3
         if self.is_rooted:
@@ -177,7 +177,7 @@ class IrreducibleDissection(HalfEdgeGraph):
                 G.nodes[v]['color'] = '#e8f442'
             else:
                 G.nodes[v]['color'] = '#aaaaaa'
-            if nodes[v][0].color is 'black':
+            if nodes[v][0].color is 0:
                 # Make black nodes darker.
                 G.nodes[v]['color'] = color_scale(G.nodes[v]['color'], 0.5)
         return G

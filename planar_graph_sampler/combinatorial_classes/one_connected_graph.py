@@ -24,7 +24,9 @@ class OneConnectedPlanarGraph(HalfEdgeGraph):
 
     def __init__(self, half_edge=None):
         if half_edge is None:
-            half_edge = HalfEdge(self_consistent=True)
+            half_edge = HalfEdge()
+            half_edge.next = half_edge
+            half_edge.prior = half_edge
             half_edge.node_nr = next(Counter())
         super(OneConnectedPlanarGraph, self).__init__(half_edge)
 

@@ -117,10 +117,10 @@ class PrimalMap:
         fresh_half_edge.node_nr = current_half_edge.node_nr
         # fresh_half_edge.color = current_half_edge.color
 
-        # if return_edge.color is not 'black':
+        # if return_edge.color is not 0:
         #     return_edge = fresh_half_edge
 
-        #assert (return_edge.color is 'black')
+        #assert (return_edge.color is 0)
         return return_edge
 
     # Checks if quadrangulation is correct

@@ -16,6 +16,7 @@ from framework.decomposition_grammar import DecompositionGrammar, AliasSampler
 from framework.generic_samplers import *
 from framework.evaluation_oracle import EvaluationOracle
 from framework.generic_samplers import BoltzmannSamplerBase
+from planar_graph_sampler.combinatorial_classes.half_edge_graph import HalfEdgeGraph
 from planar_graph_sampler.grammar.binary_tree_decomposition import EarlyRejectionControl
 
 from planar_graph_sampler.grammar.grammar_utils import to_l_derived_class, divide_by_2
@@ -74,6 +75,7 @@ def three_connected_graph_grammar():
     M_3_arrow_dx = AliasSampler('M_3_arrow_dx')
     M_3_arrow_dx_dx = AliasSampler('M_3_arrow_dx_dx')
     Bij = BijectionSampler
+    Rej = RejectionSampler
     Trans = TransformationSampler
     DyFromDx = UDerFromLDerSampler
 
@@ -126,6 +128,17 @@ def three_connected_graph_grammar():
                 mark_2_u_atoms
             ),
 
+        # Usual 3-connected planar graphs for testing/debugging purposes.
+
+        'G_3':
+            Bij(
+                Rej(
+                    G_3_arrow,
+                    lambda g: bern(1 / g.number_of_edges)
+                ),
+                lambda g: HalfEdgeGraph(g.half_edge)
+            ),
+
     }
 
     return grammar
@@ -136,6 +149,7 @@ if __name__ == "__main__":
     from planar_graph_sampler.evaluations_planar_graph import *
     from timeit import default_timer as timer
 
+    my_evals_100['G_3(x*G_1_dx(x,y),D(x*G_1_dx(x,y),y))'] = 'dummy'
     oracle = EvaluationOracle(my_evals_100)
     BoltzmannSamplerBase.oracle = oracle
 
@@ -143,7 +157,7 @@ if __name__ == "__main__":
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
-    sampled_class = 'G_3_arrow_dy_dy'
+    sampled_class = 'G_3_arrow'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
     # random.seed(0)
@@ -156,11 +170,11 @@ if __name__ == "__main__":
 
     l_sizes = []
     i = 0
-    samples = 1
+    samples = 10000
     start = timer()
     while i < samples:
         obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        assert obj.marked_atom is not None
+        # assert obj.marked_atom is not None
         l_sizes.append(obj.l_size)
         i += 1
     end = timer()
@@ -170,10 +184,10 @@ if __name__ == "__main__":
 
     # while True:
     #     g = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-    #     if g.l_size > 100:
+    #     if g.l_size == 5:
     #         print(g)
     #         print(g.u_size / g.l_size)
-    #         # g = g.underive_all()
+    #         g = g.underive_all()
     #         # assert g.is_consistent
-    #         # g.plot(node_size=25, use_planar_drawer=True)
-    #         # plt.show()
+    #         g.plot(node_size=25, use_planar_drawer=False)
+    #         plt.show()

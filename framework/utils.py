@@ -36,6 +36,7 @@ def bern(p):
     -------
     bool
     """
+    # assert 0 <= p <= 1
     return boltzmann_framework_random_gen.uniform(0, 1) <= p
 
 

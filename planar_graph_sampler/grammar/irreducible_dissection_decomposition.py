@@ -138,7 +138,7 @@ if __name__ == "__main__":
     grammar.init()
     symbolic_x = 'x*G_1_dx(x,y)'
     symbolic_y = 'D(x*G_1_dx(x,y),y)'
-    sampled_class = 'J_a_dx'
+    sampled_class = 'J_a'
     grammar.precompute_evals(sampled_class, symbolic_x, symbolic_y)
 
     try:
@@ -149,31 +149,38 @@ if __name__ == "__main__":
     # random.seed(0)
     # boltzmann_framework_random_gen.seed(3)
 
-    l_sizes = []
-    i = 0
-    samples = 100
-    start = timer()
-    while i < samples:
-        obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-        l_sizes.append(obj.l_size)
-        i += 1
-    end = timer()
-    print()
-    print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
-    print("time: {}".format(end - start))
+    # l_sizes = []
+    # i = 0
+    # samples = 10000
+    # start = timer()
+    # while i < samples:
+    #     obj = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
+    #     l_sizes.append(obj.l_size)
+    #     i += 1
+    # end = timer()
+    # print()
+    # print("avg. size: {}".format(sum(l_sizes) / len(l_sizes)))
+    # print("time: {}".format(end - start))
 
 
-    # while True:
-    #     diss = grammar.sample_iterative(sampled_class, symbolic_x, symbolic_y)
-    #     if diss.l_size > 20:
-    #         print(diss)
-    #         print(diss.u_size)
-    #         print(diss.is_admissible)
-    #         print(diss.half_edge.node_nr)
-    #         diss = diss.underive_all()
-    #         assert diss.is_consistent
-    #         diss.plot(with_labels=False, use_planar_drawer=True, node_size=25)
-    #         plt.show()
+    while True:
+        tree = grammar.sample_iterative('K', symbolic_x, symbolic_y)
+        if tree.l_size == 1:
+            print(tree)
+            print(tree.half_edge.node_nr)
+            tree = tree.underive_all()
+            assert tree.is_consistent
+            tree.plot(with_labels=True, use_planar_drawer=False, node_size=50, draw_leaves=False)
+            plt.show()
+
+            diss = closure(tree)
+            print(diss)
+            print(diss.half_edge.node_nr)
+            diss.root_at_random_hexagonal_edge()
+            print(diss.is_admissible)
+            diss.plot(with_labels=True, use_planar_drawer=False, node_size=50)
+
+            plt.show()
 
     # num_samples = 100
     # samples = []

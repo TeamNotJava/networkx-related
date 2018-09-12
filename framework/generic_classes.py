@@ -68,7 +68,7 @@ class CombinatorialClass(object):
         rand_index = boltzmann_framework_random_gen.randrange(self.u_size)
         return nth(self.u_atoms(), rand_index)
 
-    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+    def replace_l_atoms(self, sampler, x=None, y=None, exceptions=None):
         """Replaces all l-atoms within this object.
 
         Returns
@@ -83,7 +83,7 @@ class CombinatorialClass(object):
         """
         raise NotImplementedError
 
-    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+    def replace_u_atoms(self, sampler, x=None, y=None, exceptions=None):
         """Replaces all u-atoms."""
         raise NotImplementedError
 
@@ -496,7 +496,7 @@ class LDerivedClass(DerivedClass):
             if l_atom != self.marked_atom:
                 yield l_atom
 
-    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+    def replace_l_atoms(self, sampler, x=None, y=None, exceptions=None):
         if exceptions is None:
             exceptions = []
         if self.marked_atom is None:
@@ -505,7 +505,7 @@ class LDerivedClass(DerivedClass):
         base_replaced = self.base_class_object.replace_l_atoms(sampler, x, y, exceptions)
         return LDerivedClass(base_replaced, self.marked_atom)
 
-    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+    def replace_u_atoms(self, sampler, x=None, y=None, exceptions=None):
         base_replaced = self.base_class_object.replace_u_atoms(sampler, x, y, exceptions)
         return LDerivedClass(base_replaced, self.marked_atom)
 
@@ -543,11 +543,11 @@ class UDerivedClass(DerivedClass):
             if u_atom != self.marked_atom:
                 yield u_atom
 
-    def replace_l_atoms(self, sampler, x, y, exceptions=None):
+    def replace_l_atoms(self, sampler, x=None, y=None, exceptions=None):
         base_replaced = self.base_class_object.replace_l_atoms(sampler, x, y, exceptions)
         return UDerivedClass(base_replaced, self.marked_atom)
 
-    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+    def replace_u_atoms(self, sampler, x=None, y=None, exceptions=None):
         if exceptions is None:
             exceptions = []
         if self.marked_atom is None:

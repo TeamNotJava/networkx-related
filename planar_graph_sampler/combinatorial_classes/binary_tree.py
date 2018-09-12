@@ -32,16 +32,18 @@ class BinaryTree(HalfEdgeGraph):
 
     def __init__(self, root_color, root_half_edge=None):
         if root_half_edge is None:
-            root_half_edge = ClosureHalfEdge(self_consistent=True)
+            root_half_edge = ClosureHalfEdge()
+            root_half_edge.next = root_half_edge
+            root_half_edge.prior = root_half_edge
             root_half_edge.color = root_color
         super(BinaryTree, self).__init__(root_half_edge)
         self.black_nodes_count = 0
         self.white_nodes_count = 0
         # There is a leaf on the root pointing 'upwards'.
         self.leaves_count = 0
-        if root_color == 'black':
+        if root_color == 0:
             self.black_nodes_count = 1
-        elif root_color == 'white':
+        elif root_color == 1:
             self.white_nodes_count = 1
 
     @property
@@ -108,23 +110,11 @@ class BinaryTree(HalfEdgeGraph):
 
     @property
     def is_white_rooted(self):
-        return self.root_color is 'white'
+        return self.root_color == 1
 
     @property
     def is_black_rooted(self):
-        return self.root_color is 'black'
-
-    # @property
-    # def black_nodes_count(self):
-    #     return self._black_nodes_count
-    #
-    # @property
-    # def white_nodes_count(self):
-    #     return self._white_nodes_count
-    #
-    # @property
-    # def leaves_count(self):
-    #     return self._leaves_count
+        return self.root_color == 0
 
     def set_root_node_nr(self, node_nr):
         for h in self.half_edge.incident():
@@ -161,7 +151,7 @@ class BinaryTree(HalfEdgeGraph):
                 G.nodes[v]['color'] = '#229922'
             else:
                 col = nodes[v][0].color
-                G.nodes[v]['color'] = '#333333' if col is 'black' else '#999999' if col is 'white' else '#990000'
+                G.nodes[v]['color'] = '#333333' if col is 0 else '#999999' if col is 1 else '#990000'
         return G
 
     def plot(self, **kwargs):

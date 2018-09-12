@@ -120,7 +120,7 @@ class HalfEdgeGraph(CombinatorialClass):
     def l_atoms(self):
         raise NotImplementedError
 
-    def replace_u_atoms(self, sampler, x, y, exceptions=None):
+    def replace_u_atoms(self, sampler, x=None, y=None, exceptions=None):
         """Maybe it's not so stupid to actually implement this here ... (same for l_subs)"""
         raise NotImplementedError
 
